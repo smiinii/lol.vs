@@ -132,7 +132,7 @@ function Header({ view, setView, user, onLogin, onProfile, onSubmit }: {
         </nav>
         <div className="header-actions">
           <label className="search desktop-only"><span>⌕</span><input aria-label="사이트 검색" placeholder="글과 사건 검색" /></label>
-          <button className="submit-small desktop-only" onClick={onSubmit}>사건 제보</button>
+          <button className="submit-small" onClick={onSubmit}>사건 제보</button>
           {user ? (
             <button className="profile" onClick={onProfile} aria-label="내 프로필 열기">
               <span className="avatar">{user.nickname[0]}</span>
