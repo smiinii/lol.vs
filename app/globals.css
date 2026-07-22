@@ -579,17 +579,22 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
 .rank-1 .rank-number { color: #ffe08a; text-shadow: 0 0 16px rgba(255,210,94,.45); }
 .rank-2 .rank-number { color: #ff8e6b; text-shadow: 0 0 15px rgba(255,78,74,.35); }
 .rank-3 .rank-number { color: #c6a1ff; text-shadow: 0 0 15px rgba(149,86,255,.4); }
-.rank-player { display: flex !important; grid-template-columns: none !important; align-items: center; gap: 15px !important; }
-.rank-player > span { display: grid; gap: 5px; }
-.rank-frame { position: relative; flex: 0 0 58px; width: 58px; height: 64px; display: grid; place-items: center; clip-path: polygon(50% 0, 91% 17%, 100% 66%, 50% 100%, 0 66%, 9% 17%); background: linear-gradient(145deg, #7897ad, #213549 65%, #9ab2c1); filter: drop-shadow(0 5px 8px rgba(0,0,0,.42)); font-style: normal; }
-.rank-frame::before { content: ""; position: absolute; inset: 4px; clip-path: inherit; background: radial-gradient(circle at 50% 35%, #19465f, #07131f 70%); }
-.rank-frame b { position: relative; z-index: 1; color: #d9f5ff; }
-.rank-frame.challenger { background: linear-gradient(145deg, #fff2a4, #39dff5 35%, #176e9d 66%, #d8ac45); filter: drop-shadow(0 0 10px rgba(78,221,255,.45)); }
-.rank-frame.grandmaster { background: linear-gradient(145deg, #ffd176, #ff4d47 36%, #801c31 70%, #ff9a41); filter: drop-shadow(0 0 10px rgba(255,76,70,.42)); }
-.rank-frame.master { background: linear-gradient(145deg, #edc1ff, #a25cff 38%, #45226f 70%, #d790ff); filter: drop-shadow(0 0 10px rgba(156,86,255,.42)); }
-.rank-frame.diamond { background: linear-gradient(145deg, #c7fbff, #5dc9ff 40%, #26578e 72%, #7ee2ff); }
-.rank-frame.emerald { background: linear-gradient(145deg, #c8ffe2, #32d197 40%, #165d53 72%, #7bffc1); }
-.rank-frame.current { background: linear-gradient(145deg, #f8d77a, #2dd4bf 40%, #174f66 72%, #f3b74b); }
+.rank-player { --rank-bright: #9bb6ca; --rank-mid: #395267; --rank-dark: #101d2b; --rank-glow: rgba(125,168,195,.22); position: relative; isolation: isolate; width: min(100%, 350px); min-height: 70px; display: flex !important; grid-template-columns: none !important; align-items: center; gap: 13px !important; padding: 8px 43px 8px 62px; clip-path: polygon(8% 0, 92% 0, 100% 25%, 96% 50%, 100% 75%, 92% 100%, 8% 100%, 0 75%, 4% 50%, 0 25%); background: linear-gradient(135deg, var(--rank-bright), var(--rank-mid) 35%, var(--rank-dark) 68%, var(--rank-bright)) border-box; filter: drop-shadow(0 5px 8px rgba(0,0,0,.4)) drop-shadow(0 0 9px var(--rank-glow)); }
+.rank-player::before { content: ""; position: absolute; z-index: -1; inset: 2px; clip-path: inherit; background: radial-gradient(circle at 18% 50%, var(--rank-glow), transparent 25%), linear-gradient(90deg, #08131f, #132337 52%, #08131f); }
+.rank-player::after { content: ""; position: absolute; right: 14px; top: 50%; width: 13px; height: 13px; translate: 0 -50%; rotate: 45deg; border: 1px solid var(--rank-bright); background: radial-gradient(circle at 35% 30%, #fff, var(--rank-mid) 42%, var(--rank-dark) 74%); box-shadow: 0 0 9px var(--rank-glow); }
+.rank-identity { min-width: 0; display: grid; gap: 5px; }
+.rank-identity strong { overflow: hidden; color: #f2f5f8; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; text-shadow: 0 2px 6px #000; }
+.rank-identity small { color: #9baabd; font-size: 10px; }
+.rank-portrait { position: absolute; left: 13px; top: 50%; width: 42px; height: 48px; translate: 0 -50%; display: grid; place-items: center; clip-path: polygon(50% 0, 91% 18%, 100% 68%, 50% 100%, 0 68%, 9% 18%); background: linear-gradient(145deg, var(--rank-bright), var(--rank-mid) 48%, var(--rank-dark)); font-style: normal; }
+.rank-portrait::before { content: ""; position: absolute; inset: 3px; clip-path: inherit; background: radial-gradient(circle at 50% 35%, #1d435c, #06111d 72%); }
+.rank-portrait b { position: relative; z-index: 1; color: #e8f8ff; font-size: 12px; text-shadow: 0 0 8px var(--rank-glow); }
+.rank-jewel { position: absolute; left: 30px; bottom: 0; width: 9px; height: 9px; translate: -50% 40%; rotate: 45deg; border: 1px solid var(--rank-bright); background: var(--rank-mid); box-shadow: 0 0 8px var(--rank-glow); }
+.rank-nameplate.challenger { --rank-bright: #fff0a1; --rank-mid: #43dff3; --rank-dark: #114c82; --rank-glow: rgba(69,226,255,.5); }
+.rank-nameplate.grandmaster { --rank-bright: #ffc56e; --rank-mid: #f34d4d; --rank-dark: #651b36; --rank-glow: rgba(255,75,72,.44); }
+.rank-nameplate.master { --rank-bright: #e9b9ff; --rank-mid: #9b5cff; --rank-dark: #3d2568; --rank-glow: rgba(166,91,255,.46); }
+.rank-nameplate.diamond { --rank-bright: #d0fbff; --rank-mid: #5bc8ff; --rank-dark: #255186; --rank-glow: rgba(93,205,255,.35); }
+.rank-nameplate.emerald { --rank-bright: #baffdd; --rank-mid: #31cb92; --rank-dark: #15564e; --rank-glow: rgba(49,208,150,.32); }
+.rank-nameplate.current { --rank-bright: #ffe28a; --rank-mid: #2dd4bf; --rank-dark: #17475e; --rank-glow: rgba(45,212,191,.36); }
 .ranking-divider { padding: 10px 22px; border-top: 1px solid rgba(45,212,191,.3); border-bottom: 1px solid rgba(45,212,191,.18); background: rgba(45,212,191,.065); color: var(--teal); font-size: 10px; font-weight: 900; letter-spacing: .8px; }
 .current-rank-row { background: linear-gradient(90deg, rgba(45,212,191,.1), transparent 72%); }
 .rank-login-note { padding: 21px; border-top: 1px solid var(--line); color: var(--muted); text-align: center; font-size: 12px; }
