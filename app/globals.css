@@ -279,12 +279,10 @@ img, video { display: block; max-width: 100%; }
 .rail-card h2, .guide-card h2 { margin: 0 0 14px; font-size: 17px; }
 .hot-card { position: relative; padding: 0; border-color: rgba(88,201,190,.28); background: radial-gradient(circle at 100% 0, rgba(239,129,136,.11), transparent 35%), linear-gradient(150deg, rgba(14,29,47,.98), rgba(8,18,31,.98)); }
 .hot-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, var(--teal) 0 58%, var(--coral) 58% 100%); }
-.hot-card-head { min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 16px 13px; }
-.hot-card-head h2 { margin: 0; font-size: 19px; letter-spacing: -.45px; }
+.hot-card-head { min-height: 68px; display: flex; align-items: center; padding: 16px 16px 11px; }
+.hot-card-head h2 { display: flex; align-items: center; gap: 7px; margin: 0; font-family: Pretendard, "Noto Sans KR", sans-serif; font-size: 19px; font-weight: 950; letter-spacing: -.55px; }
 .hot-card-head h2 span { color: var(--teal); }
-.hot-card-head p { margin: 5px 0 0; color: #71849a; font-size: 9px; }
-.hot-refresh-badge { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid rgba(239,129,136,.22); border-radius: 20px; background: rgba(239,129,136,.07); color: #e49399; font-size: 8px; white-space: nowrap; }
-.hot-refresh-badge i { width: 5px; height: 5px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 7px rgba(239,129,136,.65); animation: livePulse 1.8s ease infinite; }
+.live-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 9px rgba(239,129,136,.72); animation: livePulse 1.4s ease-in-out infinite; }
 @keyframes livePulse { 50% { opacity: .45; transform: scale(.72); } }
 .hot-card ol { list-style: none; margin: 0; padding: 0; border: 1px solid #253248; border-radius: 10px; overflow: hidden; }
 .hot-card ol { margin: 0 10px 12px; border-radius: 8px; }
@@ -311,7 +309,9 @@ img, video { display: block; max-width: 100%; }
 .tier-card { position: relative; overflow: hidden; padding: 18px 17px 15px; border-color: rgba(88,201,190,.22); background: radial-gradient(circle at 96% 0, rgba(88,201,190,.11), transparent 37%), linear-gradient(150deg, #0f2134, #091522); }
 .tier-card::after { content: "VS"; position: absolute; right: -5px; top: -15px; color: rgba(255,255,255,.025); font-size: 62px; font-weight: 950; letter-spacing: -7px; pointer-events: none; }
 .tier-card-head { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
-.tier-card-head h2 { margin: 0; font-size: 17px; }
+.tier-card-head h2 { display: flex; align-items: baseline; gap: 4px; margin: 0; font-family: Pretendard, "Noto Sans KR", sans-serif; font-size: 18px; font-weight: 950; letter-spacing: -.55px; }
+.tier-card-head h2 b { color: #eef3f7; }
+.tier-card-head h2 em { color: transparent; background: linear-gradient(90deg, var(--teal), #9ce9e2); background-clip: text; -webkit-background-clip: text; font-style: normal; }
 .tier-card-head p { margin: 4px 0 0; color: #71849a; font-size: 9px; }
 .tier-card-head > b { padding: 5px 8px; border: 1px solid rgba(88,201,190,.2); border-radius: 6px; background: rgba(88,201,190,.07); color: var(--teal); font-size: 9px; }
 .tier-bar { position: relative; z-index: 1; display: flex; height: 10px; overflow: hidden; border-radius: 8px; background: #102033; }
@@ -327,15 +327,17 @@ img, video { display: block; max-width: 100%; }
 .tier-summary { position: relative; z-index: 1; display: flex; align-items: center; gap: 7px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(129,153,180,.12); color: #7f91a6; font-size: 9px; }
 .tier-summary i { width: 17px; height: 17px; display: grid; place-items: center; border-radius: 5px; background: rgba(88,201,190,.12); color: var(--teal); font-size: 9px; font-style: normal; font-weight: 900; }
 .rail-card > p { margin: 13px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
-.brand-principles { position: relative; display: flex; flex-direction: column; padding: 0; background: radial-gradient(circle at 85% 7%, rgba(45,212,191,.16), transparent 30%), linear-gradient(155deg, #0f2134, #081522); }
+.brand-principles { position: relative; align-self: start; display: flex; flex-direction: column; padding: 0; background: radial-gradient(circle at 85% 7%, rgba(45,212,191,.16), transparent 30%), linear-gradient(155deg, #0f2134, #081522); }
 .brand-principles::after { content: "A / B"; position: absolute; right: -6px; bottom: -10px; color: rgba(255,255,255,.025); font-size: 52px; font-weight: 950; letter-spacing: -5px; pointer-events: none; }
 .principles-head { display: flex; align-items: center; gap: 14px; padding: 19px 18px 16px; border-bottom: 1px solid rgba(120,151,180,.16); }
-.principles-head > span { width: 50px; height: 50px; display: grid; place-items: center; border: 1px solid rgba(168,180,196,.18); border-radius: 50%; background: rgba(18,31,49,.46); }
+.principles-head > span { width: 44px; height: 44px; display: grid; place-items: center; }
 .principles-mark { width: 42px; height: 42px; }
 .principles-head > div { display: grid; gap: 3px; }
-.principles-head h2 { margin: 0; font-size: 19px; line-height: 1.25; letter-spacing: -.5px; }
-.principle-list { flex: 1; display: grid; align-content: start; padding: 7px 17px 10px; }
-.principle-list article { display: grid; grid-template-columns: 32px 1fr; align-items: center; gap: 10px; min-height: 67px; border-bottom: 1px solid rgba(129,153,180,.12); }
+.principles-head h2 { display: grid; gap: 1px; margin: 0; font-family: Pretendard, "Noto Sans KR", sans-serif; font-size: 19px; font-weight: 950; line-height: 1.22; letter-spacing: -.65px; }
+.principles-head h2 b { color: #eef3f7; }
+.principles-head h2 em { color: transparent; background: linear-gradient(90deg, var(--teal), #83ded5 48%, var(--coral)); background-clip: text; -webkit-background-clip: text; font-style: normal; }
+.principle-list { display: grid; align-content: start; padding: 5px 17px 3px; }
+.principle-list article { display: grid; grid-template-columns: 32px 1fr; align-items: center; gap: 10px; min-height: 61px; border-bottom: 1px solid rgba(129,153,180,.12); }
 .principle-list article:last-child { border-bottom: 0; }
 .principle-list article > b { color: transparent; background: linear-gradient(180deg, #5de1d1, #2b7683); background-clip: text; -webkit-background-clip: text; font-size: 18px; font-weight: 950; }
 .principle-list article:nth-child(2) > b { background-image: linear-gradient(180deg, #dce7ef, #70879c); }
@@ -343,7 +345,7 @@ img, video { display: block; max-width: 100%; }
 .principle-list article span { display: grid; gap: 4px; }
 .principle-list strong { color: #dce5ee; font-size: 12px; }
 .principle-list small { color: #77889c; font-size: 10px; line-height: 1.45; }
-.principles-sign { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; padding: 0 16px 16px; color: #72899a; font-size: 8px; font-weight: 800; white-space: nowrap; }
+.principles-sign { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; padding: 8px 16px 13px; color: #72899a; font-size: 8px; font-weight: 800; white-space: nowrap; }
 .principles-sign i { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(45,212,191,.4)); }
 .principles-sign i:last-child { background: linear-gradient(90deg, rgba(255,98,108,.4), transparent); }
 
@@ -622,6 +624,7 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
 .score-rules > div { display: grid; gap: 5px; padding: 18px; border: 1px solid var(--line); border-radius: 11px; background: rgba(12,24,40,.82); }
 .score-rules b { color: var(--teal); font-size: 21px; }
 .score-rules span { color: var(--muted); font-size: 11px; }
+.personal-score-rules > div:last-child b { color: var(--coral); }
 .judge-score-rules > div:nth-child(3) b, .judge-score-rules > div:nth-child(4) b { color: var(--coral); }
 .ranking-head, .ranking-row { display: grid; grid-template-columns: 70px minmax(220px,1fr) 120px 140px 120px; align-items: center; gap: 12px; }
 .ranking-head { min-height: 42px; padding: 0 18px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; }
