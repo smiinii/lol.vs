@@ -150,8 +150,25 @@ async function loadStoredVideo(): Promise<Blob | null> {
   });
 }
 
+function BrandMark({ className = "" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M14 27.5A21 21 0 0 1 49 18" className="brand-arc brand-arc-teal" />
+      <path d="M50 36.5A21 21 0 0 1 15 46" className="brand-arc brand-arc-coral" />
+      <path d="M27 23.5 43 32 27 40.5Z" className="brand-play" />
+    </svg>
+  );
+}
+
 function Logo({ onClick }: { onClick: () => void }) {
-  return <button className="logo" onClick={onClick} aria-label="LOL.VS 홈">LOL<span>.</span>VS</button>;
+  return (
+    <button className="logo" onClick={onClick} aria-label="LOL.VS 홈">
+      <BrandMark className="logo-mark" />
+      <span className="logo-word" aria-hidden="true">
+        <span className="logo-lol">LOL</span><span className="logo-dot">.</span><span className="logo-v">V</span><span className="logo-s">S</span>
+      </span>
+    </button>
+  );
 }
 
 function VerifiedBadge({ tier, demo = false }: { tier: string; demo?: boolean }) {
@@ -242,7 +259,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
       <aside className="right-rail">
         <section className="rail-card hot-card"><div className="hot-card-head"><div><span><i /> LIVE RANK</span><h2>주간 인기 글</h2></div><small>30분마다 업데이트</small></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol><div className="hot-update-note"><span>↻</span><p><b>다음 갱신까지 30분 이내</b><small>투표·댓글 활동을 반영합니다</small></p></div></section>
         <section className="rail-card"><h2>인증 티어 분포 <small>ⓘ</small></h2><div className="tier-bar"><span /><span /><span /><span /><span /></div><div className="tier-labels"><span>12%<small>아이언–골드</small></span><span>28%<small>플래티넘</small></span><span>31%<small>에메랄드</small></span><span>19%<small>다이아</small></span><span>8%<small>마스터+</small></span></div><p>로그인 데모에서는 선택한 티어가 데모 인증으로 표시됩니다.</p></section>
-        <section className="rail-card principles brand-principles"><div className="principles-head"><span>VS</span><div><small>LOL.VS STANDARD</small><h2>좋은 판결은<br />이렇게 만듭니다</h2></div></div><div className="principle-list"><article><b>01</b><span><strong>장면을 정확히</strong><small>타임스탬프와 플레이 상황을 함께 봅니다.</small></span></article><article><b>02</b><span><strong>감정보다 근거를</strong><small>잘잘못과 다음 선택을 구분해 말합니다.</small></span></article><article><b>03</b><span><strong>사람보다 플레이를</strong><small>공격 대신 개선할 수 있는 의견을 남깁니다.</small></span></article></div><div className="principles-sign"><i /><span>판결은 선명하게, 피드백은 따뜻하게.</span><i /></div></section>
+        <section className="rail-card principles brand-principles"><div className="principles-head"><span><BrandMark className="principles-mark" /></span><div><small>LOL.VS STANDARD</small><h2>좋은 판결은<br />이렇게 만듭니다</h2></div></div><div className="principle-list"><article><b>01</b><span><strong>장면을 정확히</strong><small>타임스탬프와 플레이 상황을 함께 봅니다.</small></span></article><article><b>02</b><span><strong>감정보다 근거를</strong><small>잘잘못과 다음 선택을 구분해 말합니다.</small></span></article><article><b>03</b><span><strong>사람보다 플레이를</strong><small>공격 대신 개선할 수 있는 의견을 남깁니다.</small></span></article></div><div className="principles-sign"><i /><span>판결은 선명하게, 피드백은 따뜻하게.</span><i /></div></section>
       </aside>
     </main>
   );
