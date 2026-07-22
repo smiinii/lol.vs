@@ -57,7 +57,7 @@ const compactCases = [
   { title: "상대 궁극기를 뺀 뒤 바로 재진입한 콜, 성급했나요?", author: "쿨타임체크", tier: "플래티넘 II", category: "일반게임", meta: "22시간 전", time: "마감까지 1시간", a: 48, b: 52, comments: 56, clip: "00:28", image: asset("/media/gameplay-detail.png") },
   { title: "첫 갱 실패 뒤 같은 라인을 다시 간 정글 판단", author: "한번만더", tier: "골드 I", category: "솔로랭크", meta: "23시간 전", time: "마감까지 58분", a: 29, b: 71, comments: 84, clip: "00:26", image: asset("/media/gameplay-feed.png") },
   { title: "한타 승리 후 귀환 핑을 무시한 추격, 누구 콜이 문제였나요?", author: "집에갈시간", tier: "에메랄드 I", category: "파티랭크", meta: "1일 전", time: "마감까지 42분", a: 65, b: 35, comments: 99, clip: "00:32", image: asset("/media/gameplay-detail.png") },
-];
+].map((item, index) => ({ ...item, likes: item.comments * 2 + 41 - index * 2 }));
 
 const weeklyPosts = [
   { title: "바론 스틸, 이건 누구 잘못?", meta: "댓글 212 · 투표 1.2만", trend: "up", delta: 2 },
@@ -153,9 +153,9 @@ async function loadStoredVideo(): Promise<Blob | null> {
 function BrandMark({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M14 27.5A21 21 0 0 1 49 18" className="brand-arc brand-arc-teal" />
-      <path d="M50 36.5A21 21 0 0 1 15 46" className="brand-arc brand-arc-coral" />
-      <path d="M27 23.5 43 32 27 40.5Z" className="brand-play" />
+      <path d="M13 37C10 25 18 13 30 10C38 8 46 11 51 17L43 24C40 21 36 20 32 21C25 22 21 29 23 36Z" className="brand-shape-teal" />
+      <path d="M51 27C54 39 46 51 34 54C26 56 18 53 13 47L21 40C24 43 28 44 32 43C39 42 43 35 41 28Z" className="brand-shape-coral" />
+      <path d="M28 23 43 32 28 41Z" className="brand-play" />
     </svg>
   );
 }
@@ -241,14 +241,17 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           </button>
         )}
 
-        <div className="case-board-heading"><div><h2>진행 중인 사건</h2><span>{filtered.length}개의 판결</span></div><small>모든 사건을 같은 형식으로 빠르게 둘러보세요.</small></div>
+        <div className="case-board-heading"><div><h2>진행 중인 사건</h2><span>{filtered.length}개의 판결</span></div></div>
         <div className="case-list board-style">
           {pageItems.map((item) => (
             <button className="case-row" key={item.title} onClick={() => openDetail(false, item.title)}>
               <span className="thumb"><img src={item.image} alt="" /><i>▶</i><small>{item.clip}</small></span>
               <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author} <VerifiedBadge tier={item.tier} /></span><small>{item.category} · {item.meta}</small></span>
               <span className="row-votes"><small>{item.time}</small><VoteBar a={item.a} b={item.b} compact /></span>
-              <span className="comment-count">◯ {item.comments}</span>
+              <span className="case-engagement">
+                <span><i aria-hidden="true">♥</i><em>좋아요</em><b>{item.likes}</b></span>
+                <span><i aria-hidden="true">▣</i><em>댓글</em><b>{item.comments}</b></span>
+              </span>
             </button>
           ))}
           {!filtered.length && !showLocal && <div className="empty-state">이 카테고리의 사건을 준비하고 있습니다.</div>}
@@ -257,7 +260,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
       </section>
 
       <aside className="right-rail">
-        <section className="rail-card hot-card"><div className="hot-card-head"><div><span><i /> LIVE RANK</span><h2>주간 인기 글</h2></div><small>30분마다 업데이트</small></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol><div className="hot-update-note"><span>↻</span><p><b>다음 갱신까지 30분 이내</b><small>투표·댓글 활동을 반영합니다</small></p></div></section>
+        <section className="rail-card hot-card"><div className="hot-card-head"><div><span><i /> LIVE RANK</span><h2>주간 인기 글</h2></div></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol></section>
         <section className="rail-card"><h2>인증 티어 분포 <small>ⓘ</small></h2><div className="tier-bar"><span /><span /><span /><span /><span /></div><div className="tier-labels"><span>12%<small>아이언–골드</small></span><span>28%<small>플래티넘</small></span><span>31%<small>에메랄드</small></span><span>19%<small>다이아</small></span><span>8%<small>마스터+</small></span></div><p>로그인 데모에서는 선택한 티어가 데모 인증으로 표시됩니다.</p></section>
         <section className="rail-card principles brand-principles"><div className="principles-head"><span><BrandMark className="principles-mark" /></span><div><small>LOL.VS STANDARD</small><h2>좋은 판결은<br />이렇게 만듭니다</h2></div></div><div className="principle-list"><article><b>01</b><span><strong>장면을 정확히</strong><small>타임스탬프와 플레이 상황을 함께 봅니다.</small></span></article><article><b>02</b><span><strong>감정보다 근거를</strong><small>잘잘못과 다음 선택을 구분해 말합니다.</small></span></article><article><b>03</b><span><strong>사람보다 플레이를</strong><small>공격 대신 개선할 수 있는 의견을 남깁니다.</small></span></article></div><div className="principles-sign"><i /><span>판결은 선명하게, 피드백은 따뜻하게.</span><i /></div></section>
       </aside>
