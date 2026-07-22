@@ -33,9 +33,22 @@ const CASE_KEY = "lolvs-local-case";
 const VIDEO_KEY = "latest-case-video";
 
 const compactCases = [
-  { title: "바론 스틸 시도, 이건 미드 잘못인가요?", author: "정글은못말려", tier: "다이아몬드 IV", category: "솔로랭크", meta: "25분 전", time: "마감까지 1일 9시간", a: 71, b: 29, comments: 96, image: asset("/media/gameplay-detail.png") },
-  { title: "라인전 푸시 후 다이브, 누구 잘못일까요?", author: "탑은외로워", tier: "플래티넘 I", category: "파티랭크", meta: "1시간 전", time: "마감까지 20시간", a: 45, b: 55, comments: 73, image: asset("/media/gameplay-feed.png") },
-  { title: "용 앞 한타에서 포지셔닝 문제?", author: "서폿의하루", tier: "에메랄드 III", category: "일반게임", meta: "3시간 전", time: "마감까지 18시간", a: 34, b: 66, comments: 54, image: asset("/media/gameplay-feed.png") },
+  { title: "바론 스틸 시도, 이건 미드 잘못인가요?", author: "정글은못말려", tier: "다이아몬드 IV", category: "솔로랭크", meta: "25분 전", time: "마감까지 1일 9시간", a: 71, b: 29, comments: 96, clip: "00:25", image: asset("/media/gameplay-detail.png") },
+  { title: "라인전 푸시 후 다이브, 누구 잘못일까요?", author: "탑은외로워", tier: "플래티넘 I", category: "파티랭크", meta: "1시간 전", time: "마감까지 20시간", a: 45, b: 55, comments: 73, clip: "00:28", image: asset("/media/gameplay-feed.png") },
+  { title: "용 앞 한타에서 포지셔닝 문제?", author: "서폿의하루", tier: "에메랄드 III", category: "일반게임", meta: "3시간 전", time: "마감까지 18시간", a: 34, b: 66, comments: 54, clip: "00:31", image: asset("/media/gameplay-feed.png") },
+  { title: "바텀 2대2 교전, 원딜과 서폿 중 누구 판단이 문제였나요?", author: "바텀연구소", tier: "다이아몬드 II", category: "솔로랭크", meta: "4시간 전", time: "마감까지 16시간", a: 57, b: 43, comments: 81, clip: "00:34", image: asset("/media/gameplay-detail.png") },
+  { title: "전령 앞에서 먼저 물린 탑, 팀이 버렸다는 게 맞나요?", author: "탑텔있음", tier: "에메랄드 I", category: "파티랭크", meta: "5시간 전", time: "마감까지 15시간", a: 63, b: 37, comments: 42, clip: "00:22", image: asset("/media/gameplay-feed.png") },
+  { title: "상대 정글 위치를 알았는데도 카정 간 선택, 무리였나요?", author: "블루내꺼", tier: "플래티넘 II", category: "솔로랭크", meta: "6시간 전", time: "마감까지 14시간", a: 41, b: 59, comments: 68, clip: "00:29", image: asset("/media/gameplay-detail.png") },
+  { title: "미드 로밍을 따라가지 않은 게 잘못인가요?", author: "라인먼저", tier: "에메랄드 IV", category: "일반게임", meta: "7시간 전", time: "마감까지 13시간", a: 52, b: 48, comments: 39, clip: "00:26", image: asset("/media/gameplay-feed.png") },
+  { title: "한타 전 와드하러 간 서폿, 팀 이탈로 봐야 하나요?", author: "시야점수왕", tier: "다이아몬드 III", category: "솔로랭크", meta: "8시간 전", time: "마감까지 12시간", a: 28, b: 72, comments: 105, clip: "00:38", image: asset("/media/gameplay-detail.png") },
+  { title: "탑 억제기 대신 용 합류, 이 판단이 맞았을까요?", author: "운영이먼저", tier: "마스터 24P", category: "파티랭크", meta: "9시간 전", time: "마감까지 11시간", a: 76, b: 24, comments: 117, clip: "00:33", image: asset("/media/gameplay-feed.png") },
+  { title: "정글이 콜한 다이브를 거절한 미드가 잘못인가요?", author: "핑은찍었어", tier: "플래티넘 I", category: "솔로랭크", meta: "10시간 전", time: "마감까지 10시간", a: 49, b: 51, comments: 64, clip: "00:27", image: asset("/media/gameplay-detail.png") },
+  { title: "포킹 조합인데 먼저 진입한 탱커, 누구 콜이 맞나요?", author: "한타각보는중", tier: "에메랄드 II", category: "일반게임", meta: "11시간 전", time: "마감까지 9시간", a: 32, b: 68, comments: 77, clip: "00:36", image: asset("/media/gameplay-feed.png") },
+  { title: "바론 버스트 중 상대 정글을 막지 못한 책임은 누구에게?", author: "강타는있음", tier: "다이아몬드 I", category: "파티랭크", meta: "12시간 전", time: "마감까지 8시간", a: 66, b: 34, comments: 91, clip: "00:30", image: asset("/media/gameplay-detail.png") },
+  { title: "라인 프리징 중 로밍 간 서폿, 원딜이 억울할 만한가요?", author: "혼자먹을게", tier: "골드 I", category: "솔로랭크", meta: "13시간 전", time: "마감까지 7시간", a: 58, b: 42, comments: 45, clip: "00:24", image: asset("/media/gameplay-feed.png") },
+  { title: "첫 용을 포기하고 유충을 택한 교환, 손해인가요?", author: "오브젝트계산", tier: "에메랄드 III", category: "일반게임", meta: "14시간 전", time: "마감까지 6시간", a: 47, b: 53, comments: 58, clip: "00:32", image: asset("/media/gameplay-detail.png") },
+  { title: "텔레포트가 있는데도 한타에 늦은 탑, 고의적인 건가요?", author: "사이드운영", tier: "플래티넘 III", category: "파티랭크", meta: "15시간 전", time: "마감까지 5시간", a: 69, b: 31, comments: 83, clip: "00:35", image: asset("/media/gameplay-feed.png") },
+  { title: "마지막 한타에서 원딜을 지키지 않은 서폿 판단", author: "원딜지켜줘", tier: "다이아몬드 IV", category: "솔로랭크", meta: "16시간 전", time: "마감까지 4시간", a: 38, b: 62, comments: 112, clip: "00:41", image: asset("/media/gameplay-detail.png") },
 ];
 
 const weeklyPosts = [
@@ -121,16 +134,13 @@ function VerifiedBadge({ tier, demo = false }: { tier: string; demo?: boolean })
   return <span className="verified-badge"><span className="mini-rank">◆</span>{tier} · {demo ? "데모 인증" : "인증"}<span className="verify-dot">✓</span></span>;
 }
 
-function Header({ view, setView, user, onLogin, onProfile, onSubmit, onSearch }: {
+function Header({ view, setView, user, onLogin, onProfile }: {
   view: View;
   setView: (view: View) => void;
   user: User | null;
   onLogin: () => void;
   onProfile: () => void;
-  onSubmit: () => void;
-  onSearch: (query: string) => void;
 }) {
-  const [searchText, setSearchText] = useState("");
   const menus: [View, string][] = [["home", "홈"], ["community", "커뮤니티"], ["ranking", "랭킹"], ["guide", "가이드"]];
   return (
     <header className="site-header">
@@ -140,8 +150,6 @@ function Header({ view, setView, user, onLogin, onProfile, onSubmit, onSearch }:
           {menus.map(([target, label]) => <button key={target} className={view === target ? "active" : ""} onClick={() => setView(target)}>{label}</button>)}
         </nav>
         <div className="header-actions">
-          <form className="search desktop-only" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}><button type="submit" aria-label="검색">⌕</button><input value={searchText} onChange={(event) => setSearchText(event.target.value)} aria-label="사건과 커뮤니티 검색" placeholder="사건·커뮤니티 검색" /></form>
-          <button className="submit-small" onClick={onSubmit}>사건 제보</button>
           {user ? (
             <button className="profile" onClick={onProfile} aria-label="내 프로필 열기">
               <span className="avatar">{user.nickname[0]}</span>
@@ -159,17 +167,21 @@ function VoteBar({ a, b, compact = false }: { a: number; b: number; compact?: bo
   return <div className={compact ? "vote-summary compact" : "vote-summary"} aria-label={`A ${a}%, B ${b}%`}><div className="bar"><span className="bar-a" style={{ width: `${a}%` }} /><span className="bar-b" style={{ width: `${b}%` }} /></div><div className="vote-labels"><b>A {a}%</b><b>B {b}%</b></div></div>;
 }
 
-function Home({ openDetail, localCase, localVideoUrl }: { openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null; localVideoUrl: string }) {
+function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null; localVideoUrl: string; onSubmit: () => void; onSearch: (query: string) => void }) {
   const [category, setCategory] = useState("전체");
+  const [page, setPage] = useState(1);
+  const [searchText, setSearchText] = useState("");
   const filtered = compactCases.filter((item) => category === "전체" || item.category === category);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / 4));
+  const pageItems = filtered.slice((page - 1) * 4, page * 4);
   const showLocal = localCase && (category === "전체" || localCase.category === category);
   return (
     <main className="page-shell home-layout">
       <section className="feed-column">
-        <div className="home-title-row compact-title"><div><h1>억울한 장면, 함께 판결합니다</h1><p>티어가 인증된 플레이어의 투표와 근거 있는 피드백을 확인해 보세요.</p></div></div>
+        <div className="home-title-row compact-title"><div><h1>억울한 장면, 함께 판결합니다</h1><p>티어가 인증된 플레이어의 투표와 근거 있는 피드백을 확인해 보세요.</p></div><div className="home-primary-actions"><form className="home-search" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="사건·커뮤니티 검색" aria-label="사건과 커뮤니티 검색" /><button type="submit">검색</button></form><button className="primary-button home-submit" onClick={onSubmit}>＋ 사건 제보</button></div></div>
         <div className="toolbar">
           <div className="category-tabs" role="tablist" aria-label="게임 유형">
-            {["전체", "솔로랭크", "파티랭크", "일반게임"].map((item) => <button key={item} className={category === item ? "selected" : ""} onClick={() => setCategory(item)}>{item}</button>)}
+            {["전체", "솔로랭크", "파티랭크", "일반게임"].map((item) => <button key={item} className={category === item ? "selected" : ""} onClick={() => { setCategory(item); setPage(1); }}>{item}</button>)}
           </div>
           <button className="sort-button">최신순⌄</button>
         </div>
@@ -182,21 +194,11 @@ function Home({ openDetail, localCase, localVideoUrl }: { openDetail: (local?: b
           </button>
         )}
 
-        <article className="feature-card">
-          <div className="case-meta-row"><div className="author"><span className="avatar small">한</span><strong>한타는팀운</strong><VerifiedBadge tier="다이아몬드 IV" /></div><div className="case-deadline">마감까지 <strong>2일 14시간</strong> · 댓글 128</div></div>
-          <button className="feature-media" onClick={() => openDetail(false, "바론 스틸 시도, 이건 미드 잘못인가요?")} aria-label="대표 사건 상세보기">
-            <div className="side-panel side-a"><span>A 잘못</span><strong>62<small>%</small></strong><em>812표</em></div>
-            <div className="game-shot"><img src={asset("/media/gameplay-feed.png")} alt="미드 라인 교전 영상 장면" /><span className="play">▶</span></div>
-            <div className="side-panel side-b"><span>B 잘못</span><strong>38<small>%</small></strong><em>501표</em></div>
-          </button>
-          <div className="duel-bar"><span style={{ width: "62%" }} /><i>VS</i></div>
-          <div className="feature-footer"><span>ⓘ 댓글을 등록하면 선택한 판결이 함께 반영됩니다.</span><button onClick={() => openDetail(false, "바론 스틸 시도, 이건 미드 잘못인가요?")}>판결 보기 →</button></div>
-        </article>
-
-        <div className="case-list">
-          {filtered.map((item, index) => (
+        <div className="case-board-heading"><div><h2>진행 중인 사건</h2><span>{filtered.length}개의 판결</span></div><small>모든 사건을 같은 형식으로 빠르게 둘러보세요.</small></div>
+        <div className="case-list board-style">
+          {pageItems.map((item) => (
             <button className="case-row" key={item.title} onClick={() => openDetail(false, item.title)}>
-              <span className="thumb"><img src={item.image} alt="" /><small>00:{25 + index * 3}</small></span>
+              <span className="thumb"><img src={item.image} alt="" /><i>▶</i><small>{item.clip}</small></span>
               <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author} <VerifiedBadge tier={item.tier} /></span><small>{item.category} · {item.meta}</small></span>
               <span className="row-votes"><small>{item.time}</small><VoteBar a={item.a} b={item.b} compact /></span>
               <span className="comment-count">◯ {item.comments}</span>
@@ -204,6 +206,7 @@ function Home({ openDetail, localCase, localVideoUrl }: { openDetail: (local?: b
           ))}
           {!filtered.length && !showLocal && <div className="empty-state">이 카테고리의 사건을 준비하고 있습니다.</div>}
         </div>
+        {pageCount > 1 && <nav className="pagination" aria-label="사건 목록 페이지">{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button key={number} className={page === number ? "active" : ""} onClick={() => { setPage(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{number}</button>)}</nav>}
       </section>
 
       <aside className="right-rail">
@@ -228,8 +231,9 @@ function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, 
   const [vote, setVote] = useState<VoteSide | null>(null);
   const [feedback, setFeedback] = useState("");
   const [evidence, setEvidence] = useState("");
-  const [commentVote, setCommentVote] = useState<VoteSide>("A");
+  const [commentVote, setCommentVote] = useState<VoteSide | null>(null);
   const [comments, setComments] = useState(commentsSeed);
+  const [likedComments, setLikedComments] = useState<number[]>([]);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
   const [reportTarget, setReportTarget] = useState<string | null>(null);
@@ -240,24 +244,30 @@ function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, 
   const author = viewingLocal && localCase ? localCase.author : "한타는팀운";
   const tier = viewingLocal && localCase ? localCase.tier : "다이아몬드 IV";
   const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : asset("/media/demo.mp4");
+  const voteStorageKey = user ? `lolvs-vote:${user.nickname}:${title}` : "";
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      const savedVote = localStorage.getItem(viewingLocal ? "lolvs-local-vote" : "lolvs-default-vote") as VoteSide | null;
+      setVote(null);
+      setCommentVote(null);
+      if (!voteStorageKey) return;
+      const savedVote = localStorage.getItem(voteStorageKey) as VoteSide | null;
       if (savedVote === "A" || savedVote === "B") { setVote(savedVote); setCommentVote(savedVote); }
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [viewingLocal]);
+  }, [voteStorageKey]);
 
   const addComment = (event: FormEvent) => {
     event.preventDefault();
     if (!user) return requireLogin();
     if (!feedback.trim() || !evidence.trim()) return toast("피드백과 판단 근거를 함께 적어주세요.");
+    if (!vote && !commentVote) return toast("A 또는 B 중 판결을 먼저 선택해 주세요.");
     const selectedVote = vote ?? commentVote;
+    if (!selectedVote) return;
     const item: CommentItem = { id: Date.now(), name: user.nickname, tier: user.tier, text: feedback.trim(), evidence: evidence.trim(), vote: selectedVote, likes: 0, replies: [] };
     if (!vote) {
       setVote(selectedVote);
-      localStorage.setItem(viewingLocal ? "lolvs-local-vote" : "lolvs-default-vote", selectedVote);
+      localStorage.setItem(voteStorageKey, selectedVote);
     }
     setComments([item, ...comments]);
     setFeedback("");
@@ -279,6 +289,13 @@ function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, 
     setReportTarget(target);
   };
 
+  const likeComment = (commentId: number) => {
+    if (!user) return requireLogin();
+    if (likedComments.includes(commentId)) return toast("이미 좋아요를 눌렀습니다.");
+    setComments(comments.map((comment) => comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment));
+    setLikedComments([...likedComments, commentId]);
+  };
+
   return (
     <main className="page-shell detail-layout">
       <section className="detail-main">
@@ -292,18 +309,18 @@ function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, 
         <section className="comments-section">
           <div className="comments-heading"><h2>댓글 {comments.length + 126}</h2><span>투표 선택과 판단 근거 공개</span></div>
           {user ? (
-            <form className="comment-form evidence-form" onSubmit={addComment}>
-              <div className="comment-fields"><div className="judgement-choice"><span>{vote ? `내 판결 · ${vote} 선택 완료` : "내 판결 · 댓글 등록 시 투표 반영"}</span><button type="button" disabled={!!vote} className={commentVote === "A" ? "selected a" : "a"} onClick={() => setCommentVote("A")}>A 잘못</button><button type="button" disabled={!!vote} className={commentVote === "B" ? "selected b" : "b"} onClick={() => setCommentVote("B")}>B 잘못</button></div><input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="판단 근거 또는 타임스탬프 (필수)" aria-label="판단 근거" /><textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="어떻게 플레이하면 더 좋았을까요?" aria-label="피드백 작성" /></div><button type="submit">판결 + 댓글 등록</button>
+            <form className="comment-composer" onSubmit={addComment}>
+              <div className="comment-compose-top"><div><strong>판결과 피드백 남기기</strong><small>{vote ? `내 판결은 ${vote} 잘못으로 등록되어 있습니다.` : "댓글을 등록할 때 선택한 판결도 함께 반영됩니다."}</small></div><div className="judgement-choice"><button type="button" disabled={!!vote} className={commentVote === "A" ? "selected a" : "a"} onClick={() => setCommentVote("A")}>A 잘못</button><button type="button" disabled={!!vote} className={commentVote === "B" ? "selected b" : "b"} onClick={() => setCommentVote("B")}>B 잘못</button></div></div><div className="comment-fields"><input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="예: 24:18 미드 합류 전 바론을 시작함" aria-label="판단 근거" /><textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="다음 플레이에 도움이 될 피드백을 남겨주세요." aria-label="피드백 작성" /></div><div className="comment-submit-row"><span>선택한 판결과 근거는 댓글에 공개됩니다.</span><button type="submit">댓글 등록</button></div>
             </form>
           ) : <button className="login-lock" onClick={requireLogin}>로그인하고 판결 근거와 피드백 남기기 →</button>}
           {comments.map((item, index) => (
             <article className="comment" key={item.id}>
               <span className="comment-avatar">{item.name[0]}</span>
               <div>
-                <div><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} /><span className={`comment-vote vote-${item.vote.toLowerCase()}`}>{item.vote} 잘못 선택</span><small>{index + 1}시간 전</small></div>
+                <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} /><span className={`comment-vote vote-${item.vote.toLowerCase()}`}>{item.vote} 잘못 선택</span><small>{index + 1}시간 전</small></div>
                 <p>{item.text}</p><blockquote><b>판단 근거</b>{item.evidence}</blockquote>
-                <span>♡ {item.likes} · <button onClick={() => { if (!user) requireLogin(); else setReplyingTo(replyingTo === item.id ? null : item.id); }}>답글 {item.replies.length ? item.replies.length : ""}</button> · <button onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></span>
-                {item.replies.map((reply) => <div className="reply" key={reply.id}><span className="comment-avatar">{reply.name[0]}</span><div><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} /><p>{reply.text}</p><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div></div>)}
+                <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button><button onClick={() => { if (!user) requireLogin(); else setReplyingTo(replyingTo === item.id ? null : item.id); }}>답글 {item.replies.length ? item.replies.length : ""}</button><button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
+                {item.replies.map((reply) => <div className="reply" key={reply.id}><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} /></span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
                 {replyingTo === item.id && <div className="reply-form"><input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`${item.name}님에게 답글 남기기`} aria-label="대댓글 작성" /><button onClick={() => addReply(item.id)}>등록</button></div>}
               </div>
             </article>
@@ -337,14 +354,17 @@ function Ranking({ user }: { user: User | null }) {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
   const candidates = rankingSeed.map((row, index) => ({ rank: index + 1, name: row[0], tier: row[1], accuracy: row[2], feedback: row[3], points: row[4] }));
-  if (user) candidates.push({ rank: 326, name: user.nickname, tier: user.tier, accuracy: "61%", feedback: "8개", points: "1,250" });
+  const currentRank = user ? { rank: 326, name: user.nickname, tier: user.tier, accuracy: "61%", feedback: "8개", points: "1,250" } : null;
+  const userIsTopFive = user ? rankingSeed.some((row) => row[0].toLowerCase() === user.nickname.toLowerCase()) : false;
+  if (currentRank && !userIsTopFive) candidates.push(currentRank);
   const match = searched ? candidates.find((item) => item.name.toLowerCase() === query.trim().toLowerCase()) : undefined;
-  return <main className="page-shell section-page ranking-page"><div className="section-hero ranking-hero"><div><h1>판별자 랭킹</h1><p>최종 판결 적중, 피드백 공감, 꾸준한 참여를 합산한 순위입니다.</p></div></div><form className="rank-search" onSubmit={(event) => { event.preventDefault(); setSearched(true); }}><div><strong>내 순위 찾기</strong><span>활동 닉네임을 정확히 입력해 주세요.</span></div><label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임으로 순위 검색" aria-label="판별자 닉네임 검색" /></label><button type="submit">검색</button></form>{searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · 적중률 {match.accuracy}</small></div><em>{match.rank === 326 ? "상위 31%" : "TOP 5"}</em></section> : <div className="rank-empty">일치하는 판별자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}<section className="score-rules"><div><b>+15</b><span>최종 판결과 일치</span></div><div><b>+1</b><span>피드백 공감 1개</span></div><div><b>+5</b><span>판결 참여 1회당</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section><section className="ranking-card"><div className="ranking-head"><span>순위</span><span>판별자</span><span>적중률</span><span>도움 피드백</span><span>점수</span></div>{rankingSeed.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b><span>{["🥇", "🥈", "🥉"][index] ?? ""}</span>{index + 1}</b><span><strong>{row[0]}</strong><small>{row[1]} · 인증</small></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}</section></main>;
+  const frameNames = ["challenger", "grandmaster", "master", "diamond", "emerald"];
+  return <main className="page-shell section-page ranking-page"><div className="section-hero ranking-hero"><div><h1>판별자 랭킹</h1><p>최종 판결 적중, 피드백 공감, 꾸준한 참여를 합산한 순위입니다.</p></div><div className="ranking-crest"><span>◆</span><b>TOP</b><small>VERIFIED</small></div></div><form className="rank-search" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}><div><strong>판별자 검색</strong><span>다른 판별자의 순위와 활동 점수를 찾아보세요.</span></div><label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="판별자 닉네임 검색" /></label><button type="submit">검색</button></form>{searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · 적중률 {match.accuracy}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 판별자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}<section className="score-rules"><div><b>+15</b><span>최종 판결과 일치</span></div><div><b>+1</b><span>피드백 공감 1개</span></div><div><b>+5</b><span>판결 참여 1회당</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section><section className="ranking-card elite-ranking"><div className="ranking-head"><span>순위</span><span>판별자</span><span>적중률</span><span>도움 피드백</span><span>점수</span></div>{rankingSeed.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][index] ?? ""}</span>{index + 1}</b><span className="rank-player"><i className={`rank-frame ${frameNames[index]}`}><b>{row[0][0]}</b></i><span><strong>{row[0]}</strong><small>{row[1]} · 인증</small></span></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}{currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><i className="rank-frame current"><b>{currentRank.name[0]}</b></i><span><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span></span><span>{currentRank.accuracy}</span><span>{currentRank.feedback}</span><strong>{currentRank.points}P</strong></div></>}{!user && <div className="rank-login-note">로그인하면 TOP 5 아래에서 내 순위를 바로 확인할 수 있습니다.</div>}</section></main>;
 }
 
 function Guide() {
   const steps = [["01", "먼저 둘러보기", "로그인하지 않아도 사건 영상과 의견, 커뮤니티, 랭킹을 모두 볼 수 있어요."], ["02", "활동 정보로 로그인", "지금은 사이트 닉네임과 티어를 선택해 데모 로그인합니다. Riot 인증은 추후 연결됩니다."], ["03", "판결과 댓글을 한 번에", "A/B 판결을 고르고 근거와 피드백을 등록하면 투표도 동시에 반영됩니다."], ["04", "다음 플레이에 적용", "공감받은 의견과 대댓글을 읽고 다음 게임에서 바꿀 한 가지를 찾아보세요."]];
-  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1>억울함을 풀고,<br />다음 플레이는 더 선명하게.</h1><p>LOL.VS는 승패를 탓하는 곳이 아니라, 짧은 장면을 함께 보고 더 나은 선택을 찾는 공간입니다.</p></section><section className="guide-flow"><div className="guide-flow-title"><span>이용 흐름</span><h2>네 단계면 충분해요</h2></div><div className="guide-steps">{steps.map(([number, title, body]) => <article key={number}><b>{number}</b><h3>{title}</h3><p>{body}</p></article>)}</div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 잘 보이는 짧은 영상을 올려주세요.</li><li>A측과 B측 입장을 각각 공정하게 적어주세요.</li><li>실제 Riot ID나 상대방의 개인정보는 가려주세요.</li><li>판결 기간은 1일, 3일, 7일 중 선택할 수 있습니다.</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">!</span><h2>이럴 때 신고해 주세요</h2><ul><li>욕설·인신공격 또는 혐오 표현</li><li>반복 광고나 무관한 도배</li><li>타인의 개인정보 및 Riot ID 노출</li><li>조작된 영상이나 고의적인 허위 설명</li></ul></section></div><section className="faq"><h2>자주 묻는 질문</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 인증처럼 오해하지 않도록 구분했습니다.</p></details><details><summary>영상은 어디에 저장되나요?</summary><p>현재 GitHub Pages 버전에서는 선택한 기기의 브라우저 저장소에만 저장됩니다. 다른 사람과 공유되는 서버 업로드는 백엔드 연결 후 가능합니다.</p></details><details><summary>로그인하지 않아도 볼 수 있나요?</summary><p>네. 모든 읽기 화면은 공개되어 있고 판결·댓글 등록, 대댓글, 글쓰기, 사건 제보, 신고만 로그인이 필요합니다.</p></details></section></main>;
+  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>LOL.VS는 승패를 탓하는 곳이 아니라, 짧은 장면을 함께 보고 더 나은 선택을 찾는 공간입니다.</p><div className="guide-ad-badges"><span>티어 인증 의견</span><span>장면 중심 판결</span><span>바로 쓰는 피드백</span></div></section><section className="guide-flow"><div className="guide-flow-title"><span>이용 흐름</span><h2>네 단계면 충분해요</h2></div><div className="guide-steps">{steps.map(([number, title, body]) => <article key={number}><b>{number}</b><h3>{title}</h3><p>{body}</p></article>)}</div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 잘 보이는 짧은 영상을 올려주세요.</li><li>A측과 B측 입장을 각각 공정하게 적어주세요.</li><li>실제 Riot ID나 상대방의 개인정보는 가려주세요.</li><li>판결 기간은 1일, 3일, 7일 중 선택할 수 있습니다.</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">!</span><h2>이럴 때 신고해 주세요</h2><ul><li>욕설·인신공격 또는 혐오 표현</li><li>반복 광고나 무관한 도배</li><li>타인의 개인정보 및 Riot ID 노출</li><li>조작된 영상이나 고의적인 허위 설명</li></ul></section></div><section className="faq"><h2>자주 묻는 질문</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 인증처럼 오해하지 않도록 구분했습니다.</p></details><details><summary>영상은 어디에 저장되나요?</summary><p>현재 GitHub Pages 버전에서는 선택한 기기의 브라우저 저장소에만 저장됩니다. 다른 사람과 공유되는 서버 업로드는 백엔드 연결 후 가능합니다.</p></details><details><summary>로그인하지 않아도 볼 수 있나요?</summary><p>네. 모든 읽기 화면은 공개되어 있고 판결·댓글 등록, 대댓글, 글쓰기, 사건 제보, 신고만 로그인이 필요합니다.</p></details></section></main>;
 }
 
 function SearchResults({ query, openDetail, setView, localCase }: { query: string; openDetail: (local?: boolean, title?: string) => void; setView: (view: View) => void; localCase: LocalCase | null }) {
@@ -396,8 +416,9 @@ function ProfileModal({ user, close, logout }: { user: User; close: () => void; 
 
 function ReportModal({ target, close, onSubmit }: { target: string; close: () => void; onSubmit: (reason: string) => void }) {
   const [reason, setReason] = useState("욕설 또는 인신공격");
+  const [details, setDetails] = useState("");
   const type = target === "게시물" ? "게시물" : "댓글";
-  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal report-modal" onSubmit={(event) => { event.preventDefault(); onSubmit(reason); }} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="report-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem report-icon">!</span><h2 id="report-title">{type} 신고하기</h2><p><strong>{target}</strong><br />검토가 필요한 이유를 선택해 주세요.</p>{["욕설 또는 인신공격", "스팸·광고", "개인정보 노출", "허위 또는 조작된 내용", "기타 운영정책 위반"].map((item) => <label className="report-option" key={item}><input type="radio" name="reason" value={item} checked={reason === item} onChange={() => setReason(item)} />{item}</label>)}<button className="danger-button full" type="submit">이 사유로 신고 접수</button></form></div>;
+  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal report-modal" onSubmit={(event) => { event.preventDefault(); if (details.trim()) onSubmit(`${reason} · ${details.trim()}`); }} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="report-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem report-icon">!</span><h2 id="report-title">{type} 신고하기</h2><p><strong>{target}</strong><br />사유를 선택하고 구체적인 내용을 적어주세요.</p>{["욕설 또는 인신공격", "스팸·광고", "개인정보 노출", "허위 또는 조작된 내용", "기타 운영정책 위반"].map((item) => <label className="report-option" key={item}><input type="radio" name="reason" value={item} checked={reason === item} onChange={() => setReason(item)} />{item}</label>)}<label className="report-details"><span>상세 신고 사유</span><textarea required maxLength={300} value={details} onChange={(event) => setDetails(event.target.value)} placeholder="어떤 부분이 문제인지 구체적으로 적어주세요." aria-label="상세 신고 사유" /><small>{details.length}/300</small></label><button className="danger-button full" type="submit">신고 접수</button></form></div>;
 }
 
 export default function HomePage() {
@@ -433,8 +454,8 @@ export default function HomePage() {
   const openDetail = (local = false, title?: string) => { setViewingLocal(local); if (title) setSelectedCaseTitle(title); setView("detail"); };
   const search = (query: string) => { setSearchQuery(query); setView("search"); };
 
-  return <div className="app-root"><Header view={view} setView={setView} user={user} onLogin={() => setLoginOpen(true)} onProfile={() => setProfileOpen(true)} onSubmit={openSubmit} onSearch={search} />
-    {view === "home" && <Home openDetail={openDetail} localCase={localCase} localVideoUrl={localVideoUrl} />}
+  return <div className="app-root"><Header view={view} setView={setView} user={user} onLogin={() => setLoginOpen(true)} onProfile={() => setProfileOpen(true)} />
+    {view === "home" && <Home openDetail={openDetail} localCase={localCase} localVideoUrl={localVideoUrl} onSubmit={openSubmit} onSearch={search} />}
     {view === "detail" && <Detail setView={setView} toast={showToast} user={user} requireLogin={requireLogin} localCase={localCase} localVideoUrl={localVideoUrl} viewingLocal={viewingLocal} selectedTitle={selectedCaseTitle} />}
     {view === "community" && <Community user={user} requireLogin={requireLogin} toast={showToast} />}
     {view === "ranking" && <Ranking user={user} />}
