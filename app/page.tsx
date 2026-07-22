@@ -128,12 +128,20 @@ const commentsSeed: CommentItem[] = [
   }),
 ];
 
-const rankingSeed = [
-  ["판결요정", "챌린저 942P", "87%", "42개", "9,840"],
-  ["맵리딩중", "그랜드마스터 612P", "84%", "39개", "9,210"],
-  ["한타복기왕", "마스터 438P", "82%", "51개", "8,760"],
-  ["와드먼저", "마스터 276P", "79%", "34개", "8,110"],
-  ["천천히보자", "마스터 154P", "78%", "46개", "7,820"],
+const judgeRankingSeed = [
+  ["판결요정", "챌린저 942P", "128회", "4,210개", "9,840"],
+  ["맵리딩중", "그랜드마스터 612P", "116회", "3,984개", "9,210"],
+  ["한타복기왕", "마스터 438P", "109회", "3,621개", "8,760"],
+  ["와드먼저", "마스터 276P", "97회", "3,302개", "8,110"],
+  ["천천히보자", "마스터 154P", "93회", "3,118개", "7,820"],
+];
+
+const personalRankingSeed = [
+  ["핑찍고간다", "다이아몬드 II", "91%", "68개", "12,440"],
+  ["라인은밀었어", "에메랄드 I", "89%", "74개", "11,920"],
+  ["바론은천천히", "플래티넘 I", "87%", "81개", "11,360"],
+  ["와드두개", "다이아몬드 IV", "85%", "57개", "10,810"],
+  ["한타만보자", "골드 I", "83%", "66개", "10,240"],
 ];
 
 function openVideoDb(): Promise<IDBDatabase> {
@@ -422,19 +430,48 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
 }
 
 function Ranking({ user }: { user: User | null }) {
+  const [mode, setMode] = useState<"personal" | "judge">("personal");
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
-  const candidates = rankingSeed.map((row, index) => ({ rank: index + 1, name: row[0], tier: row[1], accuracy: row[2], feedback: row[3], points: row[4] }));
-  const currentRank = user && isMasterPlus(user.tier) ? { rank: 326, name: user.nickname, tier: user.tier, accuracy: "61%", feedback: "8개", points: "1,250" } : null;
-  const userIsTopFive = user ? rankingSeed.some((row) => row[0].toLowerCase() === user.nickname.toLowerCase()) : false;
+  const ranking = mode === "personal" ? personalRankingSeed : judgeRankingSeed;
+  const candidates = ranking.map((row, index) => ({ rank: index + 1, name: row[0], tier: row[1], metricA: row[2], metricB: row[3], points: row[4] }));
+  const currentRank = user
+    ? mode === "personal"
+      ? { rank: 326, name: user.nickname, tier: user.tier, metricA: "61%", metricB: "8개", points: "1,250" }
+      : isMasterPlus(user.tier)
+        ? { rank: 87, name: user.nickname, tier: user.tier, metricA: "12회", metricB: "184개", points: "1,090" }
+        : null
+    : null;
+  const userIsTopFive = user ? ranking.some((row) => row[0].toLowerCase() === user.nickname.toLowerCase()) : false;
   if (currentRank && !userIsTopFive) candidates.push(currentRank);
   const match = searched ? candidates.find((item) => item.name.toLowerCase() === query.trim().toLowerCase()) : undefined;
-  return <main className="page-shell section-page ranking-page"><form className="rank-search rank-search-first" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}><div><strong>판결자 검색</strong><span>공식 판결자의 순위와 활동 점수를 찾아보세요.</span></div><label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="판결자 닉네임 검색" /></label><button type="submit">검색</button></form>{searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · 합의 일치율 {match.accuracy}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 판결자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}<section className="score-rules"><div><b>+5</b><span>공식 판결 참여</span></div><div><b>+15</b><span>최종 합의와 일치</span></div><div><b>+1</b><span>판결 근거 공감</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section><section className="ranking-card elite-ranking"><div className="ranking-head"><span>순위</span><span>판결자</span><span>합의 일치율</span><span>도움 판결</span><span>점수</span></div>{rankingSeed.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][index] ?? ""}</span>{index + 1}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · 판결 자격</small></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}{currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 판결 자격</small></span><span>{currentRank.accuracy}</span><span>{currentRank.feedback}</span><strong>{currentRank.points}P</strong></div></>}{!user && <div className="rank-login-note">로그인하면 판결 자격과 내 순위를 확인할 수 있습니다.</div>}{user && !isMasterPlus(user.tier) && <div className="rank-login-note">마스터 이상부터 공식 판결자 랭킹에 등록됩니다.</div>}</section></main>;
+  const changeMode = (nextMode: "personal" | "judge") => { setMode(nextMode); setSearched(false); setQuery(""); };
+  return (
+    <main className="page-shell section-page ranking-page">
+      <div className="ranking-switch" role="tablist" aria-label="랭킹 종류">
+        <button className={mode === "personal" ? "active personal" : "personal"} onClick={() => changeMode("personal")}><b>개인 랭킹</b><span>모든 인증 사용자</span></button>
+        <button className={mode === "judge" ? "active judge" : "judge"} onClick={() => changeMode("judge")}><b>판결자 랭킹</b><span>공식 판결 자격 보유자</span></button>
+      </div>
+      <form className="rank-search" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}>
+        <div><strong>{mode === "personal" ? "플레이어 검색" : "판결자 검색"}</strong><span>{mode === "personal" ? "투표와 근거 활동 순위를 찾아보세요." : "공식 판결과 인정 점수를 찾아보세요."}</span></div>
+        <label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="랭킹 닉네임 검색" /></label><button type="submit">검색</button>
+      </form>
+      {searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · {mode === "personal" ? `합의 일치율 ${match.metricA}` : `받은 인정 ${match.metricB}`}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 사용자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}
+      {mode === "personal" ? <section className="score-rules"><div><b>+5</b><span>의견 투표 참여</span></div><div><b>+15</b><span>최종 합의와 일치</span></div><div><b>+1</b><span>판단 근거 공감</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section> : <><section className="score-rules judge-score-rules"><div><b>+5</b><span>공식 판결 참여</span></div><div><b>+1</b><span>판결·근거 인정</span></div><div><b>-100</b><span>신고 제재 확정</span></div><div><b>OUT</b><span>누적 -100점 도달</span></div></section><div className="judge-ban-note"><b>판결 자격 보호 정책</b><span>제재 감점이 누적 -100점에 도달하면 랭킹에서 제외되고 이후 공식 판결이 금지됩니다.</span></div></>}
+      <section className="ranking-card elite-ranking">
+        <div className="ranking-head"><span>순위</span><span>{mode === "personal" ? "플레이어" : "판결자"}</span><span>{mode === "personal" ? "합의 일치율" : "판결 참여"}</span><span>{mode === "personal" ? "근거 공감" : "받은 인정"}</span><span>점수</span></div>
+        {ranking.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][index] ?? ""}</span>{index + 1}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · {mode === "personal" ? "인증" : "판결 자격"}</small></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}
+        {currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span><span>{currentRank.metricA}</span><span>{currentRank.metricB}</span><strong>{currentRank.points}P</strong></div></>}
+        {!user && <div className="rank-login-note">로그인하면 내 순위를 바로 확인할 수 있습니다.</div>}
+        {mode === "judge" && user && !isMasterPlus(user.tier) && <div className="rank-login-note">마스터 이상부터 공식 판결자 랭킹에 등록됩니다.</div>}
+      </section>
+    </main>
+  );
 }
 
 function Guide() {
   const steps = [["01", "장면 확인", "로그인하지 않아도 영상과 양측 주장, 댓글과 공식 판결 현황을 모두 볼 수 있습니다."], ["02", "의견 투표", "로그인한 인증 사용자라면 티어와 관계없이 A/B 의견 투표에 한 번 참여할 수 있습니다."], ["03", "근거 댓글", "모든 인증 사용자가 타임스탬프와 판단 근거를 남기고 자유롭게 피드백할 수 있습니다."], ["04", "공식 판결", "마스터 이상 판결자가 일반 의견과 별도로 공식 판결을 등록합니다."]];
-  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>LOL.VS는 모두의 의견과 상위 티어의 공식 판결을 분리해, 가볍게 참여하면서도 신뢰할 수 있는 결론을 만드는 공간입니다.</p><div className="guide-ad-badges"><span>누구나 의견 참여</span><span>마스터+ 공식 판결</span><span>티어별 판결 권한</span></div></section><section className="guide-flow"><div className="guide-flow-title"><h2>참여는 가볍게, 판결은 신중하게</h2></div><div className="guide-steps">{steps.map(([number, title, body]) => <article key={number}><b>{number}</b><h3>{title}</h3><p>{body}</p></article>)}</div></section><section className="policy-board"><div className="policy-board-head"><div><span>참여 권한</span><h2>티어에 따라 역할이 달라집니다</h2></div><p>일반 의견과 공식 판결을 분리해 참여 장벽은 낮추고 판결의 신뢰도는 지킵니다.</p></div><div className="policy-cards"><article><b>01</b><div><h3>의견 투표 · 댓글</h3><strong>모든 인증 사용자</strong><p>티어와 관계없이 의견을 고르고 근거 댓글과 대댓글을 남길 수 있습니다.</p></div></article><article><b>02</b><div><h3>공식 판결</h3><strong>마스터 이상</strong><p>다이아몬드 사건은 그랜드마스터 이상만 판결할 수 있습니다.</p></div></article><article><b>03</b><div><h3>사건 작성</h3><strong>다이아몬드 이하</strong><p>마스터 이상은 사건을 작성하지 않고 판결자 역할에 집중합니다.</p></div></article><article><b>04</b><div><h3>판결자 랭킹</h3><strong>공식 판결만 집계</strong><p>참여, 최종 합의 일치, 근거 공감 점수로 신뢰도 높은 판결자를 찾습니다.</p></div></article></div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>다이아몬드 이하 인증 사용자만 사건을 작성할 수 있습니다.</li><li>핵심 장면이 잘 보이는 짧은 영상을 올려주세요.</li><li>A측과 B측 입장을 각각 공정하게 적어주세요.</li><li>실제 Riot ID와 개인정보는 가려주세요.</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">VS</span><h2>판결자 점수는 이렇게 계산해요</h2><ul><li>공식 판결 참여 시 5점</li><li>마감 후 최종 합의와 일치하면 15점</li><li>판결 근거가 공감을 받을 때마다 1점</li><li>신고 제재가 확정되면 20점 차감</li></ul></section></div><section className="faq"><h2>자주 묻는 질문</h2><details open><summary>투표와 공식 판결은 무엇이 다른가요?</summary><p>의견 투표는 모든 인증 사용자의 개인 의견입니다. 공식 판결은 자격을 갖춘 상위 티어 판결자의 결정이며 별도로 집계됩니다.</p></details><details><summary>왜 다이아몬드 사건은 그랜드마스터부터 판결하나요?</summary><p>당사자보다 충분히 높은 구간의 시야로 장면을 판단하도록 최소 두 단계 이상의 판결 자격을 적용했습니다.</p></details><details><summary>마스터 이상은 왜 글을 쓸 수 없나요?</summary><p>상위 구간의 장면은 작은 차이로 판단이 갈릴 수 있어 사건 작성 대상에서 제외하고, 판결자 역할에 집중하도록 설계했습니다.</p></details><details><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 서비스에서는 Riot 인증 결과로 권한을 결정할 예정입니다.</p></details></section></main>;
+  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>LOL.VS는 모두의 의견과 상위 티어의 공식 판결을 분리해, 가볍게 참여하면서도 신뢰할 수 있는 결론을 만드는 공간입니다.</p><div className="guide-ad-badges"><span>누구나 의견 참여</span><span>마스터+ 공식 판결</span><span>티어별 판결 권한</span></div></section><section className="guide-flow"><div className="guide-flow-title"><h2>참여는 가볍게, 판결은 신중하게</h2></div><div className="guide-steps">{steps.map(([number, title, body]) => <article key={number}><b>{number}</b><h3>{title}</h3><p>{body}</p></article>)}</div></section><section className="policy-board"><div className="policy-board-head"><div><span>참여 권한</span><h2>티어에 따라 역할이 달라집니다</h2></div></div><div className="policy-cards"><article className="policy-opinion"><span className="policy-token">ALL</span><div><h3>의견 투표 · 댓글</h3><p>의견 선택, 근거 댓글과 대댓글</p></div><strong>모든 인증 사용자</strong></article><article className="policy-verdict"><span className="policy-token">VS</span><div><h3>공식 판결</h3><p>다이아 사건은 그랜드마스터 이상</p></div><strong>마스터 이상</strong></article><article className="policy-submit"><span className="policy-token">＋</span><div><h3>사건 작성</h3><p>마스터 이상은 판결자 역할에 집중</p></div><strong>다이아 이하</strong></article><article className="policy-rank"><span className="policy-token">R</span><div><h3>활동 랭킹</h3><p>의견 활동과 공식 판결을 따로 평가</p></div><strong>개인 · 판결자</strong></article></div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 잘 보이는 짧은 영상을 올려주세요.</li><li>A측과 B측 입장을 각각 공정하게 적어주세요.</li><li>실제 Riot ID와 개인정보는 가려주세요.</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">VS</span><h2>두 개의 랭킹</h2><ul><li>개인: 투표 +5 · 합의 일치 +15 · 근거 공감 +1</li><li>개인 신고 제재 확정 시 20점 차감</li><li>판결자: 공식 판결 +5 · 판결 인정 +1</li><li>판결자 제재 누적 -100점이면 자격 박탈</li></ul></section></div><section className="faq"><h2>자주 묻는 질문</h2><details open><summary>개인 랭킹과 판결자 랭킹은 무엇이 다른가요?</summary><p>개인 랭킹은 모든 인증 사용자의 투표와 근거 활동을 평가합니다. 판결자 랭킹은 자격을 가진 상위 티어 사용자의 공식 판결과 받은 인정만 평가합니다.</p></details><details><summary>판결자가 신고 제재를 받으면 어떻게 되나요?</summary><p>확정 제재마다 100점이 차감됩니다. 제재 감점이 누적 -100점에 도달하면 판결자 랭킹에서 제외되고 이후 공식 판결이 금지됩니다.</p></details><details><summary>왜 다이아몬드 사건은 그랜드마스터부터 판결하나요?</summary><p>당사자보다 충분히 높은 구간의 시야로 장면을 판단하도록 최소 두 단계 이상의 판결 자격을 적용했습니다.</p></details><details><summary>마스터 이상은 왜 글을 쓸 수 없나요?</summary><p>상위 구간의 장면은 작은 차이로 판단이 갈릴 수 있어 사건 작성 대상에서 제외하고, 판결자 역할에 집중하도록 설계했습니다.</p></details><details><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 서비스에서는 Riot 인증 결과로 권한을 결정할 예정입니다.</p></details></section></main>;
 }
 
 function SearchResults({ query, openDetail, localCase }: { query: string; openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null }) {
