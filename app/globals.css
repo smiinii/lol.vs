@@ -266,16 +266,17 @@ img, video { display: block; max-width: 100%; }
 .rail-card, .guide-card { border: 1px solid var(--line); border-radius: var(--radius); background: rgba(12, 24, 40, 0.86); overflow: hidden; }
 .rail-card { padding: 18px; }
 .rail-card h2, .guide-card h2 { margin: 0 0 14px; font-size: 17px; }
-.hot-card { position: relative; padding: 0; background: radial-gradient(circle at 100% 0, rgba(255,98,108,.1), transparent 32%), linear-gradient(150deg, rgba(14,29,47,.98), rgba(8,18,31,.98)); }
-.hot-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 2px; background: linear-gradient(90deg, var(--teal), rgba(45,212,191,.1) 48%, rgba(255,98,108,.12), var(--coral)); }
-.hot-card-head { min-height: 73px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px 11px; }
-.hot-card-head > div > span { display: flex; align-items: center; gap: 6px; color: #78a8b1; font-size: 8px; font-weight: 900; letter-spacing: 1.4px; }
-.hot-card-head > div > span i { width: 5px; height: 5px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 8px var(--coral); animation: livePulse 1.8s ease infinite; }
-.hot-card-head h2 { margin: 5px 0 0; font-size: 18px; }
-.hot-card-head > small { padding: 5px 8px; border: 1px solid rgba(45,212,191,.22); border-radius: 20px; background: rgba(45,212,191,.07); color: #73beb7; font-size: 8px; white-space: nowrap; }
+.hot-card { position: relative; padding: 0; border-color: rgba(88,201,190,.28); background: radial-gradient(circle at 100% 0, rgba(239,129,136,.11), transparent 35%), linear-gradient(150deg, rgba(14,29,47,.98), rgba(8,18,31,.98)); }
+.hot-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: linear-gradient(90deg, var(--teal) 0 58%, var(--coral) 58% 100%); }
+.hot-card-head { min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 16px 13px; }
+.hot-card-head h2 { margin: 0; font-size: 19px; letter-spacing: -.45px; }
+.hot-card-head h2 span { color: var(--teal); }
+.hot-card-head p { margin: 5px 0 0; color: #71849a; font-size: 9px; }
+.hot-refresh-badge { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid rgba(239,129,136,.22); border-radius: 20px; background: rgba(239,129,136,.07); color: #e49399; font-size: 8px; white-space: nowrap; }
+.hot-refresh-badge i { width: 5px; height: 5px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 7px rgba(239,129,136,.65); animation: livePulse 1.8s ease infinite; }
 @keyframes livePulse { 50% { opacity: .45; transform: scale(.72); } }
 .hot-card ol { list-style: none; margin: 0; padding: 0; border: 1px solid #253248; border-radius: 10px; overflow: hidden; }
-.hot-card ol { margin: 0 10px; border-radius: 8px; }
+.hot-card ol { margin: 0 10px 12px; border-radius: 8px; }
 .hot-card li { min-height: 62px; border-bottom: 1px solid #202e42; }
 .hot-card li:last-child { border-bottom: 0; }
 .hot-card li button { width: 100%; min-height: 62px; display: grid; grid-template-columns: 24px 62px minmax(0,1fr) 26px; gap: 8px; align-items: center; padding: 7px 8px; border: 0; background: transparent; cursor: pointer; text-align: left; }
@@ -296,15 +297,24 @@ img, video { display: block; max-width: 100%; }
 .hot-update-note b { color: #b6c7d3; font-size: 9px; }
 .hot-update-note small { color: #697b8f; font-size: 8px; }
 .rail-more { width: 100%; height: 36px; margin-top: 8px; border: 1px solid #2a3950; border-radius: 7px; background: #121e31; color: #aab6c7; cursor: pointer; }
-.tier-bar { display: flex; height: 12px; overflow: hidden; border-radius: 8px; }
-.tier-bar span:nth-child(1) { width: 18%; background: #f2b348; }
-.tier-bar span:nth-child(2) { width: 23%; background: #2b9e83; }
-.tier-bar span:nth-child(3) { width: 27%; background: #2dd4bf; }
-.tier-bar span:nth-child(4) { width: 19%; background: #73b5ee; }
-.tier-bar span:nth-child(5) { flex: 1; background: #c073e8; }
-.tier-labels { display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 9px; text-align: center; }
+.tier-card { position: relative; overflow: hidden; padding: 18px 17px 15px; border-color: rgba(88,201,190,.22); background: radial-gradient(circle at 96% 0, rgba(88,201,190,.11), transparent 37%), linear-gradient(150deg, #0f2134, #091522); }
+.tier-card::after { content: "VS"; position: absolute; right: -5px; top: -15px; color: rgba(255,255,255,.025); font-size: 62px; font-weight: 950; letter-spacing: -7px; pointer-events: none; }
+.tier-card-head { position: relative; z-index: 1; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.tier-card-head h2 { margin: 0; font-size: 17px; }
+.tier-card-head p { margin: 4px 0 0; color: #71849a; font-size: 9px; }
+.tier-card-head > b { padding: 5px 8px; border: 1px solid rgba(88,201,190,.2); border-radius: 6px; background: rgba(88,201,190,.07); color: var(--teal); font-size: 9px; }
+.tier-bar { position: relative; z-index: 1; display: flex; height: 10px; overflow: hidden; border-radius: 8px; background: #102033; }
+.tier-bar span + span { border-left: 2px solid #13243a; }
+.tier-bar span:nth-child(1) { width: 18%; background: #b9934c; }
+.tier-bar span:nth-child(2) { width: 23%; background: #438b8b; }
+.tier-bar span:nth-child(3) { width: 27%; background: var(--teal); }
+.tier-bar span:nth-child(4) { width: 19%; background: #6598b7; }
+.tier-bar span:nth-child(5) { flex: 1; background: var(--coral); }
+.tier-labels { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(5, 1fr); margin-top: 10px; text-align: center; }
 .tier-labels span { font-weight: 800; font-size: 12px; }
 .tier-labels small { display: block; margin-top: 4px; color: var(--muted); font-size: 8px; font-weight: 500; }
+.tier-summary { position: relative; z-index: 1; display: flex; align-items: center; gap: 7px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(129,153,180,.12); color: #7f91a6; font-size: 9px; }
+.tier-summary i { width: 17px; height: 17px; display: grid; place-items: center; border-radius: 5px; background: rgba(88,201,190,.12); color: var(--teal); font-size: 9px; font-style: normal; font-weight: 900; }
 .rail-card > p { margin: 13px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
 .brand-principles { position: relative; padding: 0; background: radial-gradient(circle at 85% 7%, rgba(45,212,191,.16), transparent 30%), linear-gradient(155deg, #0f2134, #081522); }
 .brand-principles::after { content: "A / B"; position: absolute; right: -6px; bottom: -10px; color: rgba(255,255,255,.025); font-size: 52px; font-weight: 950; letter-spacing: -5px; pointer-events: none; }
@@ -312,7 +322,6 @@ img, video { display: block; max-width: 100%; }
 .principles-head > span { width: 50px; height: 50px; display: grid; place-items: center; border: 1px solid rgba(168,180,196,.18); border-radius: 50%; background: rgba(18,31,49,.46); }
 .principles-mark { width: 42px; height: 42px; }
 .principles-head > div { display: grid; gap: 3px; }
-.principles-head small { color: #5eaaa5; font-size: 8px; font-weight: 900; letter-spacing: 1.3px; }
 .principles-head h2 { margin: 0; font-size: 19px; line-height: 1.25; letter-spacing: -.5px; }
 .principle-list { display: grid; padding: 7px 17px 10px; }
 .principle-list article { display: grid; grid-template-columns: 32px 1fr; align-items: center; gap: 10px; min-height: 67px; border-bottom: 1px solid rgba(129,153,180,.12); }
@@ -708,6 +717,7 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
 .hot-card { background: radial-gradient(circle at 100% 0, rgba(239,129,136,.1), transparent 34%), linear-gradient(150deg, #22354e, #192a40); }
 .hot-card ol { border-color: var(--line); }
 .hot-card li { border-bottom-color: rgba(168,180,196,.14); }
+.tier-card { background: radial-gradient(circle at 96% 0, rgba(88,201,190,.13), transparent 38%), linear-gradient(150deg, #22374f, #192a40); }
 .brand-principles { background: radial-gradient(circle at 85% 7%, rgba(88,201,190,.15), transparent 32%), linear-gradient(155deg, #22374f, #192b41); }
 .video-card,
 .comments-card,

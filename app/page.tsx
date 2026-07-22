@@ -219,8 +219,9 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
     return () => window.clearInterval(timer);
   }, []);
   const filtered = compactCases.filter((item) => category === "전체" || item.category === category);
-  const pageCount = Math.max(1, Math.ceil(filtered.length / 6));
-  const pageItems = filtered.slice((page - 1) * 6, page * 6);
+  const casesPerPage = 8;
+  const pageCount = Math.max(1, Math.ceil(filtered.length / casesPerPage));
+  const pageItems = filtered.slice((page - 1) * casesPerPage, page * casesPerPage);
   const popularPosts = popularCycle % 2 === 0 ? weeklyPosts : [weeklyPosts[2], weeklyPosts[0], weeklyPosts[1], weeklyPosts[4], weeklyPosts[3]];
   const showLocal = localCase && (category === "전체" || localCase.category === category);
   return (
@@ -260,9 +261,9 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
       </section>
 
       <aside className="right-rail">
-        <section className="rail-card hot-card"><div className="hot-card-head"><div><span><i /> LIVE RANK</span><h2>주간 인기 글</h2></div></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol></section>
-        <section className="rail-card"><h2>인증 티어 분포 <small>ⓘ</small></h2><div className="tier-bar"><span /><span /><span /><span /><span /></div><div className="tier-labels"><span>12%<small>아이언–골드</small></span><span>28%<small>플래티넘</small></span><span>31%<small>에메랄드</small></span><span>19%<small>다이아</small></span><span>8%<small>마스터+</small></span></div><p>로그인 데모에서는 선택한 티어가 데모 인증으로 표시됩니다.</p></section>
-        <section className="rail-card principles brand-principles"><div className="principles-head"><span><BrandMark className="principles-mark" /></span><div><small>LOL.VS STANDARD</small><h2>좋은 판결은<br />이렇게 만듭니다</h2></div></div><div className="principle-list"><article><b>01</b><span><strong>장면을 정확히</strong><small>타임스탬프와 플레이 상황을 함께 봅니다.</small></span></article><article><b>02</b><span><strong>감정보다 근거를</strong><small>잘잘못과 다음 선택을 구분해 말합니다.</small></span></article><article><b>03</b><span><strong>사람보다 플레이를</strong><small>공격 대신 개선할 수 있는 의견을 남깁니다.</small></span></article></div><div className="principles-sign"><i /><span>판결은 선명하게, 피드백은 따뜻하게.</span><i /></div></section>
+        <section className="rail-card hot-card"><div className="hot-card-head"><div><h2><span>실시간</span> 인기 글</h2><p>30분마다 참여 변화를 반영합니다</p></div><b className="hot-refresh-badge"><i /> 갱신 중</b></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol></section>
+        <section className="rail-card tier-card"><div className="tier-card-head"><div><h2>인증 티어 분포</h2><p>판결 참여자 기준</p></div><b>12,480명</b></div><div className="tier-bar" aria-label="인증 티어 참여자 분포"><span /><span /><span /><span /><span /></div><div className="tier-labels"><span>12%<small>아이언–골드</small></span><span>28%<small>플래티넘</small></span><span>31%<small>에메랄드</small></span><span>19%<small>다이아</small></span><span>8%<small>마스터+</small></span></div><div className="tier-summary"><i>✓</i><span>인증된 티어의 판결만 집계합니다</span></div></section>
+        <section className="rail-card principles brand-principles"><div className="principles-head"><span><BrandMark className="principles-mark" /></span><div><h2>좋은 판결은<br />이렇게 만듭니다</h2></div></div><div className="principle-list"><article><b>01</b><span><strong>장면을 정확히</strong><small>타임스탬프와 플레이 상황을 함께 봅니다.</small></span></article><article><b>02</b><span><strong>감정보다 근거를</strong><small>잘잘못과 다음 선택을 구분해 말합니다.</small></span></article><article><b>03</b><span><strong>사람보다 플레이를</strong><small>공격 대신 개선할 수 있는 의견을 남깁니다.</small></span></article></div><div className="principles-sign"><i /><span>판결은 선명하게, 피드백은 따뜻하게.</span><i /></div></section>
       </aside>
     </main>
   );
@@ -409,9 +410,9 @@ function SearchResults({ query, openDetail, localCase }: { query: string; openDe
   const cases = [
     ...(localCase ? [{ title: localCase.title, category: localCase.category, local: true }] : []),
     ...compactCases.map((item) => ({ title: item.title, category: item.category, local: false })),
-    ...weeklyPosts.map(({ title }) => ({ title, category: "주간 인기", local: false })),
+    ...weeklyPosts.map(({ title }) => ({ title, category: "실시간 인기", local: false })),
   ].filter((item, index, array) => item.title.toLowerCase().includes(keyword) && array.findIndex((other) => other.title === item.title) === index);
-  return <main className="page-shell section-page search-page"><div className="search-heading"><span>사건 검색</span><h1>“{query}” 검색 결과</h1><p>진행 중인 사건과 주간 인기 판결에서 찾았습니다.</p></div><section className="search-result-section"><div><h2>사건</h2><b>{cases.length}</b></div>{cases.length ? <div className="search-result-list">{cases.map((item) => <button key={item.title} onClick={() => openDetail(item.local, item.title)}><span>판결</span><strong>{item.title}</strong><small>{item.category} · 사건 열기 →</small></button>)}</div> : <p className="search-none">일치하는 사건이 없습니다.</p>}</section></main>;
+  return <main className="page-shell section-page search-page"><div className="search-heading"><span>사건 검색</span><h1>“{query}” 검색 결과</h1><p>진행 중인 사건과 실시간 인기 판결에서 찾았습니다.</p></div><section className="search-result-section"><div><h2>사건</h2><b>{cases.length}</b></div>{cases.length ? <div className="search-result-list">{cases.map((item) => <button key={item.title} onClick={() => openDetail(item.local, item.title)}><span>판결</span><strong>{item.title}</strong><small>{item.category} · 사건 열기 →</small></button>)}</div> : <p className="search-none">일치하는 사건이 없습니다.</p>}</section></main>;
 }
 
 function SubmitCase({ setView, toast, user, onSubmitted }: { setView: (view: View) => void; toast: (message: string) => void; user: User; onSubmitted: (item: LocalCase, url: string) => void }) {
