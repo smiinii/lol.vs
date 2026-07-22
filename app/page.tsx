@@ -134,7 +134,7 @@ const judgeTiers = ["챌린저 942P", "그랜드마스터 612P", "마스터 438P
 const personalTiers = ["다이아몬드 II", "에메랄드 I", "플래티넘 I", "다이아몬드 IV", "골드 I", "에메랄드 III"];
 const formatScore = (value: number) => value.toLocaleString("ko-KR");
 
-const judgeRankingSeed = Array.from({ length: 300 }, (_, index) => {
+const judgeRankingSeed = Array.from({ length: 100 }, (_, index) => {
   const participation = Math.max(22, 160 - Math.floor(index * .46));
   const recognition = Math.max(80, 4200 - index * 13);
   const sanctions = index > 0 && index % 97 === 0 ? 1 : 0;
@@ -142,7 +142,7 @@ const judgeRankingSeed = Array.from({ length: 300 }, (_, index) => {
   return [judgeNames[index] ?? `판결복기${String(index + 1).padStart(3, "0")}`, judgeTiers[index] ?? `마스터 ${Math.max(1, 150 - Math.floor(index / 3))}P`, `${participation}회`, `${formatScore(recognition)}개`, formatScore(points)];
 }).sort((a, b) => Number(b[4].replaceAll(",", "")) - Number(a[4].replaceAll(",", "")));
 
-const personalRankingSeed = Array.from({ length: 300 }, (_, index) => {
+const personalRankingSeed = Array.from({ length: 100 }, (_, index) => {
   const votes = Math.max(42, 720 - index * 2);
   const agreementRate = Math.max(52, 91 - Math.floor(index / 8));
   const matches = Math.floor(votes * agreementRate / 100);
@@ -449,9 +449,9 @@ function Ranking({ user }: { user: User | null }) {
   const candidates = ranking.map((row, index) => ({ rank: index + 1, name: row[0], tier: row[1], metricA: row[2], metricB: row[3], points: row[4] }));
   const currentRank = user
     ? mode === "personal"
-      ? { rank: 276, name: user.nickname, tier: user.tier, metricA: "170 / 96", metricB: "225개", points: "2,515" }
+      ? { rank: 76, name: user.nickname, tier: user.tier, metricA: "570 / 467", metricB: "1,225개", points: "11,080" }
       : isMasterPlus(user.tier)
-        ? { rank: 188, name: user.nickname, tier: user.tier, metricA: "74회", metricB: "1,769개", points: "2,139" }
+        ? { rank: 88, name: user.nickname, tier: user.tier, metricA: "120회", metricB: "3,069개", points: "3,669" }
         : null
     : null;
   const userIsTopFive = user ? ranking.some((row) => row[0].toLowerCase() === user.nickname.toLowerCase()) : false;
@@ -461,15 +461,18 @@ function Ranking({ user }: { user: User | null }) {
   return (
     <main className="page-shell section-page ranking-page">
       <div className="ranking-switch" role="tablist" aria-label="랭킹 종류">
-        <button className={mode === "personal" ? "active personal" : "personal"} onClick={() => changeMode("personal")}><b>개인 랭킹</b><span>모든 인증 사용자</span></button>
-        <button className={mode === "judge" ? "active judge" : "judge"} onClick={() => changeMode("judge")}><b>판결자 랭킹</b><span>공식 판결 자격 보유자</span></button>
+        <span className="ranking-switch-label">랭킹 보기</span>
+        <div>
+          <button className={mode === "personal" ? "active personal" : "personal"} data-tooltip="투표 참여 · 최종 합의 · 근거 공감" aria-label="개인 랭킹: 투표 참여, 최종 합의, 근거 공감 기준" onClick={() => changeMode("personal")}><b>개인 랭킹</b></button>
+          <button className={mode === "judge" ? "active judge" : "judge"} data-tooltip="공식 판결 · 판결 근거 인정" aria-label="판결자 랭킹: 공식 판결, 판결 근거 인정 기준" onClick={() => changeMode("judge")}><b>판결자 랭킹</b></button>
+        </div>
       </div>
       <form className="rank-search" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}>
         <div><strong>{mode === "personal" ? "플레이어 검색" : "판결자 검색"}</strong><span>{mode === "personal" ? "투표와 근거 활동 순위를 찾아보세요." : "공식 판결과 인정 점수를 찾아보세요."}</span></div>
         <label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="랭킹 닉네임 검색" /></label><button type="submit">검색</button>
       </form>
       {searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · {mode === "personal" ? `투표 / 합의 ${match.metricA}` : `받은 인정 ${match.metricB}`}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 사용자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}
-      {mode === "personal" ? <section className="score-rules"><div><b>+5</b><span>의견 투표 참여</span></div><div><b>+15</b><span>최종 합의와 일치</span></div><div><b>+1</b><span>판단 근거 공감</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section> : <><section className="score-rules judge-score-rules"><div><b>+5</b><span>공식 판결 참여</span></div><div><b>+1</b><span>판결·근거 인정</span></div><div><b>-100</b><span>신고 제재 확정</span></div><div><b>OUT</b><span>누적 -100점 도달</span></div></section><div className="judge-ban-note"><b>판결 자격 보호 정책</b><span>제재 감점이 누적 -100점에 도달하면 랭킹에서 제외되고 이후 공식 판결이 금지됩니다.</span></div></>}
+      {mode === "personal" ? <section className="score-rules"><div><b>+5</b><span>의견 투표 참여</span></div><div><b>+15</b><span>최종 합의와 일치</span></div><div><b>+1</b><span>판단 근거 공감</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section> : <section className="score-rules judge-score-rules"><div><b>+5</b><span>공식 판결 참여</span></div><div><b>+1</b><span>판결·근거 인정</span></div><div><b>-100</b><span>신고 제재 확정</span></div><div><b>OUT</b><span>누적 -100점<br />자격 박탈 · 판결 금지</span></div></section>}
       <section className="ranking-card elite-ranking">
         <div className="ranking-head"><span>순위</span><span>{mode === "personal" ? "플레이어" : "판결자"}</span><span>{mode === "personal" ? "투표 / 합의" : "판결 참여"}</span><span>{mode === "personal" ? "근거 공감" : "받은 인정"}</span><span>점수</span></div>
         {visibleRanking.map((row, index) => { const rank = (rankingPage - 1) * rankingPageSize + index + 1; return <div className={rank <= 3 ? `ranking-row podium rank-${rank}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][rank - 1] ?? ""}</span>{rank}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · {mode === "personal" ? "인증" : "판결 자격"}</small></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>; })}
@@ -483,7 +486,7 @@ function Ranking({ user }: { user: User | null }) {
 }
 
 function Guide() {
-  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>짧은 장면을 함께 보고 더 나은 선택을 찾습니다.</p></section><section className="policy-board"><div className="policy-board-head"><div><span>참여 권한</span><h2>누가 무엇을 할 수 있나요?</h2></div></div><div className="policy-cards"><article className="policy-opinion"><span className="policy-token">01</span><div><h3>의견 투표 · 댓글</h3><p>A/B 선택과 근거 피드백</p></div><strong>모든 인증 사용자</strong></article><article className="policy-verdict"><span className="policy-token">02</span><div><h3>공식 판결</h3><p>다이아 사건은 그랜드마스터 이상</p></div><strong>마스터 이상</strong></article><article className="policy-submit"><span className="policy-token">03</span><div><h3>사건 작성</h3><p>영상과 양측 입장 등록</p></div><strong>다이아 이하</strong></article></div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 보이는 짧은 영상</li><li>공정하게 정리한 A측·B측 입장</li><li>Riot ID와 개인정보 가림 처리</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">VS</span><h2>좋은 판결의 기준</h2><ul><li>결과보다 당시 보였던 정보를 확인합니다.</li><li>사람이 아니라 플레이를 평가합니다.</li><li>다음 선택에 도움이 되는 근거를 남깁니다.</li></ul></section></div><section className="faq"><h2>서비스 안내</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 서비스에서는 Riot 인증 결과로 권한을 결정할 예정입니다.</p></details><details><summary>업로드한 영상은 어디에 저장되나요?</summary><p>현재 프로토타입에서는 선택한 기기의 브라우저에만 저장됩니다. 서버 업로드는 백엔드 연결 후 제공됩니다.</p></details></section></main>;
+  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>짧은 장면을 함께 보고 더 나은 선택을 찾습니다.</p></section><section className="usage-guide"><div className="usage-guide-head"><span>사용 순서</span><h2>장면에서 판결까지</h2></div><div className="usage-steps"><article><b>01</b><div><strong>장면 확인</strong><small>영상과 양측 입장</small></div></article><article><b>02</b><div><strong>의견 투표</strong><small>A/B 한 번 선택</small></div></article><article><b>03</b><div><strong>근거 댓글</strong><small>타임스탬프와 피드백</small></div></article><article><b>04</b><div><strong>결과 확인</strong><small>의견과 공식 판결 비교</small></div></article></div></section><section className="policy-board"><div className="policy-board-head"><div><span>참여 권한</span><h2><b>누가 무엇을</b><em>할 수 있나요?</em></h2></div></div><div className="policy-cards"><article className="policy-opinion"><span className="policy-token">01</span><div><h3>의견 투표 · 댓글</h3><p>A/B 선택과 근거 피드백</p></div><strong>모든 인증 사용자</strong></article><article className="policy-verdict"><span className="policy-token">02</span><div><h3>공식 판결</h3><p>다이아 사건은 그랜드마스터 이상</p></div><strong>마스터 이상</strong></article><article className="policy-submit"><span className="policy-token">03</span><div><h3>사건 작성</h3><p>영상과 양측 입장 등록</p></div><strong>다이아 이하</strong></article></div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 보이는 짧은 영상</li><li>공정하게 정리한 A측·B측 입장</li><li>Riot ID와 개인정보 가림 처리</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">VS</span><h2>좋은 판결의 기준</h2><ul><li>결과보다 당시 보였던 정보를 확인합니다.</li><li>사람이 아니라 플레이를 평가합니다.</li><li>다음 선택에 도움이 되는 근거를 남깁니다.</li></ul></section></div><section className="faq"><h2>서비스 안내</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 서비스에서는 Riot 인증 결과로 권한을 결정할 예정입니다.</p></details><details><summary>업로드한 영상은 어디에 저장되나요?</summary><p>현재 프로토타입에서는 선택한 기기의 브라우저에만 저장됩니다. 서버 업로드는 백엔드 연결 후 제공됩니다.</p></details></section></main>;
 }
 
 function SearchResults({ query, openDetail, localCase }: { query: string; openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null }) {
