@@ -254,18 +254,19 @@ function OpinionBadge({ side }: { side?: VoteSide }) {
 function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null; localVideoUrl: string; onSubmit: () => void; onSearch: (query: string) => void }) {
   const [category, setCategory] = useState("전체");
   const [page, setPage] = useState(1);
+  const [showResolved, setShowResolved] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [popularCycle, setPopularCycle] = useState(0);
   useEffect(() => {
     const timer = window.setInterval(() => setPopularCycle((cycle) => cycle + 1), 30 * 60 * 1000);
     return () => window.clearInterval(timer);
   }, []);
-  const filtered = compactCases.filter((item) => category === "전체" || item.category === category);
+  const filtered = compactCases.filter((item) => (category === "전체" || item.category === category) && Boolean(resolvedVerdicts[item.title]) === showResolved);
   const casesPerPage = 8;
   const pageCount = Math.max(1, Math.ceil(filtered.length / casesPerPage));
   const pageItems = filtered.slice((page - 1) * casesPerPage, page * casesPerPage);
   const popularPosts = popularCycle % 2 === 0 ? weeklyPosts : [weeklyPosts[2], weeklyPosts[0], weeklyPosts[1], weeklyPosts[4], weeklyPosts[3]];
-  const showLocal = localCase && (category === "전체" || localCase.category === category);
+  const showLocal = !showResolved && localCase && (category === "전체" || localCase.category === category);
   return (
     <main className="page-shell home-layout">
       <section className="feed-column">
@@ -274,6 +275,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           <div className="category-tabs" role="tablist" aria-label="게임 유형">
             {["전체", "솔로랭크", "파티랭크", "내전"].map((item) => <button key={item} className={category === item ? "selected" : ""} onClick={() => { setCategory(item); setPage(1); }}>{item}</button>)}
           </div>
+          <button className={showResolved ? "resolved-filter active" : "resolved-filter"} onClick={() => { setShowResolved((value) => !value); setPage(1); }}><span>{showResolved ? "◷" : "✓"}</span>{showResolved ? "진행 중 보기" : "판결 완료 보기"}</button>
         </div>
 
         {showLocal && (
@@ -284,7 +286,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           </button>
         )}
 
-        <div className="case-board-heading"><div><h2>진행 중인 사건</h2><span>{filtered.length}개의 판결</span></div></div>
+        <div className="case-board-heading"><div><h2>{showResolved ? "판결 완료된 사건" : "진행 중인 사건"}</h2><span>{filtered.length}개의 판결</span></div></div>
         <div className="case-list board-style">
           {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; return (
             <button className={resolved ? "case-row case-resolved" : "case-row"} key={item.title} onClick={() => openDetail(false, item.title)}>
@@ -334,7 +336,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [recognizedVerdict, setRecognizedVerdict] = useState(false);
   const [recognitionCount, setRecognitionCount] = useState(0);
   const [pendingVote, setPendingVote] = useState<VoteSide | null>(null);
-  const officialJudgeRef = useRef<HTMLElement>(null);
+  const [judgeModalOpen, setJudgeModalOpen] = useState(false);
   const result = vote === "A" ? { a: 59, b: 41 } : vote === "B" ? { a: 57, b: 43 } : { a: 58, b: 42 };
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
   const resolvedVerdict = viewingLocal ? undefined : resolvedVerdicts[title];
@@ -387,13 +389,15 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     toast(`${side}측 잘못으로 의견 투표했습니다.`);
   };
 
-  const submitOfficialVerdict = (side: VoteSide) => {
+  const submitOfficialVerdict = (side: VoteSide, reason: string) => {
     if (!user) return requireLogin();
     if (!canJudge) return toast(`${diamondCase ? "다이아몬드 사건은" : "공식 판결은"} ${judgeRequirement} 이상부터 가능합니다.`);
     if (officialVerdict) return toast("공식 판결은 등록 후 변경할 수 없습니다.");
     setOfficialVerdict(side);
     localStorage.setItem(verdictStorageKey, side);
-    toast(`${side}측 잘못으로 공식 판결을 등록했습니다.`);
+    localStorage.setItem(`${verdictStorageKey}:reason`, reason);
+    setJudgeModalOpen(false);
+    toast(`${side}측 잘못으로 공식 판결과 근거를 등록했습니다.`);
   };
 
   const addComment = (event: FormEvent) => {
@@ -447,9 +451,10 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   return (
     <main className="page-shell detail-layout">
       <section className="detail-main">
-        <div className="detail-title-row"><div className="detail-title">{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><div className="detail-title-actions"><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button>{canJudge && !resolvedVerdict && <button className="judge-jump-button" onClick={() => officialJudgeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>판결하기</button>}</div></div>
+        <div className="detail-title-row"><div className="detail-title">{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><div className="detail-title-actions"><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button>{canJudge && !resolvedVerdict && <button className={officialVerdict ? "judge-jump-button submitted" : "judge-jump-button"} disabled={Boolean(officialVerdict)} onClick={() => setJudgeModalOpen(true)}>{officialVerdict ? "판결 제출 완료" : "판결하기"}</button>}</div></div>
         <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={viewingLocal} inline /></div><span className="post-view-count">조회수 <b>3,842</b></span></div>
         <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
+        {resolvedVerdict && <section className={`inline-resolved-verdict verdict-${resolvedVerdict.side.toLowerCase()}`}><header><div><span>공식 판결</span><h2><b>{resolvedVerdict.side}측 잘못</b>으로 판결했습니다.</h2></div><time>{resolvedVerdict.decidedAt}</time></header><div className="inline-verdict-body"><div className="inline-verdict-judge"><span>{resolvedVerdict.judge[0]}</span><div><small>판결자</small><strong>{resolvedVerdict.judge}</strong><em>{resolvedVerdict.judgeTier} · 인증</em></div></div><blockquote><b>판결 근거</b><p>{resolvedVerdict.reason}</p></blockquote><button className={recognizedVerdict ? "recognition-button recognized" : "recognition-button"} onClick={recognizeOfficialVerdict}><span>{recognizedVerdict ? "♥" : "♡"}</span><b>{recognizedVerdict ? "이 판결을 인정했습니다" : "이 판결 인정"}</b><em>{recognitionCount.toLocaleString("ko-KR")}</em></button></div></section>}
 
         <section className="comments-section">
           <div className="comments-heading"><div><h2>댓글 <b>{commentTotal}</b></h2><span>모든 인증 사용자 참여 · 의견 투표 시 선택 공개</span></div><button onClick={() => { if (!user) requireLogin(); else setComposerOpen(!composerOpen); }}>{composerOpen ? "닫기" : "댓글 쓰기"}</button></div>
@@ -466,17 +471,18 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
               </div>
             </article>
           ))}
-          <nav className="comment-pagination" aria-label="댓글 페이지">{Array.from({ length: commentPageCount }, (_, index) => index + 1).map((number) => <button key={number} className={commentPage === number ? "active" : ""} onClick={() => setCommentPage(number)}>{number}</button>)}</nav>
         </section>
+        <nav className="comment-pagination standalone-comment-pagination" aria-label="댓글 페이지">{Array.from({ length: commentPageCount }, (_, index) => index + 1).map((number) => <button key={number} className={commentPage === number ? "active" : ""} onClick={() => setCommentPage(number)}>{number}</button>)}</nav>
       </section>
 
       <aside className="vote-rail">
-        {resolvedVerdict ? <><section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section><section className={`resolved-verdict-card verdict-${resolvedVerdict.side.toLowerCase()}`}><header><span>공식 판결</span><b>{resolvedVerdict.decidedAt}</b></header><div className="resolved-verdict-result"><small>FINAL VERDICT</small><strong>{resolvedVerdict.side}</strong><span>{resolvedVerdict.side}측 잘못</span></div><div className="resolved-judge"><span className="resolved-judge-avatar">{resolvedVerdict.judge[0]}</span><div><small>판결자</small><strong>{resolvedVerdict.judge}</strong><em>{resolvedVerdict.judgeTier} · 인증</em></div></div><blockquote><b>판결 근거</b><p>{resolvedVerdict.reason}</p></blockquote><button className={recognizedVerdict ? "recognition-button recognized" : "recognition-button"} onClick={recognizeOfficialVerdict}><span>{recognizedVerdict ? "♥" : "♡"}</span><b>{recognizedVerdict ? "인정함" : "이 판결 인정"}</b><em>{recognitionCount.toLocaleString("ko-KR")}</em></button></section></> : <><section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} /><div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section><section className="official-judge-card" ref={officialJudgeRef}><header><div><span>공식 판결</span><h2>판결자 전용</h2></div><b>{judgeRequirement}+</b></header><p>{diamondCase ? "다이아몬드 사건은 그랜드마스터 이상 판결자만 결정할 수 있습니다." : "마스터 이상 판결자의 결정은 일반 의견과 별도로 집계됩니다."}</p><div className="official-verdict-buttons"><button className={officialVerdict === "A" ? "a chosen" : "a"} onClick={() => submitOfficialVerdict("A")}>A측 판결</button><button className={officialVerdict === "B" ? "b chosen" : "b"} onClick={() => submitOfficialVerdict("B")}>B측 판결</button></div>{officialVerdict ? <small className="official-verdict-status">✓ 내 공식 판결: {officialVerdict}측 잘못</small> : <small>{canJudge ? "근거를 확인한 뒤 판결해 주세요." : `${judgeRequirement} 이상부터 판결할 수 있습니다.`}</small>}</section></>}
+        {resolvedVerdict ? <section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section> : <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} /><div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section>}
         <section className="positions-card"><header><div><h2>양측 주장</h2><p>게시물 작성자가 정리한 입장입니다.</p></div><span><b>A</b><i>VS</i><em>B</em></span></header><article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article><div className="position-divider"><span>VS</span></div><article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article></section>
         <section className="guide-card"><h2>참여 가이드</h2><ul><li>의견 투표와 댓글은 모든 인증 사용자가 참여합니다.</li><li>공식 판결은 마스터 이상, 다이아 사건은 그랜드마스터 이상만 가능합니다.</li><li>비난보다 다음 플레이에 도움 되는 근거를 남겨 주세요.</li></ul></section>
       </aside>
       {reportTarget && <ReportModal target={reportTarget} close={() => setReportTarget(null)} onSubmit={(reason) => { const target = reportTarget; setReportTarget(null); toast(`${target} 신고가 접수되었습니다: ${reason}`); }} />}
       {pendingVote && <VoteConfirmModal side={pendingVote} close={() => setPendingVote(null)} confirm={() => submitOpinionVote(pendingVote)} />}
+      {judgeModalOpen && <JudgeVerdictModal close={() => setJudgeModalOpen(false)} requirement={judgeRequirement} submit={submitOfficialVerdict} />}
     </main>
   );
 }
@@ -596,6 +602,12 @@ function ReportModal({ target, close, onSubmit }: { target: string; close: () =>
 
 function VoteConfirmModal({ side, close, confirm }: { side: VoteSide; close: () => void; confirm: () => void }) {
   return <div className="modal-backdrop" onMouseDown={close}><section className={`profile-modal vote-confirm vote-confirm-${side.toLowerCase()}`} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="vote-confirm-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="vote-confirm-side">{side}</span><h2 id="vote-confirm-title">{side}측 잘못으로 투표할까요?</h2><p>투표를 완료하면 변경할 수 없습니다.<br />작성한 댓글과 대댓글에도 이 의견이 표시됩니다.</p><div><button className="secondary-button" onClick={close}>다시 생각하기</button><button className="vote-confirm-submit" onClick={confirm}>투표 확정</button></div></section></div>;
+}
+
+function JudgeVerdictModal({ close, requirement, submit }: { close: () => void; requirement: string; submit: (side: VoteSide, reason: string) => void }) {
+  const [side, setSide] = useState<VoteSide | null>(null);
+  const [reason, setReason] = useState("");
+  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal judge-verdict-modal" onSubmit={(event) => { event.preventDefault(); if (side && reason.trim().length >= 10) submit(side, reason.trim()); }} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="judge-verdict-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="judge-modal-label">공식 판결 · {requirement} 이상</span><h2 id="judge-verdict-title">어느 쪽의 잘못인가요?</h2><p>영상에서 확인한 장면을 근거로 판결해 주세요.<br />제출한 판결은 변경할 수 없습니다.</p><div className="judge-side-picker"><button type="button" className={side === "A" ? "a selected" : "a"} onClick={() => setSide("A")}><b>A</b><span>A측 잘못</span></button><button type="button" className={side === "B" ? "b selected" : "b"} onClick={() => setSide("B")}><b>B</b><span>B측 잘못</span></button></div><label className="judge-reason-field"><span>판결 근거</span><textarea value={reason} onChange={(event) => setReason(event.target.value)} minLength={10} maxLength={500} required placeholder="예: 24:05 상대 정글 위치가 사라진 뒤에도 시야 없이 진입했습니다." /><small>{reason.length}/500 · 최소 10자</small></label><button className="judge-verdict-submit" type="submit" disabled={!side || reason.trim().length < 10}>판결 제출하기</button></form></div>;
 }
 
 export default function HomePage() {
