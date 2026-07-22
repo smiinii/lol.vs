@@ -225,8 +225,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   );
 }
 
-function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, viewingLocal, selectedTitle }: {
-  setView: (view: View) => void;
+function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLocal, selectedTitle }: {
   toast: (message: string) => void;
   user: User | null;
   requireLogin: () => void;
@@ -306,12 +305,9 @@ function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, 
   return (
     <main className="page-shell detail-layout">
       <section className="detail-main">
-        <button className="back-link" onClick={() => setView("home")}>← 홈으로</button>
-        <div className="detail-title-row"><div className="detail-title"><span>판결 진행 중</span><h1>{title}</h1></div><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button></div>
+        <div className="detail-title-row"><div className="detail-title"><span><i /> 판결 진행 중</span><h1>{title}</h1></div><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button></div>
         <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
         <div className="video-author-row"><div className="author"><span className="avatar small">{author[0]}</span><strong>{author}</strong><VerifiedBadge tier={tier} demo={viewingLocal} /></div><div>조회 3,842 · 댓글 {comments.length + 126}</div></div>
-        <div className="claims"><article className="claim claim-a"><h2>A측 주장</h2><p>{aClaim}</p><span>A</span></article><article className="claim claim-b"><h2>B측 주장</h2><p>{bClaim}</p><span>B</span></article></div>
-        <section className="timeline"><h2>사건 타임라인 & 상황 요약</h2><div><span><b>23:40</b>시야 장악 시작</span><i>→</i><span><b>23:52</b>라인 푸시 시작</span><i>→</i><span><b>24:18</b>교전 준비</span><i>→</i><span><b>24:31</b>전투 개시</span></div></section>
 
         <section className="comments-section">
           <div className="comments-heading"><h2>댓글 {comments.length + 126}</h2><span>투표 선택과 판단 근거 공개</span></div>
@@ -337,6 +333,7 @@ function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, 
 
       <aside className="vote-rail">
         <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>현재 판결</h2><VoteBar a={result.a} b={result.b} /><p className="vote-hint">댓글을 등록할 때 선택한 판결이 투표에 함께 반영됩니다.</p>{vote && <p className="my-vote">내 판결: <b>{vote} 잘못</b></p>}</div></section>
+        <section className="side-claims"><div className="side-claims-head"><div><span>사건 입장</span><h2>A측 · B측 주장</h2></div><small>작성자가 등록한 내용</small></div><article className="side-claim side-claim-a"><b>A</b><div><h3>A측 주장</h3><p>{aClaim}</p></div></article><article className="side-claim side-claim-b"><b>B</b><div><h3>B측 주장</h3><p>{bClaim}</p></div></article></section>
         <section className="guide-card"><h2>판결 가이드</h2><ul><li>객관적인 장면을 기준으로 판단해 주세요.</li><li>댓글에는 선택한 판결과 판단 근거가 함께 공개됩니다.</li><li>비난보다 다음 플레이에 도움 되는 피드백을 남겨 주세요.</li></ul></section>
       </aside>
       {reportTarget && <ReportModal target={reportTarget} close={() => setReportTarget(null)} onSubmit={(reason) => { const target = reportTarget; setReportTarget(null); toast(`${target} 신고가 접수되었습니다: ${reason}`); }} />}
@@ -449,7 +446,7 @@ export default function HomePage() {
 
   return <div className="app-root"><Header view={view} setView={setView} user={user} onLogin={() => setLoginOpen(true)} onProfile={() => setProfileOpen(true)} />
     {view === "home" && <Home openDetail={openDetail} localCase={localCase} localVideoUrl={localVideoUrl} onSubmit={openSubmit} onSearch={search} />}
-    {view === "detail" && <Detail setView={setView} toast={showToast} user={user} requireLogin={requireLogin} localCase={localCase} localVideoUrl={localVideoUrl} viewingLocal={viewingLocal} selectedTitle={selectedCaseTitle} />}
+    {view === "detail" && <Detail toast={showToast} user={user} requireLogin={requireLogin} localCase={localCase} localVideoUrl={localVideoUrl} viewingLocal={viewingLocal} selectedTitle={selectedCaseTitle} />}
     {view === "ranking" && <Ranking user={user} />}
     {view === "guide" && <Guide />}
     {view === "search" && <SearchResults query={searchQuery} openDetail={openDetail} localCase={localCase} />}
