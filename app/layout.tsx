@@ -21,8 +21,8 @@ export const metadata: Metadata = {
     images: ["https://smiinii.github.io/lol.vs/og.png"],
   },
   icons: {
-    icon: "favicon.svg",
-    shortcut: "favicon.svg",
+    icon: [{ url: "https://smiinii.github.io/lol.vs/favicon-v2.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "https://smiinii.github.io/lol.vs/favicon-v2.svg", type: "image/svg+xml" }],
   },
 };
 

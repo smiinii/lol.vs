@@ -68,7 +68,15 @@ img, video { display: block; max-width: 100%; }
 .brand-arc-teal { stroke: var(--teal); }
 .brand-arc-coral { stroke: var(--coral); }
 .brand-play { fill: var(--text); }
-.logo-word { display: inline-flex; align-items: baseline; font-size: 27px; font-weight: 900; letter-spacing: -1.4px; line-height: 1; }
+.logo-word {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", "Avenir Next Rounded", system-ui, sans-serif;
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: -0.8px;
+  line-height: 1;
+}
 .logo-lol, .logo-dot { color: var(--text); }
 .logo-v { color: var(--teal); }
 .logo-s { color: var(--coral); }
