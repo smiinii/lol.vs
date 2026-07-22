@@ -34,7 +34,8 @@ button { color: inherit; }
 button, label { -webkit-tap-highlight-color: transparent; }
 img, video { display: block; max-width: 100%; }
 
-.app-root { min-height: 100vh; }
+.app-root { min-height: 100vh; display: flex; flex-direction: column; }
+.app-root > main { flex: 1 0 auto; }
 .site-header {
   position: sticky;
   top: 0;
@@ -418,10 +419,11 @@ img, video { display: block; max-width: 100%; }
 .submit-notice p { margin: 0; }
 .submit-notice strong { color: #dbe3ec; }
 
-footer { min-height: 155px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 11px; padding: 30px; border-top: 1px solid var(--line-soft); color: var(--muted); text-align: center; }
-footer .logo { font-size: 21px; }
+footer { flex: 0 0 86px; min-height: 86px; display: flex; align-items: center; justify-content: center; gap: 18px; padding: 14px 24px; border-top: 1px solid var(--line-soft); background: rgba(4,11,21,.48); color: var(--muted); text-align: center; }
+footer .logo { font-size: 18px; }
 footer p, footer small { margin: 0; }
-footer small { color: #5f7187; }
+footer p { font-size: 11px; }
+footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); color: #5f7187; font-size: 9px; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 20px; background: rgba(1,6,12,.76); backdrop-filter: blur(8px); }
 .profile-modal { position: relative; width: min(420px, 100%); padding: 38px 32px 30px; border: 1px solid #35465d; border-radius: 16px; background: #0f1b2b; box-shadow: 0 35px 90px rgba(0,0,0,.5); text-align: center; }
 .modal-close { position: absolute; right: 14px; top: 10px; border: 0; background: transparent; color: #8292a7; cursor: pointer; font-size: 26px; }
@@ -598,10 +600,9 @@ footer small { color: #5f7187; }
 .guide-intro p { position: relative; z-index: 1; max-width: 600px; margin: 0; color: #a9b5c4; font-size: 14px; line-height: 1.8; }
 .guide-ad-badges { position: relative; z-index: 1; display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
 .guide-ad-badges span { padding: 7px 10px; border: 1px solid rgba(45,212,191,.22); border-radius: 20px; background: rgba(7,17,31,.58); color: #a9c8cc; font-size: 10px; font-weight: 750; }
-.guide-flow { margin-top: 40px; }
-.guide-flow-title { margin-bottom: 16px; }
-.guide-flow-title span { color: var(--teal); font-size: 11px; font-weight: 900; letter-spacing: 1px; }
-.guide-flow-title h2 { margin: 7px 0 0; font-size: 26px; font-weight: 900; letter-spacing: -.7px; }
+.guide-flow { margin-top: 26px; }
+.guide-flow-title { margin-bottom: 13px; }
+.guide-flow-title h2 { margin: 0; font-size: 24px; font-weight: 900; letter-spacing: -.7px; }
 .guide-steps { margin-top: 0; }
 .guide-steps article { min-height: 230px; padding: 25px; transition: border-color .18s ease, transform .18s ease; }
 .guide-steps article:hover { transform: translateY(-3px); border-color: rgba(45,212,191,.42); }
@@ -744,6 +745,9 @@ footer small { color: #5f7187; }
   .site-header nav button { display: block; padding: 0 7px; font-size: 10px; }
   .site-header nav button.active::after { left: 7px; right: 7px; }
   .login-button { padding: 0 12px; }
+  footer { flex-basis: 104px; min-height: 104px; flex-direction: column; gap: 5px; padding: 12px; }
+  footer p { font-size: 10px; }
+  footer small { padding-left: 0; border-left: 0; font-size: 8px; }
   .uploaded-case-banner { grid-template-columns: 92px 1fr; padding: 9px; }
   .uploaded-case-banner > b { display: none; }
   .uploaded-thumb { height: 66px; }
