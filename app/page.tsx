@@ -335,9 +335,9 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   return (
     <main className="page-shell detail-layout">
       <section className="detail-main">
-        <div className="detail-title-row"><div className="detail-title"><span><i /> 판결 진행 중</span><h1>{title}</h1></div><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button></div>
+        <div className="detail-title-row"><div className="detail-title"><h1>{title}</h1></div><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button></div>
+        <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={viewingLocal} /></div><span className="post-view-count">조회수 <b>3,842</b></span></div>
         <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
-        <div className="video-author-row"><div className="author"><span className="avatar small">{author[0]}</span><strong>{author}</strong><VerifiedBadge tier={tier} demo={viewingLocal} /></div><div>조회 3,842 · 댓글 {commentTotal}</div></div>
 
         <section className="comments-section">
           <div className="comments-heading"><div><h2>댓글 <b>{commentTotal}</b></h2><span>인증 티어 · 선택한 판결 공개</span></div><button onClick={() => { if (!user) requireLogin(); else setComposerOpen(!composerOpen); }}>{composerOpen ? "닫기" : "댓글 쓰기"}</button></div>
@@ -360,7 +360,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
 
       <aside className="vote-rail">
         <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>현재 판결</h2><VoteBar a={result.a} b={result.b} /><p className="vote-hint">댓글을 등록할 때 선택한 판결이 투표에 함께 반영됩니다.</p>{vote && <p className="my-vote">내 판결: <b>{vote} 잘못</b></p>}</div></section>
-        <section className="side-claims"><div className="side-claims-head"><div><span>사건 입장</span><h2>A측 · B측 주장</h2></div><small>작성자가 등록한 내용</small></div><article className="side-claim side-claim-a"><b>A</b><div><h3>A측 주장</h3><p>{aClaim}</p></div></article><article className="side-claim side-claim-b"><b>B</b><div><h3>B측 주장</h3><p>{bClaim}</p></div></article></section>
+        <section className="positions-card"><header><div><h2>양측 주장</h2><p>게시물 작성자가 정리한 입장입니다.</p></div><span><b>A</b><i>VS</i><em>B</em></span></header><article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article><div className="position-divider"><span>VS</span></div><article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article></section>
         <section className="guide-card"><h2>판결 가이드</h2><ul><li>객관적인 장면을 기준으로 판단해 주세요.</li><li>댓글에는 선택한 판결과 판단 근거가 함께 공개됩니다.</li><li>비난보다 다음 플레이에 도움 되는 피드백을 남겨 주세요.</li></ul></section>
       </aside>
       {reportTarget && <ReportModal target={reportTarget} close={() => setReportTarget(null)} onSubmit={(reason) => { const target = reportTarget; setReportTarget(null); toast(`${target} 신고가 접수되었습니다: ${reason}`); }} />}
