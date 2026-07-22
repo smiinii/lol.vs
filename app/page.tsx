@@ -49,14 +49,22 @@ const compactCases = [
   { title: "첫 용을 포기하고 유충을 택한 교환, 손해인가요?", author: "오브젝트계산", tier: "에메랄드 III", category: "일반게임", meta: "14시간 전", time: "마감까지 6시간", a: 47, b: 53, comments: 58, clip: "00:32", image: asset("/media/gameplay-detail.png") },
   { title: "텔레포트가 있는데도 한타에 늦은 탑, 고의적인 건가요?", author: "사이드운영", tier: "플래티넘 III", category: "파티랭크", meta: "15시간 전", time: "마감까지 5시간", a: 69, b: 31, comments: 83, clip: "00:35", image: asset("/media/gameplay-feed.png") },
   { title: "마지막 한타에서 원딜을 지키지 않은 서폿 판단", author: "원딜지켜줘", tier: "다이아몬드 IV", category: "솔로랭크", meta: "16시간 전", time: "마감까지 4시간", a: 38, b: 62, comments: 112, clip: "00:41", image: asset("/media/gameplay-detail.png") },
+  { title: "상대 텔 위치를 놓친 미드, 콜을 안 한 탑 책임도 있나요?", author: "미아핑세번", tier: "에메랄드 II", category: "솔로랭크", meta: "17시간 전", time: "마감까지 3시간", a: 54, b: 46, comments: 49, clip: "00:27", image: asset("/media/gameplay-feed.png") },
+  { title: "용을 앞두고 귀환한 원딜, 오브젝트 포기 판단이 맞나요?", author: "템은사야지", tier: "플래티넘 I", category: "파티랭크", meta: "18시간 전", time: "마감까지 3시간", a: 36, b: 64, comments: 62, clip: "00:30", image: asset("/media/gameplay-detail.png") },
+  { title: "유리한 한타 뒤 바론 대신 억제기를 민 선택", author: "운영토론회", tier: "다이아몬드 III", category: "일반게임", meta: "19시간 전", time: "마감까지 2시간", a: 61, b: 39, comments: 88, clip: "00:35", image: asset("/media/gameplay-feed.png") },
+  { title: "레드 양보를 거절한 정글, 성장 차이면 정당한가요?", author: "버프는공유", tier: "에메랄드 IV", category: "솔로랭크", meta: "20시간 전", time: "마감까지 2시간", a: 43, b: 57, comments: 71, clip: "00:23", image: asset("/media/gameplay-detail.png") },
+  { title: "사이드 압박 중 본대가 교전한 상황, 합류가 늦었나요?", author: "스플릿장인", tier: "다이아몬드 II", category: "파티랭크", meta: "21시간 전", time: "마감까지 1시간", a: 72, b: 28, comments: 93, clip: "00:39", image: asset("/media/gameplay-feed.png") },
+  { title: "상대 궁극기를 뺀 뒤 바로 재진입한 콜, 성급했나요?", author: "쿨타임체크", tier: "플래티넘 II", category: "일반게임", meta: "22시간 전", time: "마감까지 1시간", a: 48, b: 52, comments: 56, clip: "00:28", image: asset("/media/gameplay-detail.png") },
+  { title: "첫 갱 실패 뒤 같은 라인을 다시 간 정글 판단", author: "한번만더", tier: "골드 I", category: "솔로랭크", meta: "23시간 전", time: "마감까지 58분", a: 29, b: 71, comments: 84, clip: "00:26", image: asset("/media/gameplay-feed.png") },
+  { title: "한타 승리 후 귀환 핑을 무시한 추격, 누구 콜이 문제였나요?", author: "집에갈시간", tier: "에메랄드 I", category: "파티랭크", meta: "1일 전", time: "마감까지 42분", a: 65, b: 35, comments: 99, clip: "00:32", image: asset("/media/gameplay-detail.png") },
 ];
 
 const weeklyPosts = [
-  ["바론 스틸, 이건 누구 잘못?", "댓글 212 · 투표 1.2만"],
-  ["탑 다이브 교환, 합리적인 선택?", "댓글 158 · 투표 8,745"],
-  ["용 한타 진입 타이밍 논란", "댓글 134 · 투표 6,312"],
-  ["미드 로밍 vs 라인 손해", "댓글 98 · 투표 5,102"],
-  ["정글 동선 꼬임, 누구 책임?", "댓글 87 · 투표 4,210"],
+  { title: "바론 스틸, 이건 누구 잘못?", meta: "댓글 212 · 투표 1.2만", trend: "up", delta: 2 },
+  { title: "탑 다이브 교환, 합리적인 선택?", meta: "댓글 158 · 투표 8,745", trend: "down", delta: 1 },
+  { title: "용 한타 진입 타이밍 논란", meta: "댓글 134 · 투표 6,312", trend: "up", delta: 1 },
+  { title: "미드 로밍 vs 라인 손해", meta: "댓글 98 · 투표 5,102", trend: "same", delta: 0 },
+  { title: "정글 동선 꼬임, 누구 책임?", meta: "댓글 87 · 투표 4,210", trend: "down", delta: 2 },
 ];
 
 const commentsSeed: CommentItem[] = [
@@ -171,14 +179,20 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const [category, setCategory] = useState("전체");
   const [page, setPage] = useState(1);
   const [searchText, setSearchText] = useState("");
+  const [popularCycle, setPopularCycle] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setPopularCycle((cycle) => cycle + 1), 30 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
   const filtered = compactCases.filter((item) => category === "전체" || item.category === category);
-  const pageCount = Math.max(1, Math.ceil(filtered.length / 4));
-  const pageItems = filtered.slice((page - 1) * 4, page * 4);
+  const pageCount = Math.max(1, Math.ceil(filtered.length / 6));
+  const pageItems = filtered.slice((page - 1) * 6, page * 6);
+  const popularPosts = popularCycle % 2 === 0 ? weeklyPosts : [weeklyPosts[2], weeklyPosts[0], weeklyPosts[1], weeklyPosts[4], weeklyPosts[3]];
   const showLocal = localCase && (category === "전체" || localCase.category === category);
   return (
     <main className="page-shell home-layout">
       <section className="feed-column">
-        <div className="home-title-row compact-title"><div><h1>억울한 장면, 함께 판결합니다</h1><p>티어가 인증된 플레이어의 투표와 근거 있는 피드백을 확인해 보세요.</p></div><div className="home-primary-actions"><form className="home-search" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="사건·커뮤니티 검색" aria-label="사건과 커뮤니티 검색" /><button type="submit">검색</button></form><button className="primary-button home-submit" onClick={onSubmit}>＋ 사건 제보</button></div></div>
+        <div className="home-title-row compact-title"><div className="home-brand-copy"><span className="home-kicker"><i /> LOL 플레이 판결소</span><h1><b>억울한 장면,</b><em>함께 판결합니다</em></h1><p>티어가 인증된 플레이어의 투표와 근거 있는 피드백을 확인해 보세요.</p><div className="home-brand-tags"><span>◆ 티어 인증</span><span>● 장면 중심</span><span>VS 근거 피드백</span></div></div><div className="home-primary-actions"><form className="home-search" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="사건·커뮤니티 검색" aria-label="사건과 커뮤니티 검색" /><button type="submit">검색</button></form><button className="home-write-button" onClick={onSubmit}><span>＋</span> 글쓰기</button></div></div>
         <div className="toolbar">
           <div className="category-tabs" role="tablist" aria-label="게임 유형">
             {["전체", "솔로랭크", "파티랭크", "일반게임"].map((item) => <button key={item} className={category === item ? "selected" : ""} onClick={() => { setCategory(item); setPage(1); }}>{item}</button>)}
@@ -210,9 +224,9 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
       </section>
 
       <aside className="right-rail">
-        <section className="rail-card hot-card"><h2><span>◆</span> 주간 인기 글</h2><ol>{weeklyPosts.map(([title, meta], index) => <li key={title}><button onClick={() => openDetail(false, title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span><strong>{title}</strong><small>{meta}</small></span></button></li>)}</ol></section>
+        <section className="rail-card hot-card"><div className="hot-card-head"><div><span><i /> LIVE RANK</span><h2>주간 인기 글</h2></div><small>30분마다 업데이트</small></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol><div className="hot-update-note"><span>↻</span><p><b>다음 갱신까지 30분 이내</b><small>투표·댓글 활동을 반영합니다</small></p></div></section>
         <section className="rail-card"><h2>인증 티어 분포 <small>ⓘ</small></h2><div className="tier-bar"><span /><span /><span /><span /><span /></div><div className="tier-labels"><span>12%<small>아이언–골드</small></span><span>28%<small>플래티넘</small></span><span>31%<small>에메랄드</small></span><span>19%<small>다이아</small></span><span>8%<small>마스터+</small></span></div><p>로그인 데모에서는 선택한 티어가 데모 인증으로 표시됩니다.</p></section>
-        <section className="rail-card principles"><h2>좋은 판결은 이렇게 만듭니다</h2><p><b>◎</b><span><strong>선택에 근거 남기기</strong><small>어떤 장면을 봤는지 타임스탬프와 함께 적습니다.</small></span></p><p><b>◇</b><span><strong>공격보다 개선점</strong><small>다음 플레이에 도움 되는 의견을 권장합니다.</small></span></p><p><b>◉</b><span><strong>악의적 이용 신고</strong><small>신고 사유를 선택해 운영 검토를 요청할 수 있습니다.</small></span></p></section>
+        <section className="rail-card principles brand-principles"><div className="principles-head"><span>VS</span><div><small>LOL.VS STANDARD</small><h2>좋은 판결은<br />이렇게 만듭니다</h2></div></div><div className="principle-list"><article><b>01</b><span><strong>장면을 정확히</strong><small>타임스탬프와 플레이 상황을 함께 봅니다.</small></span></article><article><b>02</b><span><strong>감정보다 근거를</strong><small>잘잘못과 다음 선택을 구분해 말합니다.</small></span></article><article><b>03</b><span><strong>사람보다 플레이를</strong><small>공격 대신 개선할 수 있는 의견을 남깁니다.</small></span></article></div><div className="principles-sign"><i /><span>판결은 선명하게, 피드백은 따뜻하게.</span><i /></div></section>
       </aside>
     </main>
   );
@@ -347,7 +361,21 @@ function Community({ user, requireLogin, toast }: { user: User | null; requireLo
   const write = () => { if (!user) return requireLogin(); setComposer(true); };
   const addPost = (event: FormEvent) => { event.preventDefault(); if (!user || !title.trim() || !content.trim()) return; setPosts([{ category: postCategory, title: title.trim(), author: user.nickname, tier: user.tier, comments: 0, views: 1 }, ...posts]); setTitle(""); setContent(""); setPostCategory("자유"); setComposer(false); toast("커뮤니티 글을 등록했습니다."); };
   const visiblePosts = posts.filter((post) => tab === "전체" || post.category === tab);
-  return <main className="page-shell section-page"><div className="section-hero"><div><small>COMMUNITY</small><h1>소환사의 라운지</h1><p>판결 밖의 게임 이야기, 질문, 듀오 모집을 자유롭게 나눠보세요.</p></div><button className="primary-button" onClick={write}>글쓰기</button></div><div className="community-layout"><section className="board-card"><div className="board-tabs">{["전체", "자유", "듀오 모집", "패치 토론", "질문"].map((item) => <button key={item} className={tab === item ? "selected" : ""} onClick={() => setTab(item)}>{item}</button>)}</div>{composer && <form className="board-composer" onSubmit={addPost}><select value={postCategory} onChange={(event) => setPostCategory(event.target.value)} aria-label="커뮤니티 글 카테고리">{["자유", "듀오 모집", "패치 토론", "질문"].map((item) => <option key={item}>{item}</option>)}</select><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="글 제목" aria-label="커뮤니티 글 제목" /><textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="함께 이야기할 내용을 적어주세요." aria-label="커뮤니티 글 내용" /><div><button type="button" onClick={() => setComposer(false)}>취소</button><button type="submit">등록</button></div></form>}<div className="board-list">{visiblePosts.map((post, index) => <button key={`${post.title}-${index}`} onClick={() => toast("커뮤니티 게시글을 열었습니다.")}><span className="board-category">{post.category}</span><span><strong>{post.title}</strong><small>{post.author} · {post.tier} 인증</small></span><span><b>댓글 {post.comments}</b><small>조회 {post.views.toLocaleString()}</small></span></button>)}</div></section><aside className="board-side"><section className="rail-card"><h2>커뮤니티 이용 원칙</h2><p>게임 닉네임을 노출하거나 특정 사용자를 공격하지 마세요.</p><p>듀오 모집 시 외부 개인정보 공유에 주의해 주세요.</p></section><section className="rail-card"><h2>지금 많이 보는 주제</h2><div className="topic-tags"><span>#패치노트</span><span>#라인관리</span><span>#듀오모집</span><span>#한타복기</span></div></section></aside></div></main>;
+  return (
+    <main className="page-shell section-page community-page">
+      <div className="community-layout">
+        <section className="board-card">
+          <div className="board-toolbar">
+            <div className="board-tabs">{["전체", "자유", "듀오 모집", "패치 토론", "질문"].map((item) => <button key={item} className={tab === item ? "selected" : ""} onClick={() => setTab(item)}>{item}</button>)}</div>
+            <button className="community-write" onClick={write}>＋ 글쓰기</button>
+          </div>
+          {composer && <form className="board-composer" onSubmit={addPost}><select value={postCategory} onChange={(event) => setPostCategory(event.target.value)} aria-label="커뮤니티 글 카테고리">{["자유", "듀오 모집", "패치 토론", "질문"].map((item) => <option key={item}>{item}</option>)}</select><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="글 제목" aria-label="커뮤니티 글 제목" /><textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="함께 이야기할 내용을 적어주세요." aria-label="커뮤니티 글 내용" /><div><button type="button" onClick={() => setComposer(false)}>취소</button><button type="submit">등록</button></div></form>}
+          <div className="board-list">{visiblePosts.map((post, index) => <button key={`${post.title}-${index}`} onClick={() => toast("커뮤니티 게시글을 열었습니다.")}><span className="board-category">{post.category}</span><span><strong>{post.title}</strong><small>{post.author} · {post.tier} 인증</small></span><span><b>댓글 {post.comments}</b><small>조회 {post.views.toLocaleString()}</small></span></button>)}</div>
+        </section>
+        <aside className="board-side"><section className="rail-card"><h2>커뮤니티 이용 원칙</h2><p>게임 닉네임을 노출하거나 특정 사용자를 공격하지 마세요.</p><p>듀오 모집 시 외부 개인정보 공유에 주의해 주세요.</p></section><section className="rail-card"><h2>지금 많이 보는 주제</h2><div className="topic-tags"><span>#패치노트</span><span>#라인관리</span><span>#듀오모집</span><span>#한타복기</span></div></section></aside>
+      </div>
+    </main>
+  );
 }
 
 function Ranking({ user }: { user: User | null }) {
@@ -359,7 +387,7 @@ function Ranking({ user }: { user: User | null }) {
   if (currentRank && !userIsTopFive) candidates.push(currentRank);
   const match = searched ? candidates.find((item) => item.name.toLowerCase() === query.trim().toLowerCase()) : undefined;
   const frameNames = ["challenger", "grandmaster", "master", "diamond", "emerald"];
-  return <main className="page-shell section-page ranking-page"><div className="section-hero ranking-hero"><div><h1>판별자 랭킹</h1><p>최종 판결 적중, 피드백 공감, 꾸준한 참여를 합산한 순위입니다.</p></div><div className="ranking-crest"><span>◆</span><b>TOP</b><small>VERIFIED</small></div></div><form className="rank-search" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}><div><strong>판별자 검색</strong><span>다른 판별자의 순위와 활동 점수를 찾아보세요.</span></div><label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="판별자 닉네임 검색" /></label><button type="submit">검색</button></form>{searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · 적중률 {match.accuracy}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 판별자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}<section className="score-rules"><div><b>+15</b><span>최종 판결과 일치</span></div><div><b>+1</b><span>피드백 공감 1개</span></div><div><b>+5</b><span>판결 참여 1회당</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section><section className="ranking-card elite-ranking"><div className="ranking-head"><span>순위</span><span>판별자</span><span>적중률</span><span>도움 피드백</span><span>점수</span></div>{rankingSeed.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][index] ?? ""}</span>{index + 1}</b><span className="rank-player"><i className={`rank-frame ${frameNames[index]}`}><b>{row[0][0]}</b></i><span><strong>{row[0]}</strong><small>{row[1]} · 인증</small></span></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}{currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><i className="rank-frame current"><b>{currentRank.name[0]}</b></i><span><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span></span><span>{currentRank.accuracy}</span><span>{currentRank.feedback}</span><strong>{currentRank.points}P</strong></div></>}{!user && <div className="rank-login-note">로그인하면 TOP 5 아래에서 내 순위를 바로 확인할 수 있습니다.</div>}</section></main>;
+  return <main className="page-shell section-page ranking-page"><form className="rank-search rank-search-first" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}><div><strong>판별자 검색</strong><span>다른 판별자의 순위와 활동 점수를 찾아보세요.</span></div><label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="판별자 닉네임 검색" /></label><button type="submit">검색</button></form>{searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · 적중률 {match.accuracy}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 판별자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}<section className="score-rules"><div><b>+15</b><span>최종 판결과 일치</span></div><div><b>+1</b><span>피드백 공감 1개</span></div><div><b>+5</b><span>판결 참여 1회당</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section><section className="ranking-card elite-ranking"><div className="ranking-head"><span>순위</span><span>판별자</span><span>적중률</span><span>도움 피드백</span><span>점수</span></div>{rankingSeed.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][index] ?? ""}</span>{index + 1}</b><span className="rank-player"><i className={`rank-frame ${frameNames[index]}`}><b>{row[0][0]}</b></i><span><strong>{row[0]}</strong><small>{row[1]} · 인증</small></span></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}{currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><i className="rank-frame current"><b>{currentRank.name[0]}</b></i><span><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span></span><span>{currentRank.accuracy}</span><span>{currentRank.feedback}</span><strong>{currentRank.points}P</strong></div></>}{!user && <div className="rank-login-note">로그인하면 TOP 5 아래에서 내 순위를 바로 확인할 수 있습니다.</div>}</section></main>;
 }
 
 function Guide() {
@@ -372,7 +400,7 @@ function SearchResults({ query, openDetail, setView, localCase }: { query: strin
   const cases = [
     ...(localCase ? [{ title: localCase.title, category: localCase.category, local: true }] : []),
     ...compactCases.map((item) => ({ title: item.title, category: item.category, local: false })),
-    ...weeklyPosts.map(([title]) => ({ title, category: "주간 인기", local: false })),
+    ...weeklyPosts.map(({ title }) => ({ title, category: "주간 인기", local: false })),
   ].filter((item, index, array) => item.title.toLowerCase().includes(keyword) && array.findIndex((other) => other.title === item.title) === index);
   const community = communitySeed.filter((item) => `${item.title} ${item.category}`.toLowerCase().includes(keyword));
   return <main className="page-shell section-page search-page"><div className="search-heading"><span>통합 검색</span><h1>“{query}” 검색 결과</h1><p>사건과 커뮤니티 글을 한 번에 찾았습니다.</p></div><section className="search-result-section"><div><h2>사건</h2><b>{cases.length}</b></div>{cases.length ? <div className="search-result-list">{cases.map((item) => <button key={item.title} onClick={() => openDetail(item.local, item.title)}><span>판결</span><strong>{item.title}</strong><small>{item.category} · 사건 열기 →</small></button>)}</div> : <p className="search-none">일치하는 사건이 없습니다.</p>}</section><section className="search-result-section"><div><h2>커뮤니티</h2><b>{community.length}</b></div>{community.length ? <div className="search-result-list">{community.map((item) => <button key={item.title} onClick={() => setView("community")}><span>{item.category}</span><strong>{item.title}</strong><small>{item.author} · 커뮤니티로 이동 →</small></button>)}</div> : <p className="search-none">일치하는 커뮤니티 글이 없습니다.</p>}</section></main>;
