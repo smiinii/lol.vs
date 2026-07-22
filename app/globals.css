@@ -661,22 +661,17 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
 .ranking-crest > span { color: #8ee7ff; font-size: 24px; text-shadow: 0 0 16px #27b9d0; }
 .ranking-crest b { color: #f6d47b; font-size: 16px; letter-spacing: 2px; }
 .ranking-crest small { color: #7fa6bd; font-size: 8px; letter-spacing: 1.6px; }
-.ranking-switch { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 12px; padding: 8px 10px 8px 15px; overflow: visible; border: 1px solid #3a5069; border-radius: 11px; background: linear-gradient(135deg, rgba(37,57,80,.94), rgba(27,44,66,.94)); }
-.ranking-switch-label { color: #91a2b5; font-size: 9px; font-weight: 900; letter-spacing: 1.2px; }
-.ranking-switch > div { display: flex; gap: 4px; padding: 3px; border: 1px solid rgba(255,255,255,.04); border-radius: 8px; background: rgba(7,18,31,.38); }
-.ranking-switch button { position: relative; min-width: 136px; height: 38px; padding: 0 16px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #91a1b4; cursor: pointer; }
-.ranking-switch button b { font-size: 12px; }
-.ranking-switch button.active { border-color: rgba(88,201,190,.36); background: linear-gradient(135deg, rgba(88,201,190,.2), rgba(88,201,190,.08)); color: #baf4ee; }
-.ranking-switch button.judge.active { border-color: rgba(239,129,136,.36); background: linear-gradient(135deg, rgba(239,129,136,.18), rgba(239,129,136,.07)); color: #ffc0c4; }
-.ranking-switch button::after { content: attr(data-tooltip); position: absolute; left: 50%; bottom: -37px; z-index: 20; width: max-content; max-width: 230px; padding: 7px 10px; translate: -50% 4px; border: 1px solid #435a74; border-radius: 7px; background: #13243a; box-shadow: 0 10px 28px rgba(0,0,0,.32); color: #b9c7d5; font-size: 9px; font-weight: 750; letter-spacing: 0; opacity: 0; pointer-events: none; transition: opacity .15s ease, translate .15s ease; }
-.ranking-switch button:hover::after, .ranking-switch button:focus-visible::after { translate: -50% 0; opacity: 1; }
-.rank-search { display: grid; grid-template-columns: minmax(220px,1fr) minmax(280px,420px) 84px; align-items: stretch; gap: 12px; margin-top: 18px; }
-.rank-search-first { margin-top: 0; }
-.rank-search > div { min-height: 66px; display: grid; align-content: center; gap: 4px; padding: 12px 17px; border: 1px solid #455b74; border-radius: 10px; background: linear-gradient(135deg, #293e57, #22364e); }
-.rank-search > div span { color: var(--muted); font-size: 11px; }
-.rank-search label { min-height: 66px; display: flex; align-items: center; gap: 9px; padding: 0 17px; border: 1px solid #455b74; border-radius: 10px; background: linear-gradient(135deg, #293e57, #22364e); color: #9aacbf; }
-.rank-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); }
-.rank-search button { min-height: 66px; border: 1px solid rgba(88,201,190,.48); border-radius: 10px; background: linear-gradient(145deg, rgba(88,201,190,.24), rgba(46,108,111,.22)); color: #a8f0e8; cursor: pointer; font-weight: 900; }
+.ranking-toolbar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 12px; padding: 9px 10px; border: 1px solid #3a5069; border-radius: 11px; background: linear-gradient(135deg, rgba(37,57,80,.94), rgba(27,44,66,.94)); }
+.ranking-tabs { display: flex; gap: 4px; padding: 3px; border: 1px solid rgba(255,255,255,.04); border-radius: 8px; background: rgba(7,18,31,.38); }
+.ranking-tabs button { min-width: 136px; height: 38px; padding: 0 16px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #91a1b4; cursor: pointer; }
+.ranking-tabs button b { font-size: 12px; }
+.ranking-tabs button.active { border-color: rgba(88,201,190,.36); background: linear-gradient(135deg, rgba(88,201,190,.2), rgba(88,201,190,.08)); color: #baf4ee; }
+.ranking-tabs button.judge.active { border-color: rgba(239,129,136,.36); background: linear-gradient(135deg, rgba(239,129,136,.18), rgba(239,129,136,.07)); color: #ffc0c4; }
+.rank-inline-search { width: min(420px, 44vw); display: grid; grid-template-columns: minmax(0,1fr) 70px; }
+.rank-inline-search label { min-width: 0; height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 14px; border: 1px solid #455b74; border-right: 0; border-radius: 8px 0 0 8px; background: rgba(8,20,34,.44); color: #9aacbf; }
+.rank-inline-search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); }
+.rank-inline-search input::placeholder { color: #8292a5; }
+.rank-inline-search button { height: 44px; border: 1px solid rgba(88,201,190,.48); border-radius: 0 8px 8px 0; background: linear-gradient(145deg, rgba(88,201,190,.24), rgba(46,108,111,.22)); color: #a8f0e8; cursor: pointer; font-weight: 900; }
 .rank-result { display: flex; align-items: center; gap: 14px; margin-top: 12px; padding: 17px 20px; border: 1px solid rgba(45,212,191,.42); border-radius: 12px; background: linear-gradient(90deg, rgba(45,212,191,.11), rgba(11,23,39,.9)); }
 .rank-result > b { min-width: 62px; color: var(--teal); font-size: 22px; }
 .rank-result > div { display: grid; gap: 4px; }
@@ -901,7 +896,8 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
   .score-rules { grid-template-columns: 1fr 1fr; }
   .ranking-card { overflow-x: auto; }
   .ranking-head, .ranking-row { min-width: 760px; }
-  .rank-search { grid-template-columns: 1fr 1fr auto; }
+  .ranking-toolbar { align-items: stretch; }
+  .rank-inline-search { width: min(380px, 42vw); }
   .inline-verdict-body { grid-template-columns: 160px minmax(0,1fr); }
   .inline-resolved-verdict .recognition-button { grid-column: 1 / -1; min-height: 44px; }
 }
@@ -981,9 +977,10 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
   .section-hero { display: grid; min-height: auto; padding: 22px 18px; }
   .section-hero .primary-button { width: 100%; min-height: 46px; }
   .score-rules, .guide-steps, .guide-grid, .policy-cards, .usage-steps { grid-template-columns: 1fr; }
-  .ranking-switch { align-items: stretch; flex-direction: column; gap: 7px; }
-  .ranking-switch > div { width: 100%; }
-  .ranking-switch button { flex: 1; min-width: 0; }
+  .ranking-toolbar { align-items: stretch; flex-direction: column; gap: 8px; }
+  .ranking-tabs { width: 100%; }
+  .ranking-tabs button { flex: 1; min-width: 0; }
+  .rank-inline-search { width: 100%; }
   .policy-cards article { min-height: auto; border-right: 0; border-bottom: 1px solid var(--line-soft); }
   .policy-cards article:last-child { border-bottom: 0; }
   .guide-steps article { min-height: 170px; }
@@ -993,8 +990,6 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
   .judgement-choice { flex-wrap: wrap; }
   .reply-form { display: grid; }
   .reply-form button { min-height: 38px; }
-  .rank-search { grid-template-columns: 1fr; }
-  .rank-search button { width: 100%; }
   .rank-result { align-items: flex-start; flex-wrap: wrap; }
   .rank-result em { width: 100%; margin-left: 76px; }
   .guide-intro { min-height: 220px; padding: 28px 22px; }

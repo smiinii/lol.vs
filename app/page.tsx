@@ -510,17 +510,16 @@ function Ranking({ user }: { user: User | null }) {
   const changeMode = (nextMode: "personal" | "judge") => { setMode(nextMode); setSearched(false); setQuery(""); setRankingPage(1); };
   return (
     <main className="page-shell section-page ranking-page">
-      <div className="ranking-switch" role="tablist" aria-label="랭킹 종류">
-        <span className="ranking-switch-label">랭킹 보기</span>
-        <div>
-          <button className={mode === "personal" ? "active personal" : "personal"} data-tooltip="투표 참여 · 최종 합의 · 근거 공감" aria-label="개인 랭킹: 투표 참여, 최종 합의, 근거 공감 기준" onClick={() => changeMode("personal")}><b>개인 랭킹</b></button>
-          <button className={mode === "judge" ? "active judge" : "judge"} data-tooltip="공식 판결 · 판결 근거 인정" aria-label="판결자 랭킹: 공식 판결, 판결 근거 인정 기준" onClick={() => changeMode("judge")}><b>판결자 랭킹</b></button>
+      <div className="ranking-toolbar">
+        <div className="ranking-tabs" role="tablist" aria-label="랭킹 종류">
+          <button role="tab" aria-selected={mode === "personal"} className={mode === "personal" ? "active personal" : "personal"} onClick={() => changeMode("personal")}><b>개인 랭킹</b></button>
+          <button role="tab" aria-selected={mode === "judge"} className={mode === "judge" ? "active judge" : "judge"} onClick={() => changeMode("judge")}><b>판결자 랭킹</b></button>
         </div>
+        <form className="rank-inline-search" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}>
+          <label><span aria-hidden="true">⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임으로 찾기" aria-label="랭킹에서 닉네임으로 찾기" /></label>
+          <button type="submit">검색</button>
+        </form>
       </div>
-      <form className="rank-search" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}>
-        <div><strong>{mode === "personal" ? "플레이어 검색" : "판결자 검색"}</strong><span>{mode === "personal" ? "투표와 근거 활동 순위를 찾아보세요." : "공식 판결과 인정 점수를 찾아보세요."}</span></div>
-        <label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="랭킹 닉네임 검색" /></label><button type="submit">검색</button>
-      </form>
       {searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · {mode === "personal" ? `투표 / 합의 ${match.metricA}` : `받은 인정 ${match.metricB}`}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 사용자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}
       {mode === "personal" ? <section className="score-rules personal-score-rules"><div><b>+5</b><span>의견 투표 참여</span></div><div><b>+15</b><span>최종 합의와 일치</span></div><div><b>+1</b><span>판단 근거 공감</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section> : <section className="score-rules judge-score-rules"><div><b>+5</b><span>공식 판결 참여</span></div><div><b>+1</b><span>판결·근거 인정</span></div><div><b>-100</b><span>신고 제재 확정</span></div><div><b>OUT</b><span>누적 -100점<br />자격 박탈 · 판결 금지</span></div></section>}
       <section className="ranking-card elite-ranking">
