@@ -88,6 +88,29 @@ const commentsSeed: CommentItem[] = [
     likes: 138,
     replies: [],
   },
+  ...Array.from({ length: 18 }, (_, index) => {
+    const names = ["강타확인", "라인관리중", "와드두개", "한타천천히", "사이드장인", "핑찍고간다"];
+    const tiers = ["에메랄드 II", "플래티넘 I", "다이아몬드 IV", "골드 I", "에메랄드 IV", "플래티넘 III"];
+    const texts = [
+      "이 장면만 보면 미드 합류보다 바론을 먼저 시작한 콜이 더 위험해 보입니다.",
+      "라인 상황까지 같이 보면 한 명의 잘못으로 보기 어렵고, 시작 핑이 핵심인 것 같아요.",
+      "상대 정글 위치가 보이지 않았기 때문에 버스트보다 입구 차단을 먼저 했어야 합니다.",
+      "결과와 별개로 24분대 인원 배치를 보면 한 번 기다리는 선택이 더 안정적이었습니다.",
+      "미드도 늦었지만 팀이 빠질 수 있는 타이밍이 두 번 있었던 점을 같이 봐야 합니다.",
+      "다음에는 오브젝트 체력보다 아군 합류 상태를 먼저 확인하면 같은 실수를 줄일 수 있어요.",
+    ];
+    const evidence = ["24:18 미드가 강가에 도착하기 전에 바론 체력이 절반 아래였습니다.", "23:52 라인을 정리하는 동안 별도의 합류 핑이 확인되지 않습니다.", "24:05 상대 정글 위치가 사라진 뒤에도 시야 확보 없이 진행했습니다."];
+    return {
+      id: index + 20,
+      name: names[index % names.length],
+      tier: tiers[index % tiers.length],
+      text: texts[index % texts.length],
+      evidence: evidence[index % evidence.length],
+      vote: index % 3 === 0 ? "B" : "A" as VoteSide,
+      likes: 97 - index * 3,
+      replies: index % 4 === 0 ? [{ id: index + 200, name: "복기하는사람", tier: "다이아몬드 II", text: "이 부분은 저도 영상 다시 보니 같은 생각입니다. 핑이 조금만 빨랐으면 달라졌을 것 같아요." }] : [],
+    };
+  }),
 ];
 
 const rankingSeed = [
@@ -243,6 +266,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [replyText, setReplyText] = useState("");
   const [reportTarget, setReportTarget] = useState<string | null>(null);
+  const [commentPage, setCommentPage] = useState(1);
+  const [composerOpen, setComposerOpen] = useState(false);
   const result = vote === "A" ? { a: 59, b: 41 } : { a: 58, b: 42 };
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
   const aClaim = viewingLocal && localCase ? localCase.aClaim : "미드가 바론 시야를 확보하지 않고 라인을 밀다가 합류했습니다. 미드의 지도 관리 소홀과 합류 지연이 원인입니다.";
@@ -251,6 +276,9 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const tier = viewingLocal && localCase ? localCase.tier : "다이아몬드 IV";
   const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : asset("/media/demo.mp4");
   const voteStorageKey = user ? `lolvs-vote:${user.nickname}:${title}` : "";
+  const commentTotal = 125 + Math.max(0, comments.length - commentsSeed.length);
+  const commentPageCount = Math.max(1, Math.ceil(comments.length / 5));
+  const visibleComments = comments.slice((commentPage - 1) * 5, commentPage * 5);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -276,6 +304,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
       localStorage.setItem(voteStorageKey, selectedVote);
     }
     setComments([item, ...comments]);
+    setCommentPage(1);
+    setComposerOpen(false);
     setFeedback("");
     setEvidence("");
     toast("판결과 피드백을 함께 등록했습니다.");
@@ -307,27 +337,24 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
       <section className="detail-main">
         <div className="detail-title-row"><div className="detail-title"><span><i /> 판결 진행 중</span><h1>{title}</h1></div><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button></div>
         <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
-        <div className="video-author-row"><div className="author"><span className="avatar small">{author[0]}</span><strong>{author}</strong><VerifiedBadge tier={tier} demo={viewingLocal} /></div><div>조회 3,842 · 댓글 {comments.length + 126}</div></div>
+        <div className="video-author-row"><div className="author"><span className="avatar small">{author[0]}</span><strong>{author}</strong><VerifiedBadge tier={tier} demo={viewingLocal} /></div><div>조회 3,842 · 댓글 {commentTotal}</div></div>
 
         <section className="comments-section">
-          <div className="comments-heading"><h2>댓글 {comments.length + 126}</h2><span>투표 선택과 판단 근거 공개</span></div>
-          {user ? (
-            <form className="comment-composer" onSubmit={addComment}>
-              <div className="comment-compose-top"><div><strong>판결과 피드백 남기기</strong><small>{vote ? `내 판결은 ${vote} 잘못으로 등록되어 있습니다.` : "댓글을 등록할 때 선택한 판결도 함께 반영됩니다."}</small></div><div className="judgement-choice"><button type="button" disabled={!!vote} className={commentVote === "A" ? "selected a" : "a"} onClick={() => setCommentVote("A")}>A 잘못</button><button type="button" disabled={!!vote} className={commentVote === "B" ? "selected b" : "b"} onClick={() => setCommentVote("B")}>B 잘못</button></div></div><div className="comment-fields"><input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="예: 24:18 미드 합류 전 바론을 시작함" aria-label="판단 근거" /><textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="다음 플레이에 도움이 될 피드백을 남겨주세요." aria-label="피드백 작성" /></div><div className="comment-submit-row"><span>선택한 판결과 근거는 댓글에 공개됩니다.</span><button type="submit">댓글 등록</button></div>
-            </form>
-          ) : <button className="login-lock" onClick={requireLogin}>로그인하고 판결 근거와 피드백 남기기 →</button>}
-          {comments.map((item, index) => (
-            <article className="comment" key={item.id}>
+          <div className="comments-heading"><div><h2>댓글 <b>{commentTotal}</b></h2><span>인증 티어 · 선택한 판결 공개</span></div><button onClick={() => { if (!user) requireLogin(); else setComposerOpen(!composerOpen); }}>{composerOpen ? "닫기" : "댓글 쓰기"}</button></div>
+          {composerOpen && user && <form className="comment-composer compact-composer" onSubmit={addComment}><div className="judgement-choice"><button type="button" disabled={!!vote} className={commentVote === "A" ? "selected a" : "a"} onClick={() => setCommentVote("A")}>A 잘못</button><button type="button" disabled={!!vote} className={commentVote === "B" ? "selected b" : "b"} onClick={() => setCommentVote("B")}>B 잘못</button></div><div className="comment-fields"><input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="판단 근거 또는 타임스탬프" aria-label="판단 근거" /><textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="댓글을 입력하세요." aria-label="댓글 작성" /></div><button className="compact-comment-submit" type="submit">등록</button></form>}
+          {visibleComments.map((item, index) => (
+            <article className="comment parent-comment" key={item.id}>
               <span className="comment-avatar">{item.name[0]}</span>
               <div>
-                <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} /><span className={`comment-vote vote-${item.vote.toLowerCase()}`}>{item.vote} 잘못 선택</span><small>{index + 1}시간 전</small></div>
+                <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} /><span className={`comment-vote vote-${item.vote.toLowerCase()}`}>{item.vote} 잘못</span><small>{(commentPage - 1) * 5 + index + 1}시간 전</small></div>
                 <p>{item.text}</p><blockquote><b>판단 근거</b>{item.evidence}</blockquote>
                 <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button><button onClick={() => { if (!user) requireLogin(); else setReplyingTo(replyingTo === item.id ? null : item.id); }}>답글 {item.replies.length ? item.replies.length : ""}</button><button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
-                {item.replies.map((reply) => <div className="reply" key={reply.id}><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} /></span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
+                {item.replies.map((reply) => <div className="reply" key={reply.id}><span className="reply-arrow">↳</span><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><em>답글</em><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} /></span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
                 {replyingTo === item.id && <div className="reply-form"><input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`${item.name}님에게 답글 남기기`} aria-label="대댓글 작성" /><button onClick={() => addReply(item.id)}>등록</button></div>}
               </div>
             </article>
           ))}
+          <nav className="comment-pagination" aria-label="댓글 페이지">{Array.from({ length: commentPageCount }, (_, index) => index + 1).map((number) => <button key={number} className={commentPage === number ? "active" : ""} onClick={() => setCommentPage(number)}>{number}</button>)}</nav>
         </section>
       </section>
 
