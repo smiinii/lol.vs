@@ -20,8 +20,8 @@ type CommentItem = {
   name: string;
   tier: string;
   text: string;
-  evidence: string;
-  vote: VoteSide;
+  evidence?: string;
+  vote?: VoteSide;
   likes: number;
   replies: Reply[];
 };
@@ -32,6 +32,21 @@ const USER_KEY = "lolvs-demo-user";
 const CASE_KEY = "lolvs-local-case";
 const VIDEO_KEY = "latest-case-video";
 
+const tierLevel = (tier: string) => {
+  if (tier.includes("챌린저")) return 9;
+  if (tier.includes("그랜드마스터")) return 8;
+  if (tier.includes("마스터")) return 7;
+  if (tier.includes("다이아몬드")) return 6;
+  if (tier.includes("에메랄드")) return 5;
+  if (tier.includes("플래티넘")) return 4;
+  if (tier.includes("골드")) return 3;
+  if (tier.includes("실버")) return 2;
+  if (tier.includes("브론즈")) return 1;
+  return 0;
+};
+
+const isMasterPlus = (tier: string) => tierLevel(tier) >= 7;
+
 const compactCases = [
   { title: "바론 스틸 시도, 이건 미드 잘못인가요?", author: "정글은못말려", tier: "다이아몬드 IV", category: "솔로랭크", meta: "25분 전", time: "마감까지 1일 9시간", a: 71, b: 29, comments: 96, clip: "00:25", image: asset("/media/gameplay-detail.png") },
   { title: "라인전 푸시 후 다이브, 누구 잘못일까요?", author: "탑은외로워", tier: "플래티넘 I", category: "파티랭크", meta: "1시간 전", time: "마감까지 20시간", a: 45, b: 55, comments: 73, clip: "00:28", image: asset("/media/gameplay-feed.png") },
@@ -41,7 +56,7 @@ const compactCases = [
   { title: "상대 정글 위치를 알았는데도 카정 간 선택, 무리였나요?", author: "블루내꺼", tier: "플래티넘 II", category: "솔로랭크", meta: "6시간 전", time: "마감까지 14시간", a: 41, b: 59, comments: 68, clip: "00:29", image: asset("/media/gameplay-detail.png") },
   { title: "미드 로밍을 따라가지 않은 게 잘못인가요?", author: "라인먼저", tier: "에메랄드 IV", category: "내전", meta: "7시간 전", time: "마감까지 13시간", a: 52, b: 48, comments: 39, clip: "00:26", image: asset("/media/gameplay-feed.png") },
   { title: "한타 전 와드하러 간 서폿, 팀 이탈로 봐야 하나요?", author: "시야점수왕", tier: "다이아몬드 III", category: "솔로랭크", meta: "8시간 전", time: "마감까지 12시간", a: 28, b: 72, comments: 105, clip: "00:38", image: asset("/media/gameplay-detail.png") },
-  { title: "탑 억제기 대신 용 합류, 이 판단이 맞았을까요?", author: "운영이먼저", tier: "마스터 24P", category: "파티랭크", meta: "9시간 전", time: "마감까지 11시간", a: 76, b: 24, comments: 117, clip: "00:33", image: asset("/media/gameplay-feed.png") },
+  { title: "탑 억제기 대신 용 합류, 이 판단이 맞았을까요?", author: "운영이먼저", tier: "다이아몬드 I", category: "파티랭크", meta: "9시간 전", time: "마감까지 11시간", a: 76, b: 24, comments: 117, clip: "00:33", image: asset("/media/gameplay-feed.png") },
   { title: "정글이 콜한 다이브를 거절한 미드가 잘못인가요?", author: "핑은찍었어", tier: "플래티넘 I", category: "솔로랭크", meta: "10시간 전", time: "마감까지 10시간", a: 49, b: 51, comments: 64, clip: "00:27", image: asset("/media/gameplay-detail.png") },
   { title: "포킹 조합인데 먼저 진입한 탱커, 누구 콜이 맞나요?", author: "한타각보는중", tier: "에메랄드 II", category: "내전", meta: "11시간 전", time: "마감까지 9시간", a: 32, b: 68, comments: 77, clip: "00:36", image: asset("/media/gameplay-feed.png") },
   { title: "바론 버스트 중 상대 정글을 막지 못한 책임은 누구에게?", author: "강타는있음", tier: "다이아몬드 I", category: "파티랭크", meta: "12시간 전", time: "마감까지 8시간", a: 66, b: 34, comments: 91, clip: "00:30", image: asset("/media/gameplay-detail.png") },
@@ -114,11 +129,11 @@ const commentsSeed: CommentItem[] = [
 ];
 
 const rankingSeed = [
-  ["판결요정", "마스터 132P", "87%", "42개", "9,840"],
-  ["맵리딩중", "다이아몬드 I", "84%", "39개", "9,210"],
-  ["한타복기왕", "에메랄드 II", "82%", "51개", "8,760"],
-  ["와드먼저", "다이아몬드 IV", "79%", "34개", "8,110"],
-  ["천천히보자", "플래티넘 I", "78%", "46개", "7,820"],
+  ["판결요정", "챌린저 942P", "87%", "42개", "9,840"],
+  ["맵리딩중", "그랜드마스터 612P", "84%", "39개", "9,210"],
+  ["한타복기왕", "마스터 438P", "82%", "51개", "8,760"],
+  ["와드먼저", "마스터 276P", "79%", "34개", "8,110"],
+  ["천천히보자", "마스터 154P", "78%", "46개", "7,820"],
 ];
 
 function openVideoDb(): Promise<IDBDatabase> {
@@ -262,7 +277,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
 
       <aside className="right-rail">
         <section className="rail-card hot-card"><div className="hot-card-head"><div><h2><span>실시간</span> 인기 글</h2><p>30분마다 참여 변화를 반영합니다</p></div><b className="hot-refresh-badge"><i /> 갱신 중</b></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol></section>
-        <section className="rail-card tier-card"><div className="tier-card-head"><div><h2>인증 티어 분포</h2><p>판결 참여자 기준</p></div><b>12,480명</b></div><div className="tier-bar" aria-label="인증 티어 참여자 분포"><span /><span /><span /><span /><span /></div><div className="tier-labels"><span>12%<small>아이언–골드</small></span><span>28%<small>플래티넘</small></span><span>31%<small>에메랄드</small></span><span>19%<small>다이아</small></span><span>8%<small>마스터+</small></span></div><div className="tier-summary"><i>✓</i><span>인증된 티어의 판결만 집계합니다</span></div></section>
+        <section className="rail-card tier-card"><div className="tier-card-head"><div><h2>인증 티어 분포</h2><p>의견 참여자 기준</p></div><b>12,480명</b></div><div className="tier-bar" aria-label="인증 티어 참여자 분포"><span /><span /><span /><span /><span /></div><div className="tier-labels"><span>12%<small>아이언–골드</small></span><span>28%<small>플래티넘</small></span><span>31%<small>에메랄드</small></span><span>19%<small>다이아</small></span><span>8%<small>마스터+</small></span></div><div className="tier-summary"><i>✓</i><span>인증 사용자의 의견 참여만 집계합니다</span></div></section>
         <section className="rail-card principles brand-principles"><div className="principles-head"><span><BrandMark className="principles-mark" /></span><div><h2>좋은 판결은<br />이렇게 만듭니다</h2></div></div><div className="principle-list"><article><b>01</b><span><strong>장면을 정확히</strong><small>타임스탬프와 플레이 상황을 함께 봅니다.</small></span></article><article><b>02</b><span><strong>감정보다 근거를</strong><small>잘잘못과 다음 선택을 구분해 말합니다.</small></span></article><article><b>03</b><span><strong>사람보다 플레이를</strong><small>공격 대신 개선할 수 있는 의견을 남깁니다.</small></span></article></div><div className="principles-sign"><i /><span>판결은 선명하게, 피드백은 따뜻하게.</span><i /></div></section>
       </aside>
     </main>
@@ -279,9 +294,9 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   selectedTitle: string;
 }) {
   const [vote, setVote] = useState<VoteSide | null>(null);
+  const [officialVerdict, setOfficialVerdict] = useState<VoteSide | null>(null);
   const [feedback, setFeedback] = useState("");
   const [evidence, setEvidence] = useState("");
-  const [commentVote, setCommentVote] = useState<VoteSide | null>(null);
   const [comments, setComments] = useState(commentsSeed);
   const [likedComments, setLikedComments] = useState<number[]>([]);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -289,7 +304,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [reportTarget, setReportTarget] = useState<string | null>(null);
   const [commentPage, setCommentPage] = useState(1);
   const [composerOpen, setComposerOpen] = useState(false);
-  const result = vote === "A" ? { a: 59, b: 41 } : { a: 58, b: 42 };
+  const result = vote === "A" ? { a: 59, b: 41 } : vote === "B" ? { a: 57, b: 43 } : { a: 58, b: 42 };
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
   const aClaim = viewingLocal && localCase ? localCase.aClaim : "미드가 바론 시야를 확보하지 않고 라인을 밀다가 합류했습니다. 미드의 지도 관리 소홀과 합류 지연이 원인입니다.";
   const bClaim = viewingLocal && localCase ? localCase.bClaim : "정글이 바론 핑을 찍지 않았고, 미드가 라인을 밀 수밖에 없는 상황이었습니다. 팀 전체의 판단 실수가 더 큽니다.";
@@ -297,6 +312,10 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const tier = viewingLocal && localCase ? localCase.tier : "다이아몬드 IV";
   const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : asset("/media/demo.mp4");
   const voteStorageKey = user ? `lolvs-vote:${user.nickname}:${title}` : "";
+  const verdictStorageKey = user ? `lolvs-verdict:${user.nickname}:${title}` : "";
+  const diamondCase = tier.includes("다이아몬드");
+  const judgeRequirement = diamondCase ? "그랜드마스터" : "마스터";
+  const canJudge = Boolean(user && tierLevel(user.tier) >= (diamondCase ? 8 : 7));
   const commentTotal = 125 + Math.max(0, comments.length - commentsSeed.length);
   const commentPageCount = Math.max(1, Math.ceil(comments.length / 5));
   const visibleComments = comments.slice((commentPage - 1) * 5, commentPage * 5);
@@ -304,32 +323,44 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setVote(null);
-      setCommentVote(null);
+      setOfficialVerdict(null);
       if (!voteStorageKey) return;
       const savedVote = localStorage.getItem(voteStorageKey) as VoteSide | null;
-      if (savedVote === "A" || savedVote === "B") { setVote(savedVote); setCommentVote(savedVote); }
+      const savedVerdict = localStorage.getItem(verdictStorageKey) as VoteSide | null;
+      if (savedVote === "A" || savedVote === "B") setVote(savedVote);
+      if (savedVerdict === "A" || savedVerdict === "B") setOfficialVerdict(savedVerdict);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [voteStorageKey]);
+  }, [voteStorageKey, verdictStorageKey]);
+
+  const submitOpinionVote = (side: VoteSide) => {
+    if (!user) return requireLogin();
+    if (vote) return toast("의견 투표는 한 번만 가능하며 변경할 수 없습니다.");
+    setVote(side);
+    localStorage.setItem(voteStorageKey, side);
+    toast(`${side}측 잘못으로 의견 투표했습니다.`);
+  };
+
+  const submitOfficialVerdict = (side: VoteSide) => {
+    if (!user) return requireLogin();
+    if (!canJudge) return toast(`${diamondCase ? "다이아몬드 사건은" : "공식 판결은"} ${judgeRequirement} 이상부터 가능합니다.`);
+    if (officialVerdict) return toast("공식 판결은 등록 후 변경할 수 없습니다.");
+    setOfficialVerdict(side);
+    localStorage.setItem(verdictStorageKey, side);
+    toast(`${side}측 잘못으로 공식 판결을 등록했습니다.`);
+  };
 
   const addComment = (event: FormEvent) => {
     event.preventDefault();
     if (!user) return requireLogin();
     if (!feedback.trim() || !evidence.trim()) return toast("피드백과 판단 근거를 함께 적어주세요.");
-    if (!vote && !commentVote) return toast("A 또는 B 중 판결을 먼저 선택해 주세요.");
-    const selectedVote = vote ?? commentVote;
-    if (!selectedVote) return;
-    const item: CommentItem = { id: Date.now(), name: user.nickname, tier: user.tier, text: feedback.trim(), evidence: evidence.trim(), vote: selectedVote, likes: 0, replies: [] };
-    if (!vote) {
-      setVote(selectedVote);
-      localStorage.setItem(voteStorageKey, selectedVote);
-    }
+    const item: CommentItem = { id: Date.now(), name: user.nickname, tier: user.tier, text: feedback.trim(), evidence: evidence.trim(), vote: vote ?? undefined, likes: 0, replies: [] };
     setComments([item, ...comments]);
     setCommentPage(1);
     setComposerOpen(false);
     setFeedback("");
     setEvidence("");
-    toast("판결과 피드백을 함께 등록했습니다.");
+    toast("댓글과 판단 근거를 등록했습니다.");
   };
 
   const addReply = (commentId: number) => {
@@ -361,14 +392,14 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
         <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
 
         <section className="comments-section">
-          <div className="comments-heading"><div><h2>댓글 <b>{commentTotal}</b></h2><span>인증 티어 · 선택한 판결 공개</span></div><button onClick={() => { if (!user) requireLogin(); else setComposerOpen(!composerOpen); }}>{composerOpen ? "닫기" : "댓글 쓰기"}</button></div>
-          {composerOpen && user && <form className="comment-composer compact-composer" onSubmit={addComment}><div className="judgement-choice"><button type="button" disabled={!!vote} className={commentVote === "A" ? "selected a" : "a"} onClick={() => setCommentVote("A")}>A 잘못</button><button type="button" disabled={!!vote} className={commentVote === "B" ? "selected b" : "b"} onClick={() => setCommentVote("B")}>B 잘못</button></div><div className="comment-fields"><input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="판단 근거 또는 타임스탬프" aria-label="판단 근거" /><textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="댓글을 입력하세요." aria-label="댓글 작성" /></div><button className="compact-comment-submit" type="submit">등록</button></form>}
+          <div className="comments-heading"><div><h2>댓글 <b>{commentTotal}</b></h2><span>모든 인증 사용자 참여 · 의견 투표 시 선택 공개</span></div><button onClick={() => { if (!user) requireLogin(); else setComposerOpen(!composerOpen); }}>{composerOpen ? "닫기" : "댓글 쓰기"}</button></div>
+          {composerOpen && user && <form className="comment-composer compact-composer" onSubmit={addComment}><div className="comment-fields"><input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="판단 근거 또는 타임스탬프" aria-label="판단 근거" /><textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="댓글을 입력하세요." aria-label="댓글 작성" /></div><button className="compact-comment-submit" type="submit">등록</button></form>}
           {visibleComments.map((item, index) => (
             <article className="comment parent-comment" key={item.id}>
               <span className="comment-avatar">{item.name[0]}</span>
               <div>
-                <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} /><span className={`comment-vote vote-${item.vote.toLowerCase()}`}>{item.vote} 잘못</span><small>{(commentPage - 1) * 5 + index + 1}시간 전</small></div>
-                <p>{item.text}</p><blockquote><b>판단 근거</b>{item.evidence}</blockquote>
+                <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} />{item.vote && <span className={`comment-vote vote-${item.vote.toLowerCase()}`}>{item.vote} 의견</span>}<small>{(commentPage - 1) * 5 + index + 1}시간 전</small></div>
+                <p>{item.text}</p>{item.evidence && <blockquote><b>판단 근거</b>{item.evidence}</blockquote>}
                 <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button><button onClick={() => { if (!user) requireLogin(); else setReplyingTo(replyingTo === item.id ? null : item.id); }}>답글 {item.replies.length ? item.replies.length : ""}</button><button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
                 {item.replies.map((reply) => <div className="reply" key={reply.id}><span className="reply-arrow">↳</span><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><em>답글</em><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} /></span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
                 {replyingTo === item.id && <div className="reply-form"><input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`${item.name}님에게 답글 남기기`} aria-label="대댓글 작성" /><button onClick={() => addReply(item.id)}>등록</button></div>}
@@ -380,9 +411,10 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
       </section>
 
       <aside className="vote-rail">
-        <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>현재 판결</h2><VoteBar a={result.a} b={result.b} /><p className="vote-hint">댓글을 등록할 때 선택한 판결이 투표에 함께 반영됩니다.</p>{vote && <p className="my-vote">내 판결: <b>{vote} 잘못</b></p>}</div></section>
+        <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} /><div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => submitOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => submitOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section>
+        <section className="official-judge-card"><header><div><span>공식 판결</span><h2>판결자 전용</h2></div><b>{judgeRequirement}+</b></header><p>{diamondCase ? "다이아몬드 사건은 그랜드마스터 이상 판결자만 결정할 수 있습니다." : "마스터 이상 판결자의 결정은 일반 의견과 별도로 집계됩니다."}</p><div className="official-verdict-buttons"><button className={officialVerdict === "A" ? "a chosen" : "a"} onClick={() => submitOfficialVerdict("A")}>A측 판결</button><button className={officialVerdict === "B" ? "b chosen" : "b"} onClick={() => submitOfficialVerdict("B")}>B측 판결</button></div>{officialVerdict ? <small className="official-verdict-status">✓ 내 공식 판결: {officialVerdict}측 잘못</small> : <small>{canJudge ? "근거를 확인한 뒤 판결해 주세요." : `${judgeRequirement} 이상부터 판결할 수 있습니다.`}</small>}</section>
         <section className="positions-card"><header><div><h2>양측 주장</h2><p>게시물 작성자가 정리한 입장입니다.</p></div><span><b>A</b><i>VS</i><em>B</em></span></header><article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article><div className="position-divider"><span>VS</span></div><article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article></section>
-        <section className="guide-card"><h2>판결 가이드</h2><ul><li>객관적인 장면을 기준으로 판단해 주세요.</li><li>댓글에는 선택한 판결과 판단 근거가 함께 공개됩니다.</li><li>비난보다 다음 플레이에 도움 되는 피드백을 남겨 주세요.</li></ul></section>
+        <section className="guide-card"><h2>참여 가이드</h2><ul><li>의견 투표와 댓글은 모든 인증 사용자가 참여합니다.</li><li>공식 판결은 마스터 이상, 다이아 사건은 그랜드마스터 이상만 가능합니다.</li><li>비난보다 다음 플레이에 도움 되는 근거를 남겨 주세요.</li></ul></section>
       </aside>
       {reportTarget && <ReportModal target={reportTarget} close={() => setReportTarget(null)} onSubmit={(reason) => { const target = reportTarget; setReportTarget(null); toast(`${target} 신고가 접수되었습니다: ${reason}`); }} />}
     </main>
@@ -393,16 +425,16 @@ function Ranking({ user }: { user: User | null }) {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
   const candidates = rankingSeed.map((row, index) => ({ rank: index + 1, name: row[0], tier: row[1], accuracy: row[2], feedback: row[3], points: row[4] }));
-  const currentRank = user ? { rank: 326, name: user.nickname, tier: user.tier, accuracy: "61%", feedback: "8개", points: "1,250" } : null;
+  const currentRank = user && isMasterPlus(user.tier) ? { rank: 326, name: user.nickname, tier: user.tier, accuracy: "61%", feedback: "8개", points: "1,250" } : null;
   const userIsTopFive = user ? rankingSeed.some((row) => row[0].toLowerCase() === user.nickname.toLowerCase()) : false;
   if (currentRank && !userIsTopFive) candidates.push(currentRank);
   const match = searched ? candidates.find((item) => item.name.toLowerCase() === query.trim().toLowerCase()) : undefined;
-  return <main className="page-shell section-page ranking-page"><form className="rank-search rank-search-first" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}><div><strong>판별자 검색</strong><span>다른 판별자의 순위와 활동 점수를 찾아보세요.</span></div><label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="판별자 닉네임 검색" /></label><button type="submit">검색</button></form>{searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · 적중률 {match.accuracy}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 판별자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}<section className="score-rules"><div><b>+15</b><span>최종 판결과 일치</span></div><div><b>+1</b><span>피드백 공감 1개</span></div><div><b>+5</b><span>판결 참여 1회당</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section><section className="ranking-card elite-ranking"><div className="ranking-head"><span>순위</span><span>판별자</span><span>적중률</span><span>도움 피드백</span><span>점수</span></div>{rankingSeed.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][index] ?? ""}</span>{index + 1}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · 인증</small></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}{currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span><span>{currentRank.accuracy}</span><span>{currentRank.feedback}</span><strong>{currentRank.points}P</strong></div></>}{!user && <div className="rank-login-note">로그인하면 TOP 5 아래에서 내 순위를 바로 확인할 수 있습니다.</div>}</section></main>;
+  return <main className="page-shell section-page ranking-page"><form className="rank-search rank-search-first" onSubmit={(event) => { event.preventDefault(); setSearched(Boolean(query.trim())); }}><div><strong>판결자 검색</strong><span>공식 판결자의 순위와 활동 점수를 찾아보세요.</span></div><label><span>⌕</span><input value={query} onChange={(event) => { setQuery(event.target.value); setSearched(false); }} placeholder="닉네임 입력" aria-label="판결자 닉네임 검색" /></label><button type="submit">검색</button></form>{searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · 합의 일치율 {match.accuracy}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 판결자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}<section className="score-rules"><div><b>+5</b><span>공식 판결 참여</span></div><div><b>+15</b><span>최종 합의와 일치</span></div><div><b>+1</b><span>판결 근거 공감</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section><section className="ranking-card elite-ranking"><div className="ranking-head"><span>순위</span><span>판결자</span><span>합의 일치율</span><span>도움 판결</span><span>점수</span></div>{rankingSeed.map((row, index) => <div className={index < 3 ? `ranking-row podium rank-${index + 1}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][index] ?? ""}</span>{index + 1}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · 판결 자격</small></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>)}{currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 판결 자격</small></span><span>{currentRank.accuracy}</span><span>{currentRank.feedback}</span><strong>{currentRank.points}P</strong></div></>}{!user && <div className="rank-login-note">로그인하면 판결 자격과 내 순위를 확인할 수 있습니다.</div>}{user && !isMasterPlus(user.tier) && <div className="rank-login-note">마스터 이상부터 공식 판결자 랭킹에 등록됩니다.</div>}</section></main>;
 }
 
 function Guide() {
-  const steps = [["01", "먼저 둘러보기", "로그인하지 않아도 사건 영상과 의견, 판별자 랭킹을 모두 볼 수 있어요."], ["02", "활동 정보로 로그인", "지금은 사이트 닉네임과 티어를 선택해 데모 로그인합니다. Riot 인증은 추후 연결됩니다."], ["03", "판결과 댓글을 한 번에", "A/B 판결을 고르고 근거와 피드백을 등록하면 투표도 동시에 반영됩니다."], ["04", "다음 플레이에 적용", "공감받은 의견과 대댓글을 읽고 다음 게임에서 바꿀 한 가지를 찾아보세요."]];
-  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>LOL.VS는 승패를 탓하는 곳이 아니라, 짧은 장면을 함께 보고 더 나은 선택을 찾는 공간입니다.</p><div className="guide-ad-badges"><span>티어 인증 의견</span><span>장면 중심 판결</span><span>바로 쓰는 피드백</span></div></section><section className="guide-flow"><div className="guide-flow-title"><h2>네 단계면 충분해요</h2></div><div className="guide-steps">{steps.map(([number, title, body]) => <article key={number}><b>{number}</b><h3>{title}</h3><p>{body}</p></article>)}</div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 잘 보이는 짧은 영상을 올려주세요.</li><li>A측과 B측 입장을 각각 공정하게 적어주세요.</li><li>실제 Riot ID나 상대방의 개인정보는 가려주세요.</li><li>판결 기간은 1일, 3일, 7일 중 선택할 수 있습니다.</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">!</span><h2>이럴 때 신고해 주세요</h2><ul><li>욕설·인신공격 또는 혐오 표현</li><li>반복 광고나 무관한 도배</li><li>타인의 개인정보 및 Riot ID 노출</li><li>조작된 영상이나 고의적인 허위 설명</li></ul></section></div><section className="faq"><h2>자주 묻는 질문</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 인증처럼 오해하지 않도록 구분했습니다.</p></details><details><summary>영상은 어디에 저장되나요?</summary><p>현재 GitHub Pages 버전에서는 선택한 기기의 브라우저 저장소에만 저장됩니다. 다른 사람과 공유되는 서버 업로드는 백엔드 연결 후 가능합니다.</p></details><details><summary>로그인하지 않아도 볼 수 있나요?</summary><p>네. 모든 읽기 화면은 공개되어 있고 판결·댓글 등록, 대댓글, 글쓰기, 사건 제보, 신고만 로그인이 필요합니다.</p></details></section></main>;
+  const steps = [["01", "장면 확인", "로그인하지 않아도 영상과 양측 주장, 댓글과 공식 판결 현황을 모두 볼 수 있습니다."], ["02", "의견 투표", "로그인한 인증 사용자라면 티어와 관계없이 A/B 의견 투표에 한 번 참여할 수 있습니다."], ["03", "근거 댓글", "모든 인증 사용자가 타임스탬프와 판단 근거를 남기고 자유롭게 피드백할 수 있습니다."], ["04", "공식 판결", "마스터 이상 판결자가 일반 의견과 별도로 공식 판결을 등록합니다."]];
+  return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>LOL.VS는 모두의 의견과 상위 티어의 공식 판결을 분리해, 가볍게 참여하면서도 신뢰할 수 있는 결론을 만드는 공간입니다.</p><div className="guide-ad-badges"><span>누구나 의견 참여</span><span>마스터+ 공식 판결</span><span>티어별 판결 권한</span></div></section><section className="guide-flow"><div className="guide-flow-title"><h2>참여는 가볍게, 판결은 신중하게</h2></div><div className="guide-steps">{steps.map(([number, title, body]) => <article key={number}><b>{number}</b><h3>{title}</h3><p>{body}</p></article>)}</div></section><section className="policy-board"><div className="policy-board-head"><div><span>참여 권한</span><h2>티어에 따라 역할이 달라집니다</h2></div><p>일반 의견과 공식 판결을 분리해 참여 장벽은 낮추고 판결의 신뢰도는 지킵니다.</p></div><div className="policy-cards"><article><b>01</b><div><h3>의견 투표 · 댓글</h3><strong>모든 인증 사용자</strong><p>티어와 관계없이 의견을 고르고 근거 댓글과 대댓글을 남길 수 있습니다.</p></div></article><article><b>02</b><div><h3>공식 판결</h3><strong>마스터 이상</strong><p>다이아몬드 사건은 그랜드마스터 이상만 판결할 수 있습니다.</p></div></article><article><b>03</b><div><h3>사건 작성</h3><strong>다이아몬드 이하</strong><p>마스터 이상은 사건을 작성하지 않고 판결자 역할에 집중합니다.</p></div></article><article><b>04</b><div><h3>판결자 랭킹</h3><strong>공식 판결만 집계</strong><p>참여, 최종 합의 일치, 근거 공감 점수로 신뢰도 높은 판결자를 찾습니다.</p></div></article></div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>다이아몬드 이하 인증 사용자만 사건을 작성할 수 있습니다.</li><li>핵심 장면이 잘 보이는 짧은 영상을 올려주세요.</li><li>A측과 B측 입장을 각각 공정하게 적어주세요.</li><li>실제 Riot ID와 개인정보는 가려주세요.</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">VS</span><h2>판결자 점수는 이렇게 계산해요</h2><ul><li>공식 판결 참여 시 5점</li><li>마감 후 최종 합의와 일치하면 15점</li><li>판결 근거가 공감을 받을 때마다 1점</li><li>신고 제재가 확정되면 20점 차감</li></ul></section></div><section className="faq"><h2>자주 묻는 질문</h2><details open><summary>투표와 공식 판결은 무엇이 다른가요?</summary><p>의견 투표는 모든 인증 사용자의 개인 의견입니다. 공식 판결은 자격을 갖춘 상위 티어 판결자의 결정이며 별도로 집계됩니다.</p></details><details><summary>왜 다이아몬드 사건은 그랜드마스터부터 판결하나요?</summary><p>당사자보다 충분히 높은 구간의 시야로 장면을 판단하도록 최소 두 단계 이상의 판결 자격을 적용했습니다.</p></details><details><summary>마스터 이상은 왜 글을 쓸 수 없나요?</summary><p>상위 구간의 장면은 작은 차이로 판단이 갈릴 수 있어 사건 작성 대상에서 제외하고, 판결자 역할에 집중하도록 설계했습니다.</p></details><details><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 서비스에서는 Riot 인증 결과로 권한을 결정할 예정입니다.</p></details></section></main>;
 }
 
 function SearchResults({ query, openDetail, localCase }: { query: string; openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null }) {
@@ -431,6 +463,7 @@ function SubmitCase({ setView, toast, user, onSubmitted }: { setView: (view: Vie
   };
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (isMasterPlus(user.tier)) return toast("마스터 이상은 공식 판결자 역할로 참여하며 사건을 작성할 수 없습니다.");
     if (!file) return toast("실제 영상 파일을 선택해 주세요.");
     const form = new FormData(event.currentTarget);
     const item: LocalCase = { title: String(form.get("title")), category: String(form.get("category")), aClaim: String(form.get("aClaim")), bClaim: String(form.get("bClaim")), author: user.nickname, tier: user.tier };
@@ -444,7 +477,7 @@ function LoginModal({ close, onLogin }: { close: () => void; onLogin: (user: Use
   const [nickname, setNickname] = useState("");
   const [tier, setTier] = useState("골드 IV");
   const submit = (event: FormEvent) => { event.preventDefault(); if (nickname.trim().length < 2) return; onLogin({ nickname: nickname.trim(), tier }); };
-  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">데모 로그인</h2><p>Riot API 연결 전까지 활동 닉네임과 티어를 직접 선택합니다.</p><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={12} required placeholder="2~12자" autoFocus /></label><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터"].map((item) => <option key={item}>{item}</option>)}</select></label><div className="demo-warning">선택한 티어는 실제 Riot 인증이 아닌 <b>데모 인증</b>으로 표시됩니다.</div><button className="primary-button full" type="submit">이 정보로 로그인</button></form></div>;
+  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">데모 로그인</h2><p>Riot API 연결 전까지 활동 닉네임과 티어를 직접 선택합니다.</p><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={12} required placeholder="2~12자" autoFocus /></label><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label><div className="demo-warning">선택한 티어는 실제 Riot 인증이 아닌 <b>데모 인증</b>으로 표시됩니다.</div><button className="primary-button full" type="submit">이 정보로 로그인</button></form></div>;
 }
 
 function ProfileModal({ user, close, logout }: { user: User; close: () => void; logout: () => void }) {
@@ -487,7 +520,11 @@ export default function HomePage() {
   const requireLogin = () => { setLoginOpen(true); showToast("로그인이 필요한 기능입니다."); };
   const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
   const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); showToast("로그아웃했습니다."); };
-  const openSubmit = () => { if (!user) requireLogin(); else setView("submit"); };
+  const openSubmit = () => {
+    if (!user) return requireLogin();
+    if (isMasterPlus(user.tier)) return showToast("마스터 이상은 사건을 작성할 수 없으며 공식 판결자로 참여합니다.");
+    setView("submit");
+  };
   const openDetail = (local = false, title?: string) => { setViewingLocal(local); if (title) setSelectedCaseTitle(title); setView("detail"); };
   const search = (query: string) => { setSearchQuery(query); setView("search"); };
 
