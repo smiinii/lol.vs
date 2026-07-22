@@ -14,7 +14,7 @@ type LocalCase = {
   author: string;
   tier: string;
 };
-type Reply = { id: number; name: string; tier: string; text: string };
+type Reply = { id: number; name: string; tier: string; text: string; vote?: VoteSide };
 type CommentItem = {
   id: number;
   name: string;
@@ -30,6 +30,7 @@ type ResolvedVerdict = { side: VoteSide; judge: string; judgeTier: string; reaso
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const asset = (path: string) => `${basePath}${path}`;
 const USER_KEY = "lolvs-demo-user";
+const CHALLENGER_TEST_KEY = "lolvs-challenger-test-v1";
 const CASE_KEY = "lolvs-local-case";
 const VIDEO_KEY = "latest-case-video";
 
@@ -97,7 +98,7 @@ const commentsSeed: CommentItem[] = [
     evidence: "24:18 바론 체력 50%인데 미드가 아직 강가에 없었습니다.",
     vote: "A",
     likes: 256,
-    replies: [{ id: 11, name: "바위게장인", tier: "에메랄드 IV", text: "저도 합류 핑이 없었던 점까지 같이 봐야 한다고 생각해요." }],
+    replies: [{ id: 11, name: "바위게장인", tier: "에메랄드 IV", text: "저도 합류 핑이 없었던 점까지 같이 봐야 한다고 생각해요.", vote: "A" }],
   },
   {
     id: 2,
@@ -129,7 +130,7 @@ const commentsSeed: CommentItem[] = [
       evidence: evidence[index % evidence.length],
       vote: index % 3 === 0 ? "B" : "A" as VoteSide,
       likes: 97 - index * 3,
-      replies: index % 4 === 0 ? [{ id: index + 200, name: "복기하는사람", tier: "다이아몬드 II", text: "이 부분은 저도 영상 다시 보니 같은 생각입니다. 핑이 조금만 빨랐으면 달라졌을 것 같아요." }] : [],
+      replies: index % 4 === 0 ? [{ id: index + 200, name: "복기하는사람", tier: "다이아몬드 II", text: "이 부분은 저도 영상 다시 보니 같은 생각입니다. 핑이 조금만 빨랐으면 달라졌을 것 같아요.", vote: index % 3 === 0 ? "B" as VoteSide : "A" as VoteSide }] : [],
     };
   }),
 ];
@@ -246,6 +247,10 @@ function VoteBar({ a, b, compact = false }: { a: number; b: number; compact?: bo
   return <div className={compact ? "vote-summary compact" : "vote-summary"} aria-label={`A ${a}%, B ${b}%`}><div className="bar"><span className="bar-a" style={{ width: `${a}%` }} /><span className="bar-b" style={{ width: `${b}%` }} /></div><div className="vote-labels"><b>A {a}%</b><b>B {b}%</b></div></div>;
 }
 
+function OpinionBadge({ side }: { side?: VoteSide }) {
+  return side ? <span className={`comment-vote vote-${side.toLowerCase()}`}>{side} 의견</span> : null;
+}
+
 function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null; localVideoUrl: string; onSubmit: () => void; onSearch: (query: string) => void }) {
   const [category, setCategory] = useState("전체");
   const [page, setPage] = useState(1);
@@ -321,12 +326,15 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [comments, setComments] = useState(commentsSeed);
   const [likedComments, setLikedComments] = useState<number[]>([]);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [expandedReplies, setExpandedReplies] = useState<number[]>([]);
   const [replyText, setReplyText] = useState("");
   const [reportTarget, setReportTarget] = useState<string | null>(null);
   const [commentPage, setCommentPage] = useState(1);
   const [composerOpen, setComposerOpen] = useState(false);
   const [recognizedVerdict, setRecognizedVerdict] = useState(false);
   const [recognitionCount, setRecognitionCount] = useState(0);
+  const [pendingVote, setPendingVote] = useState<VoteSide | null>(null);
+  const officialJudgeRef = useRef<HTMLElement>(null);
   const result = vote === "A" ? { a: 59, b: 41 } : vote === "B" ? { a: 57, b: 43 } : { a: 58, b: 42 };
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
   const resolvedVerdict = viewingLocal ? undefined : resolvedVerdicts[title];
@@ -366,11 +374,16 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     return () => window.clearTimeout(timer);
   }, [recognitionStorageKey, resolvedVerdict]);
 
-  const submitOpinionVote = (side: VoteSide) => {
+  const requestOpinionVote = (side: VoteSide) => {
     if (!user) return requireLogin();
     if (vote) return toast("의견 투표는 한 번만 가능하며 변경할 수 없습니다.");
+    setPendingVote(side);
+  };
+
+  const submitOpinionVote = (side: VoteSide) => {
     setVote(side);
     localStorage.setItem(voteStorageKey, side);
+    setPendingVote(null);
     toast(`${side}측 잘못으로 의견 투표했습니다.`);
   };
 
@@ -399,7 +412,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const addReply = (commentId: number) => {
     if (!user) return requireLogin();
     if (!replyText.trim()) return;
-    setComments(comments.map((comment) => comment.id === commentId ? { ...comment, replies: [...comment.replies, { id: Date.now(), name: user.nickname, tier: user.tier, text: replyText.trim() }] } : comment));
+    setComments(comments.map((comment) => comment.id === commentId ? { ...comment, replies: [...comment.replies, { id: Date.now(), name: user.nickname, tier: user.tier, text: replyText.trim(), vote: vote ?? undefined }] } : comment));
+    setExpandedReplies((ids) => ids.includes(commentId) ? ids : [...ids, commentId]);
     setReplyText("");
     setReplyingTo(null);
     toast("대댓글을 등록했습니다.");
@@ -427,10 +441,13 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     toast(`${resolvedVerdict.judge} 판결자의 근거를 인정했습니다.`);
   };
 
+  const activityVoteFor = (name: string, savedVote?: VoteSide) => name === user?.nickname && vote ? vote : savedVote;
+  const toggleReplies = (commentId: number) => setExpandedReplies((ids) => ids.includes(commentId) ? ids.filter((id) => id !== commentId) : [...ids, commentId]);
+
   return (
     <main className="page-shell detail-layout">
       <section className="detail-main">
-        <div className="detail-title-row"><div className="detail-title">{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button></div>
+        <div className="detail-title-row"><div className="detail-title">{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><div className="detail-title-actions"><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button>{canJudge && !resolvedVerdict && <button className="judge-jump-button" onClick={() => officialJudgeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>판결하기</button>}</div></div>
         <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={viewingLocal} inline /></div><span className="post-view-count">조회수 <b>3,842</b></span></div>
         <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
 
@@ -441,10 +458,10 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
             <article className="comment parent-comment" key={item.id}>
               <span className="comment-avatar">{item.name[0]}</span>
               <div>
-                <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} inline />{item.vote && <span className={`comment-vote vote-${item.vote.toLowerCase()}`}>{item.vote} 의견</span>}<small>{(commentPage - 1) * 5 + index + 1}시간 전</small></div>
+                <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} inline /><OpinionBadge side={activityVoteFor(item.name, item.vote)} /><small>{(commentPage - 1) * 5 + index + 1}시간 전</small></div>
                 <p>{item.text}</p>{item.evidence && <blockquote><b>판단 근거</b>{item.evidence}</blockquote>}
-                <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button><button onClick={() => { if (!user) requireLogin(); else setReplyingTo(replyingTo === item.id ? null : item.id); }}>답글 {item.replies.length ? item.replies.length : ""}</button><button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
-                {item.replies.map((reply) => <div className="reply" key={reply.id}><span className="reply-arrow">↳</span><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><em>답글</em><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} inline /></span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
+                <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button>{item.replies.length > 0 && <button className="reply-toggle" onClick={() => toggleReplies(item.id)}>{expandedReplies.includes(item.id) ? "답글 접기" : `답글 ${item.replies.length}개 보기`}</button>}<button onClick={() => { if (!user) return requireLogin(); setReplyingTo(replyingTo === item.id ? null : item.id); setExpandedReplies((ids) => ids.includes(item.id) ? ids : [...ids, item.id]); }}>답글 달기</button><button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
+                {expandedReplies.includes(item.id) && item.replies.map((reply) => <div className="reply" key={reply.id}><span className="reply-arrow">↳</span><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><em>답글</em><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} inline /><OpinionBadge side={activityVoteFor(reply.name, reply.vote)} /></span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
                 {replyingTo === item.id && <div className="reply-form"><input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`${item.name}님에게 답글 남기기`} aria-label="대댓글 작성" /><button onClick={() => addReply(item.id)}>등록</button></div>}
               </div>
             </article>
@@ -454,11 +471,12 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
       </section>
 
       <aside className="vote-rail">
-        {resolvedVerdict ? <><section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section><section className={`resolved-verdict-card verdict-${resolvedVerdict.side.toLowerCase()}`}><header><span>공식 판결</span><b>{resolvedVerdict.decidedAt}</b></header><div className="resolved-verdict-result"><small>FINAL VERDICT</small><strong>{resolvedVerdict.side}</strong><span>{resolvedVerdict.side}측 잘못</span></div><div className="resolved-judge"><span className="resolved-judge-avatar">{resolvedVerdict.judge[0]}</span><div><small>판결자</small><strong>{resolvedVerdict.judge}</strong><em>{resolvedVerdict.judgeTier} · 인증</em></div></div><blockquote><b>판결 근거</b><p>{resolvedVerdict.reason}</p></blockquote><button className={recognizedVerdict ? "recognition-button recognized" : "recognition-button"} onClick={recognizeOfficialVerdict}><span>{recognizedVerdict ? "♥" : "♡"}</span><b>{recognizedVerdict ? "인정함" : "이 판결 인정"}</b><em>{recognitionCount.toLocaleString("ko-KR")}</em></button></section></> : <><section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} /><div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => submitOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => submitOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section><section className="official-judge-card"><header><div><span>공식 판결</span><h2>판결자 전용</h2></div><b>{judgeRequirement}+</b></header><p>{diamondCase ? "다이아몬드 사건은 그랜드마스터 이상 판결자만 결정할 수 있습니다." : "마스터 이상 판결자의 결정은 일반 의견과 별도로 집계됩니다."}</p><div className="official-verdict-buttons"><button className={officialVerdict === "A" ? "a chosen" : "a"} onClick={() => submitOfficialVerdict("A")}>A측 판결</button><button className={officialVerdict === "B" ? "b chosen" : "b"} onClick={() => submitOfficialVerdict("B")}>B측 판결</button></div>{officialVerdict ? <small className="official-verdict-status">✓ 내 공식 판결: {officialVerdict}측 잘못</small> : <small>{canJudge ? "근거를 확인한 뒤 판결해 주세요." : `${judgeRequirement} 이상부터 판결할 수 있습니다.`}</small>}</section></>}
+        {resolvedVerdict ? <><section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section><section className={`resolved-verdict-card verdict-${resolvedVerdict.side.toLowerCase()}`}><header><span>공식 판결</span><b>{resolvedVerdict.decidedAt}</b></header><div className="resolved-verdict-result"><small>FINAL VERDICT</small><strong>{resolvedVerdict.side}</strong><span>{resolvedVerdict.side}측 잘못</span></div><div className="resolved-judge"><span className="resolved-judge-avatar">{resolvedVerdict.judge[0]}</span><div><small>판결자</small><strong>{resolvedVerdict.judge}</strong><em>{resolvedVerdict.judgeTier} · 인증</em></div></div><blockquote><b>판결 근거</b><p>{resolvedVerdict.reason}</p></blockquote><button className={recognizedVerdict ? "recognition-button recognized" : "recognition-button"} onClick={recognizeOfficialVerdict}><span>{recognizedVerdict ? "♥" : "♡"}</span><b>{recognizedVerdict ? "인정함" : "이 판결 인정"}</b><em>{recognitionCount.toLocaleString("ko-KR")}</em></button></section></> : <><section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} /><div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section><section className="official-judge-card" ref={officialJudgeRef}><header><div><span>공식 판결</span><h2>판결자 전용</h2></div><b>{judgeRequirement}+</b></header><p>{diamondCase ? "다이아몬드 사건은 그랜드마스터 이상 판결자만 결정할 수 있습니다." : "마스터 이상 판결자의 결정은 일반 의견과 별도로 집계됩니다."}</p><div className="official-verdict-buttons"><button className={officialVerdict === "A" ? "a chosen" : "a"} onClick={() => submitOfficialVerdict("A")}>A측 판결</button><button className={officialVerdict === "B" ? "b chosen" : "b"} onClick={() => submitOfficialVerdict("B")}>B측 판결</button></div>{officialVerdict ? <small className="official-verdict-status">✓ 내 공식 판결: {officialVerdict}측 잘못</small> : <small>{canJudge ? "근거를 확인한 뒤 판결해 주세요." : `${judgeRequirement} 이상부터 판결할 수 있습니다.`}</small>}</section></>}
         <section className="positions-card"><header><div><h2>양측 주장</h2><p>게시물 작성자가 정리한 입장입니다.</p></div><span><b>A</b><i>VS</i><em>B</em></span></header><article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article><div className="position-divider"><span>VS</span></div><article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article></section>
         <section className="guide-card"><h2>참여 가이드</h2><ul><li>의견 투표와 댓글은 모든 인증 사용자가 참여합니다.</li><li>공식 판결은 마스터 이상, 다이아 사건은 그랜드마스터 이상만 가능합니다.</li><li>비난보다 다음 플레이에 도움 되는 근거를 남겨 주세요.</li></ul></section>
       </aside>
       {reportTarget && <ReportModal target={reportTarget} close={() => setReportTarget(null)} onSubmit={(reason) => { const target = reportTarget; setReportTarget(null); toast(`${target} 신고가 접수되었습니다: ${reason}`); }} />}
+      {pendingVote && <VoteConfirmModal side={pendingVote} close={() => setPendingVote(null)} confirm={() => submitOpinionVote(pendingVote)} />}
     </main>
   );
 }
@@ -514,10 +532,9 @@ function Ranking({ user }: { user: User | null }) {
 function Guide() {
   return <main className="page-shell section-page guide-page">
     <section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>짧은 장면을 함께 보고 더 나은 선택을 찾습니다.</p></section>
-    <section className="guide-ruleset">
-      <div className="usage-guide"><div className="usage-guide-head"><span>사용 순서</span><h2>장면에서 판결까지</h2></div><div className="usage-steps"><article><b>01</b><div><strong>장면 확인</strong><small>영상과 양측 입장</small></div></article><article><b>02</b><div><strong>의견 투표</strong><small>A/B 한 번 선택</small></div></article><article><b>03</b><div><strong>근거 댓글</strong><small>타임스탬프와 피드백</small></div></article><article><b>04</b><div><strong>결과 확인</strong><small>의견과 공식 판결 비교</small></div></article></div></div>
-      <div className="policy-board"><div className="policy-board-head"><div><span>참여 권한</span><h2><b>누가 무엇을</b><em>할 수 있나요?</em></h2></div></div><div className="policy-cards"><article className="policy-opinion"><span className="policy-token">01</span><div><h3>의견 투표 · 댓글</h3><p>A/B 선택과 근거 피드백</p></div><strong>모든 인증 사용자</strong></article><article className="policy-verdict"><span className="policy-token">02</span><div><h3>공식 판결</h3><p>다이아 사건은 그랜드마스터 이상</p></div><strong>마스터 이상</strong></article><article className="policy-submit"><span className="policy-token">03</span><div><h3>사건 작성</h3><p>영상과 양측 입장 등록</p></div><strong>다이아 이하</strong></article></div></div>
-    </section>
+    <section className="guide-section usage-guide"><div className="guide-section-heading"><span>사용 순서</span><h2><b>장면에서</b><em>판결까지</em></h2></div><div className="usage-steps"><article><b>01</b><div><strong>장면 확인</strong><small>영상과 양측 입장</small></div></article><article><b>02</b><div><strong>의견 투표</strong><small>A/B 한 번 선택</small></div></article><article><b>03</b><div><strong>근거 댓글</strong><small>타임스탬프와 피드백</small></div></article><article><b>04</b><div><strong>결과 확인</strong><small>의견과 공식 판결 비교</small></div></article></div></section>
+    <section className="guide-section policy-board"><div className="guide-section-heading"><span>참여 권한</span><h2><b>누가 무엇을</b><em>할 수 있나요?</em></h2></div><div className="policy-cards"><article className="policy-opinion"><span className="policy-token">01</span><div><h3>의견 투표 · 댓글</h3><p>A/B 선택과 근거 피드백</p></div><strong>모든 인증 사용자</strong></article><article className="policy-verdict"><span className="policy-token">02</span><div><h3>공식 판결</h3><p>다이아 사건은 그랜드마스터 이상</p></div><strong>마스터 이상</strong></article><article className="policy-submit"><span className="policy-token">03</span><div><h3>사건 작성</h3><p>영상과 양측 입장 등록</p></div><strong>다이아 이하</strong></article></div></section>
+    <section className="guide-privacy"><span className="privacy-shield">✓</span><div><small>티어는 인증하고, 활동은 자유롭게</small><h2>Riot ID 대신 사이트 닉네임으로 참여합니다.</h2><p>실제 계정과 티어는 인증에만 사용하고 게시글·투표·댓글에는 선택한 활동 닉네임이 표시됩니다.</p></div></section>
     <div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 보이는 짧은 영상</li><li>공정하게 정리한 A측·B측 입장</li><li>Riot ID와 개인정보 가림 처리</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">VS</span><h2>좋은 판결의 기준</h2><ul><li>결과보다 당시 보였던 정보를 확인합니다.</li><li>사람이 아니라 플레이를 평가합니다.</li><li>다음 선택에 도움이 되는 근거를 남깁니다.</li></ul></section></div>
     <section className="faq"><h2>서비스 안내</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 서비스에서는 Riot 인증 결과로 권한을 결정할 예정입니다.</p></details><details><summary>업로드한 영상은 어디에 저장되나요?</summary><p>현재 프로토타입에서는 선택한 기기의 브라우저에만 저장됩니다. 서버 업로드는 백엔드 연결 후 제공됩니다.</p></details></section>
   </main>;
@@ -561,7 +578,7 @@ function SubmitCase({ setView, toast, user, onSubmitted }: { setView: (view: Vie
 
 function LoginModal({ close, onLogin }: { close: () => void; onLogin: (user: User) => void }) {
   const [nickname, setNickname] = useState("");
-  const [tier, setTier] = useState("골드 IV");
+  const [tier, setTier] = useState("챌린저");
   const submit = (event: FormEvent) => { event.preventDefault(); if (nickname.trim().length < 2) return; onLogin({ nickname: nickname.trim(), tier }); };
   return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">데모 로그인</h2><p>Riot API 연결 전까지 활동 닉네임과 티어를 직접 선택합니다.</p><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={12} required placeholder="2~12자" autoFocus /></label><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label><div className="demo-warning">선택한 티어는 실제 Riot 인증이 아닌 <b>데모 인증</b>으로 표시됩니다.</div><button className="primary-button full" type="submit">이 정보로 로그인</button></form></div>;
 }
@@ -575,6 +592,10 @@ function ReportModal({ target, close, onSubmit }: { target: string; close: () =>
   const [details, setDetails] = useState("");
   const type = target === "게시물" ? "게시물" : "댓글";
   return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal report-modal" onSubmit={(event) => { event.preventDefault(); if (details.trim()) onSubmit(`${reason} · ${details.trim()}`); }} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="report-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem report-icon">!</span><h2 id="report-title">{type} 신고하기</h2><p><strong>{target}</strong><br />사유를 선택하고 구체적인 내용을 적어주세요.</p>{["욕설 또는 인신공격", "스팸·광고", "개인정보 노출", "허위 또는 조작된 내용", "기타 운영정책 위반"].map((item) => <label className="report-option" key={item}><input type="radio" name="reason" value={item} checked={reason === item} onChange={() => setReason(item)} />{item}</label>)}<label className="report-details"><span>상세 신고 사유</span><textarea required maxLength={300} value={details} onChange={(event) => setDetails(event.target.value)} placeholder="어떤 부분이 문제인지 구체적으로 적어주세요." aria-label="상세 신고 사유" /><small>{details.length}/300</small></label><button className="danger-button full" type="submit">신고 접수</button></form></div>;
+}
+
+function VoteConfirmModal({ side, close, confirm }: { side: VoteSide; close: () => void; confirm: () => void }) {
+  return <div className="modal-backdrop" onMouseDown={close}><section className={`profile-modal vote-confirm vote-confirm-${side.toLowerCase()}`} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="vote-confirm-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="vote-confirm-side">{side}</span><h2 id="vote-confirm-title">{side}측 잘못으로 투표할까요?</h2><p>투표를 완료하면 변경할 수 없습니다.<br />작성한 댓글과 대댓글에도 이 의견이 표시됩니다.</p><div><button className="secondary-button" onClick={close}>다시 생각하기</button><button className="vote-confirm-submit" onClick={confirm}>투표 확정</button></div></section></div>;
 }
 
 export default function HomePage() {
@@ -593,7 +614,15 @@ export default function HomePage() {
     const timer = window.setTimeout(() => {
       const storedUser = localStorage.getItem(USER_KEY);
       const storedCase = localStorage.getItem(CASE_KEY);
-      if (storedUser) setUser(JSON.parse(storedUser));
+      if (storedUser) {
+        const savedUser = JSON.parse(storedUser) as User;
+        if (!localStorage.getItem(CHALLENGER_TEST_KEY)) {
+          const challengerUser = { ...savedUser, tier: "챌린저" };
+          localStorage.setItem(USER_KEY, JSON.stringify(challengerUser));
+          localStorage.setItem(CHALLENGER_TEST_KEY, "complete");
+          setUser(challengerUser);
+        } else setUser(savedUser);
+      }
       if (storedCase) {
         setLocalCase(JSON.parse(storedCase));
         loadStoredVideo().then((blob) => { if (blob) setLocalVideoUrl(URL.createObjectURL(blob)); }).catch(() => undefined);
@@ -604,7 +633,7 @@ export default function HomePage() {
 
   const showToast = (message: string) => { setToastMessage(message); window.setTimeout(() => setToastMessage(""), 2800); };
   const requireLogin = () => { setLoginOpen(true); showToast("로그인이 필요한 기능입니다."); };
-  const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
+  const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); localStorage.setItem(CHALLENGER_TEST_KEY, "complete"); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
   const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); showToast("로그아웃했습니다."); };
   const openSubmit = () => {
     if (!user) return requireLogin();
