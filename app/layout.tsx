@@ -3,11 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://smiinii.github.io/lol.vs/"),
-  title: "LOL.VS — 억울한 장면, 함께 판결합니다",
-  description: "티어가 인증된 플레이어들과 롤 플레이를 함께 보고 투표와 피드백을 나누는 커뮤니티 프로토타입",
+  title: "LOL.VS — 판정받고, 다음 플레이까지 확인하세요",
+  description: "검증된 판정자가 핵심 타임스탬프와 근거, 다음에 더 나은 선택까지 알려주는 롤 플레이 판정·피드백 서비스",
   openGraph: {
-    title: "LOL.VS — 억울한 장면, 함께 판결합니다",
-    description: "티어 인증 플레이어들의 투표와 피드백",
+    title: "LOL.VS — 판정받고, 다음 플레이까지 확인하세요",
+    description: "검증된 판정자의 근거 있는 판정과 다음 플레이 피드백",
     url: "https://smiinii.github.io/lol.vs/",
     siteName: "LOL.VS",
     locale: "ko_KR",
@@ -16,8 +16,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "LOL.VS — 억울한 장면, 함께 판결합니다",
-    description: "티어 인증 플레이어들의 투표와 피드백",
+    title: "LOL.VS — 판정받고, 다음 플레이까지 확인하세요",
+    description: "검증된 판정자의 근거 있는 판정과 다음 플레이 피드백",
     images: ["https://smiinii.github.io/lol.vs/og.png"],
   },
   icons: {
