@@ -3,7 +3,7 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-type View = "home" | "community" | "ranking" | "guide" | "detail" | "submit" | "search";
+type View = "home" | "ranking" | "guide" | "detail" | "submit" | "search";
 type VoteSide = "A" | "B";
 type User = { nickname: string; tier: string };
 type LocalCase = {
@@ -98,19 +98,6 @@ const rankingSeed = [
   ["천천히보자", "플래티넘 I", "78%", "46개", "7,820"],
 ];
 
-const communitySeed = [
-  { category: "자유", title: "이번 패치 이후 정글 동선 다들 어떻게 잡나요?", author: "맵리딩중", tier: "다이아몬드 I", comments: 34, views: 1280 },
-  { category: "듀오 모집", title: "오늘 저녁 플래티넘 원딜과 듀오하실 서폿 구해요", author: "바텀듀오", tier: "플래티넘 II", comments: 12, views: 486 },
-  { category: "패치 토론", title: "신규 아이템 이후 탱커 체감이 달라졌네요", author: "탑은단단해", tier: "에메랄드 III", comments: 51, views: 2120 },
-  { category: "질문", title: "라인 프리징을 풀어야 하는 정확한 타이밍이 궁금합니다", author: "배우는중", tier: "골드 I", comments: 22, views: 734 },
-  { category: "자유", title: "연패할 때 다들 몇 판 정도 쉬고 다시 돌리나요?", author: "멘탈도실력", tier: "에메랄드 IV", comments: 46, views: 1642 },
-  { category: "패치 토론", title: "이번 원딜 아이템 변경, 라인전 구도에도 영향이 큰가요?", author: "치명타계산기", tier: "다이아몬드 IV", comments: 39, views: 1875 },
-  { category: "질문", title: "서폿 로밍 타이밍에 원딜이 지켜야 할 웨이브가 따로 있나요?", author: "시야배우는중", tier: "플래티넘 III", comments: 28, views: 921 },
-  { category: "듀오 모집", title: "주말 오전 에메랄드 구간 즐겜 듀오 구합니다", author: "주말소환사", tier: "에메랄드 II", comments: 17, views: 603 },
-  { category: "자유", title: "채팅 끄고 핑만 쓰니까 승률이 오히려 좋아졌어요", author: "핑으로말해요", tier: "플래티넘 I", comments: 63, views: 2416 },
-  { category: "패치 토론", title: "유충 가치가 바뀐 뒤 첫 오브젝트 선택 어떻게 보세요?", author: "오브젝트연구", tier: "다이아몬드 III", comments: 57, views: 2098 },
-];
-
 function openVideoDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open("lolvs-local-media", 1);
@@ -155,7 +142,7 @@ function Header({ view, setView, user, onLogin, onProfile }: {
   onLogin: () => void;
   onProfile: () => void;
 }) {
-  const menus: [View, string][] = [["home", "홈"], ["community", "커뮤니티"], ["ranking", "랭킹"], ["guide", "가이드"]];
+  const menus: [View, string][] = [["home", "홈"], ["ranking", "랭킹"], ["guide", "가이드"]];
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -198,7 +185,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   return (
     <main className="page-shell home-layout">
       <section className="feed-column">
-        <div className="home-title-row compact-title"><div className="home-brand-copy"><span className="home-kicker"><i /> LOL 플레이 판결소</span><h1><b>억울한 장면,</b><em>함께 판결합니다</em></h1><p>티어가 인증된 플레이어의 투표와 근거 있는 피드백을 확인해 보세요.</p><div className="home-brand-tags"><span>◆ 티어 인증</span><span>● 장면 중심</span><span>VS 근거 피드백</span></div></div><div className="home-primary-actions"><form className="home-search" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="사건·커뮤니티 검색" aria-label="사건과 커뮤니티 검색" /><button type="submit">검색</button></form><button className="home-write-button" onClick={onSubmit}><span>＋</span> 글쓰기</button></div></div>
+        <div className="home-title-row compact-title"><div className="home-brand-copy"><span className="home-kicker"><i /> LOL 플레이 판결소</span><h1><b>억울한 장면,</b><em>함께 판결합니다</em></h1><p>티어가 인증된 플레이어의 투표와 근거 있는 피드백을 확인해 보세요.</p><div className="home-brand-tags"><span>◆ 티어 인증</span><span>● 장면 중심</span><span>VS 근거 피드백</span></div></div><div className="home-primary-actions"><form className="home-search" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="사건 검색" aria-label="사건 검색" /><button type="submit">검색</button></form><button className="home-write-button" onClick={onSubmit}><span>＋</span> 글쓰기</button></div></div>
         <div className="toolbar">
           <div className="category-tabs" role="tablist" aria-label="게임 유형">
             {["전체", "솔로랭크", "파티랭크", "일반게임"].map((item) => <button key={item} className={category === item ? "selected" : ""} onClick={() => { setCategory(item); setPage(1); }}>{item}</button>)}
@@ -357,33 +344,6 @@ function Detail({ setView, toast, user, requireLogin, localCase, localVideoUrl, 
   );
 }
 
-function Community({ user, requireLogin, toast }: { user: User | null; requireLogin: () => void; toast: (message: string) => void }) {
-  const [tab, setTab] = useState("전체");
-  const [composer, setComposer] = useState(false);
-  const [postCategory, setPostCategory] = useState("자유");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [posts, setPosts] = useState(communitySeed);
-  const write = () => { if (!user) return requireLogin(); setComposer(true); };
-  const addPost = (event: FormEvent) => { event.preventDefault(); if (!user || !title.trim() || !content.trim()) return; setPosts([{ category: postCategory, title: title.trim(), author: user.nickname, tier: user.tier, comments: 0, views: 1 }, ...posts]); setTitle(""); setContent(""); setPostCategory("자유"); setComposer(false); toast("커뮤니티 글을 등록했습니다."); };
-  const visiblePosts = posts.filter((post) => tab === "전체" || post.category === tab);
-  return (
-    <main className="page-shell section-page community-page">
-      <div className="community-layout">
-        <section className="board-card">
-          <div className="board-toolbar">
-            <div className="board-tabs">{["전체", "자유", "듀오 모집", "패치 토론", "질문"].map((item) => <button key={item} className={tab === item ? "selected" : ""} onClick={() => setTab(item)}>{item}</button>)}</div>
-            <button className="community-write" onClick={write}>＋ 글쓰기</button>
-          </div>
-          {composer && <form className="board-composer" onSubmit={addPost}><select value={postCategory} onChange={(event) => setPostCategory(event.target.value)} aria-label="커뮤니티 글 카테고리">{["자유", "듀오 모집", "패치 토론", "질문"].map((item) => <option key={item}>{item}</option>)}</select><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="글 제목" aria-label="커뮤니티 글 제목" /><textarea value={content} onChange={(event) => setContent(event.target.value)} placeholder="함께 이야기할 내용을 적어주세요." aria-label="커뮤니티 글 내용" /><div><button type="button" onClick={() => setComposer(false)}>취소</button><button type="submit">등록</button></div></form>}
-          <div className="board-list">{visiblePosts.map((post, index) => <button key={`${post.title}-${index}`} onClick={() => toast("커뮤니티 게시글을 열었습니다.")}><span className="board-category">{post.category}</span><span><strong>{post.title}</strong><small>{post.author} · {post.tier} 인증</small></span><span><b>댓글 {post.comments}</b><small>조회 {post.views.toLocaleString()}</small></span></button>)}</div>
-        </section>
-        <aside className="board-side"><section className="rail-card"><h2>커뮤니티 이용 원칙</h2><p>게임 닉네임을 노출하거나 특정 사용자를 공격하지 마세요.</p><p>듀오 모집 시 외부 개인정보 공유에 주의해 주세요.</p></section><section className="rail-card"><h2>지금 많이 보는 주제</h2><div className="topic-tags"><span>#패치노트</span><span>#라인관리</span><span>#듀오모집</span><span>#한타복기</span></div></section></aside>
-      </div>
-    </main>
-  );
-}
-
 function Ranking({ user }: { user: User | null }) {
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
@@ -397,19 +357,18 @@ function Ranking({ user }: { user: User | null }) {
 }
 
 function Guide() {
-  const steps = [["01", "먼저 둘러보기", "로그인하지 않아도 사건 영상과 의견, 커뮤니티, 랭킹을 모두 볼 수 있어요."], ["02", "활동 정보로 로그인", "지금은 사이트 닉네임과 티어를 선택해 데모 로그인합니다. Riot 인증은 추후 연결됩니다."], ["03", "판결과 댓글을 한 번에", "A/B 판결을 고르고 근거와 피드백을 등록하면 투표도 동시에 반영됩니다."], ["04", "다음 플레이에 적용", "공감받은 의견과 대댓글을 읽고 다음 게임에서 바꿀 한 가지를 찾아보세요."]];
+  const steps = [["01", "먼저 둘러보기", "로그인하지 않아도 사건 영상과 의견, 판별자 랭킹을 모두 볼 수 있어요."], ["02", "활동 정보로 로그인", "지금은 사이트 닉네임과 티어를 선택해 데모 로그인합니다. Riot 인증은 추후 연결됩니다."], ["03", "판결과 댓글을 한 번에", "A/B 판결을 고르고 근거와 피드백을 등록하면 투표도 동시에 반영됩니다."], ["04", "다음 플레이에 적용", "공감받은 의견과 대댓글을 읽고 다음 게임에서 바꿀 한 가지를 찾아보세요."]];
   return <main className="page-shell section-page guide-page"><section className="guide-intro"><span>처음 오셨나요?</span><h1><b>억울함을 풀고,</b><em>다음 플레이는 더 선명하게.</em></h1><p>LOL.VS는 승패를 탓하는 곳이 아니라, 짧은 장면을 함께 보고 더 나은 선택을 찾는 공간입니다.</p><div className="guide-ad-badges"><span>티어 인증 의견</span><span>장면 중심 판결</span><span>바로 쓰는 피드백</span></div></section><section className="guide-flow"><div className="guide-flow-title"><h2>네 단계면 충분해요</h2></div><div className="guide-steps">{steps.map(([number, title, body]) => <article key={number}><b>{number}</b><h3>{title}</h3><p>{body}</p></article>)}</div></section><div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 잘 보이는 짧은 영상을 올려주세요.</li><li>A측과 B측 입장을 각각 공정하게 적어주세요.</li><li>실제 Riot ID나 상대방의 개인정보는 가려주세요.</li><li>판결 기간은 1일, 3일, 7일 중 선택할 수 있습니다.</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">!</span><h2>이럴 때 신고해 주세요</h2><ul><li>욕설·인신공격 또는 혐오 표현</li><li>반복 광고나 무관한 도배</li><li>타인의 개인정보 및 Riot ID 노출</li><li>조작된 영상이나 고의적인 허위 설명</li></ul></section></div><section className="faq"><h2>자주 묻는 질문</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 인증처럼 오해하지 않도록 구분했습니다.</p></details><details><summary>영상은 어디에 저장되나요?</summary><p>현재 GitHub Pages 버전에서는 선택한 기기의 브라우저 저장소에만 저장됩니다. 다른 사람과 공유되는 서버 업로드는 백엔드 연결 후 가능합니다.</p></details><details><summary>로그인하지 않아도 볼 수 있나요?</summary><p>네. 모든 읽기 화면은 공개되어 있고 판결·댓글 등록, 대댓글, 글쓰기, 사건 제보, 신고만 로그인이 필요합니다.</p></details></section></main>;
 }
 
-function SearchResults({ query, openDetail, setView, localCase }: { query: string; openDetail: (local?: boolean, title?: string) => void; setView: (view: View) => void; localCase: LocalCase | null }) {
+function SearchResults({ query, openDetail, localCase }: { query: string; openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null }) {
   const keyword = query.toLowerCase();
   const cases = [
     ...(localCase ? [{ title: localCase.title, category: localCase.category, local: true }] : []),
     ...compactCases.map((item) => ({ title: item.title, category: item.category, local: false })),
     ...weeklyPosts.map(({ title }) => ({ title, category: "주간 인기", local: false })),
   ].filter((item, index, array) => item.title.toLowerCase().includes(keyword) && array.findIndex((other) => other.title === item.title) === index);
-  const community = communitySeed.filter((item) => `${item.title} ${item.category}`.toLowerCase().includes(keyword));
-  return <main className="page-shell section-page search-page"><div className="search-heading"><span>통합 검색</span><h1>“{query}” 검색 결과</h1><p>사건과 커뮤니티 글을 한 번에 찾았습니다.</p></div><section className="search-result-section"><div><h2>사건</h2><b>{cases.length}</b></div>{cases.length ? <div className="search-result-list">{cases.map((item) => <button key={item.title} onClick={() => openDetail(item.local, item.title)}><span>판결</span><strong>{item.title}</strong><small>{item.category} · 사건 열기 →</small></button>)}</div> : <p className="search-none">일치하는 사건이 없습니다.</p>}</section><section className="search-result-section"><div><h2>커뮤니티</h2><b>{community.length}</b></div>{community.length ? <div className="search-result-list">{community.map((item) => <button key={item.title} onClick={() => setView("community")}><span>{item.category}</span><strong>{item.title}</strong><small>{item.author} · 커뮤니티로 이동 →</small></button>)}</div> : <p className="search-none">일치하는 커뮤니티 글이 없습니다.</p>}</section></main>;
+  return <main className="page-shell section-page search-page"><div className="search-heading"><span>사건 검색</span><h1>“{query}” 검색 결과</h1><p>진행 중인 사건과 주간 인기 판결에서 찾았습니다.</p></div><section className="search-result-section"><div><h2>사건</h2><b>{cases.length}</b></div>{cases.length ? <div className="search-result-list">{cases.map((item) => <button key={item.title} onClick={() => openDetail(item.local, item.title)}><span>판결</span><strong>{item.title}</strong><small>{item.category} · 사건 열기 →</small></button>)}</div> : <p className="search-none">일치하는 사건이 없습니다.</p>}</section></main>;
 }
 
 function SubmitCase({ setView, toast, user, onSubmitted }: { setView: (view: View) => void; toast: (message: string) => void; user: User; onSubmitted: (item: LocalCase, url: string) => void }) {
@@ -491,12 +450,11 @@ export default function HomePage() {
   return <div className="app-root"><Header view={view} setView={setView} user={user} onLogin={() => setLoginOpen(true)} onProfile={() => setProfileOpen(true)} />
     {view === "home" && <Home openDetail={openDetail} localCase={localCase} localVideoUrl={localVideoUrl} onSubmit={openSubmit} onSearch={search} />}
     {view === "detail" && <Detail setView={setView} toast={showToast} user={user} requireLogin={requireLogin} localCase={localCase} localVideoUrl={localVideoUrl} viewingLocal={viewingLocal} selectedTitle={selectedCaseTitle} />}
-    {view === "community" && <Community user={user} requireLogin={requireLogin} toast={showToast} />}
     {view === "ranking" && <Ranking user={user} />}
     {view === "guide" && <Guide />}
-    {view === "search" && <SearchResults query={searchQuery} openDetail={openDetail} setView={setView} localCase={localCase} />}
+    {view === "search" && <SearchResults query={searchQuery} openDetail={openDetail} localCase={localCase} />}
     {view === "submit" && user && <SubmitCase setView={setView} toast={showToast} user={user} onSubmitted={(item, url) => { setLocalCase(item); setLocalVideoUrl(url); }} />}
-    <footer><Logo onClick={() => setView("home")} /><p>티어는 진짜로, 닉네임은 자유롭게. 함께 보는 롤 플레이 커뮤니티.</p><small>LOL.VS는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</small></footer>
+    <footer><Logo onClick={() => setView("home")} /><p>티어는 진짜로, 닉네임은 자유롭게. 함께 판결하는 롤 플레이 판결소.</p><small>LOL.VS는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</small></footer>
     {loginOpen && <LoginModal close={() => setLoginOpen(false)} onLogin={login} />}
     {profileOpen && user && <ProfileModal user={user} close={() => setProfileOpen(false)} logout={logout} />}
     {toastMessage && <div className="toast" role="status">✓ {toastMessage}</div>}

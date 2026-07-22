@@ -485,32 +485,7 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
 .section-hero small { color: var(--teal); font-weight: 850; letter-spacing: 1.5px; }
 .section-hero h1 { margin: 9px 0 8px; font-size: clamp(28px, 3vw, 40px); letter-spacing: -1.5px; }
 .section-hero p { margin: 0; color: var(--muted); }
-.community-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
-.board-card, .ranking-card, .guide-panel, .faq { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: rgba(11,23,39,.84); }
-.board-toolbar { min-height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 13px; border-bottom: 1px solid var(--line); }
-.board-tabs { flex: 1; display: flex; gap: 6px; overflow-x: auto; }
-.board-tabs button { height: 36px; padding: 0 15px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; white-space: nowrap; }
-.board-tabs button.selected { background: rgba(45,212,191,.13); color: var(--teal); font-weight: 850; }
-.community-write { flex: 0 0 auto; height: 38px; padding: 0 15px; border: 1px solid rgba(45,212,191,.46); border-radius: 8px; background: rgba(45,212,191,.09); color: #86e8dc; cursor: pointer; font-size: 12px; font-weight: 900; }
-.community-write:hover { border-color: var(--teal); background: rgba(45,212,191,.15); }
-.board-composer { display: grid; gap: 9px; padding: 16px; border-bottom: 1px solid var(--line); }
-.board-composer input, .board-composer textarea, .board-composer select { border: 1px solid #314158; border-radius: 8px; outline: 0; padding: 12px; background: #0a1523; color: var(--text); }
-.board-composer select { cursor: pointer; }
-.board-composer textarea { min-height: 100px; resize: vertical; }
-.board-composer > div { display: flex; justify-content: flex-end; gap: 8px; }
-.board-composer button { min-height: 36px; padding: 0 18px; border: 1px solid #3a4b62; border-radius: 7px; background: #132034; cursor: pointer; }
-.board-composer button[type="submit"] { border-color: var(--teal); background: var(--teal); color: #052421; font-weight: 850; }
-.board-list > button { width: 100%; min-height: 88px; display: grid; grid-template-columns: 92px 1fr 86px; align-items: center; gap: 14px; padding: 12px 18px; border: 0; border-bottom: 1px solid var(--line-soft); background: transparent; cursor: pointer; text-align: left; }
-.board-list > button:hover { background: rgba(38,56,78,.35); }
-.board-list > button:last-child { border-bottom: 0; }
-.board-category { color: var(--teal); font-size: 12px; font-weight: 800; }
-.board-list > button > span:nth-child(2) { display: grid; gap: 7px; }
-.board-list strong { font-size: 15px; }
-.board-list small { color: var(--muted); font-size: 11px; }
-.board-list > button > span:last-child { display: grid; gap: 5px; text-align: right; font-size: 11px; }
-.board-side { display: grid; align-content: start; gap: 14px; }
-.topic-tags { display: flex; flex-wrap: wrap; gap: 7px; }
-.topic-tags span { padding: 7px 9px; border-radius: 6px; background: #14243a; color: #aab9cb; font-size: 11px; }
+.ranking-card, .guide-panel, .faq { overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: rgba(11,23,39,.84); }
 
 .score-rules { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin: 20px 0; }
 .score-rules > div { display: grid; gap: 5px; padding: 18px; border: 1px solid var(--line); border-radius: 11px; background: rgba(12,24,40,.82); }
@@ -660,8 +635,6 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
   .hot-card { grid-row: auto; }
   .vote-rail { position: static; grid-template-columns: 1fr 1fr; }
   .case-row { grid-template-columns: 145px minmax(0, 1fr) 200px 90px; }
-  .community-layout { grid-template-columns: 1fr; }
-  .board-side { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 880px) {
@@ -754,12 +727,6 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
   .section-page { padding-top: 22px; }
   .section-hero { display: grid; min-height: auto; padding: 22px 18px; }
   .section-hero .primary-button { width: 100%; min-height: 46px; }
-  .board-toolbar { align-items: stretch; flex-direction: column; padding: 10px; }
-  .board-tabs { width: 100%; }
-  .community-write { width: 100%; }
-  .board-side { grid-template-columns: 1fr; }
-  .board-list > button { grid-template-columns: 72px 1fr; gap: 9px; padding: 12px; }
-  .board-list > button > span:last-child { display: none; }
   .score-rules, .guide-steps, .guide-grid { grid-template-columns: 1fr; }
   .guide-steps article { min-height: 170px; }
   .guide-steps h3 { margin-top: 16px; }
