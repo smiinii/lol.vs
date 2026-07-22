@@ -13,6 +13,8 @@
   --teal: #58c9be;
   --teal-dark: #349f98;
   --coral: #ef8188;
+  --brand-blue: #5aaef2;
+  --brand-orange: #ff9a55;
   --gold: #f3b74b;
   --radius: 14px;
   --shadow: 0 20px 55px rgba(7, 17, 31, 0.2);
@@ -64,9 +66,9 @@ img, video { display: block; max-width: 100%; }
   white-space: nowrap;
 }
 .logo-mark { width: 35px; height: 35px; flex: 0 0 auto; overflow: visible; }
-.brand-shape-teal { fill: var(--teal); }
-.brand-shape-coral { fill: var(--coral); }
-.brand-play { fill: var(--text); }
+.brand-bubble-blue { fill: var(--brand-blue); }
+.brand-bubble-orange { fill: var(--brand-orange); }
+.brand-letter { fill: #fff; }
 .logo-word {
   display: inline-flex;
   align-items: baseline;
@@ -77,8 +79,8 @@ img, video { display: block; max-width: 100%; }
   line-height: 1;
 }
 .logo-lol, .logo-dot { color: var(--text); }
-.logo-v { color: var(--teal); }
-.logo-s { color: var(--coral); }
+.logo-v { color: var(--brand-blue); }
+.logo-s { color: var(--brand-orange); }
 .site-header nav { align-self: stretch; display: flex; align-items: stretch; gap: 6px; }
 .site-header nav button {
   position: relative;

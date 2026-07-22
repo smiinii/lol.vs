@@ -153,9 +153,10 @@ async function loadStoredVideo(): Promise<Blob | null> {
 function BrandMark({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M13 37C10 25 18 13 30 10C38 8 46 11 51 17L43 24C40 21 36 20 32 21C25 22 21 29 23 36Z" className="brand-shape-teal" />
-      <path d="M51 27C54 39 46 51 34 54C26 56 18 53 13 47L21 40C24 43 28 44 32 43C39 42 43 35 41 28Z" className="brand-shape-coral" />
-      <path d="M28 23 43 32 28 41Z" className="brand-play" />
+      <path d="M16 7H31V48H22L13 56L15 48C9 48 6 44 6 38V18C6 11 10 7 16 7Z" className="brand-bubble-blue" />
+      <path d="M33 7H48C54 7 58 11 58 18V38C58 44 55 48 49 48L51 56L42 48H33Z" className="brand-bubble-orange" />
+      <text x="19" y="40" className="brand-letter" fontFamily="Arial, Helvetica, sans-serif" fontSize="26" fontWeight="700" textAnchor="middle">V</text>
+      <text x="45" y="40" className="brand-letter" fontFamily="Arial, Helvetica, sans-serif" fontSize="28" fontWeight="700" textAnchor="middle">S</text>
     </svg>
   );
 }
