@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useRef, useState } from "react";
 
 type View = "home" | "ranking" | "guide" | "detail" | "submit" | "search" | "admin";
+type NavigationState = { view: View; title?: string; local?: boolean; query?: string };
 type VoteSide = "A" | "B";
 type CaseMode = "judgement" | "feedback";
 type User = { nickname: string; tier: string; peakTier?: string; primaryRole?: string; isAdmin?: boolean };
@@ -37,6 +38,7 @@ const asset = (path: string) => `${basePath}${path}`;
 const USER_KEY = "lolvs-demo-user";
 const CASE_KEY = "lolvs-local-case-v2";
 const VIDEO_KEY = "latest-case-video-v2";
+const PERSONAL_RANKING_KEY = "lolvs-personal-ranking-v1";
 
 const tierLevel = (tier: string) => {
   if (tier.includes("챌린저")) return 9;
@@ -155,7 +157,13 @@ const weeklyPosts = compactCases.map((item) => ({ title: item.title, meta: "댓�
 const commentsSeed: CommentItem[] = [];
 const feedbackCommentsSeed: CommentItem[] = [];
 const judgeRankingSeed: string[][] = topJudges.map((judge) => [judge.name, judge.tier, "0", "0", "0"]);
-const personalRankingSeed: string[][] = [];
+
+function registerPersonalRanking(rows: string[][], user: User) {
+  const tier = user.isAdmin ? "챌린저" : user.tier;
+  const index = rows.findIndex((row) => row[0].toLowerCase() === user.nickname.toLowerCase());
+  if (index === -1) return [...rows, [user.nickname, tier, "0 / 0", "0", "0"]];
+  return rows.map((row, rowIndex) => rowIndex === index ? [user.nickname, tier, row[2], row[3], row[4]] : row);
+}
 
 function openVideoDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -284,7 +292,6 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
         <section className="feed-column">
           <header className="clean-home-intro">
             <div>
-              <span className="clean-eyebrow">검증된 플레이 판정</span>
               <h1>누가 잘못했는지 판정받고,<em>다음 플레이 방법까지 확인하세요.</em></h1>
             </div>
             <button className="clean-write-button" onClick={onSubmit}>글쓰기</button>
@@ -626,12 +633,12 @@ function PersonalActivityMetric({ value }: { value: string }) {
   return <span className="personal-activity-metric"><span><b>{votes}</b><small>참여</small></span><i /><span><b>{matches}</b><small>합의 일치</small></span></span>;
 }
 
-function Ranking() {
+function Ranking({ personalRanking }: { personalRanking: string[][] }) {
   const [mode, setMode] = useState<"personal" | "judge">("personal");
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
   const [rankingPage, setRankingPage] = useState(1);
-  const ranking = mode === "personal" ? personalRankingSeed : judgeRankingSeed;
+  const ranking = mode === "personal" ? personalRanking : judgeRankingSeed;
   const rankingPageSize = 20;
   const rankingPageCount = Math.max(1, Math.ceil(ranking.length / rankingPageSize));
   const visibleRanking = ranking.slice((rankingPage - 1) * rankingPageSize, rankingPage * rankingPageSize);
@@ -797,18 +804,25 @@ export default function HomePage() {
   const [viewingLocal, setViewingLocal] = useState(false);
   const [selectedCaseTitle, setSelectedCaseTitle] = useState(REAL_CASE_TITLE);
   const [searchQuery, setSearchQuery] = useState("");
+  const [personalRanking, setPersonalRanking] = useState<string[][]>([]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const storedUser = localStorage.getItem(USER_KEY);
       const storedCase = localStorage.getItem(CASE_KEY);
+      const storedRanking = JSON.parse(localStorage.getItem(PERSONAL_RANKING_KEY) ?? "[]") as string[][];
       if (storedUser) {
         const storedProfile = JSON.parse(storedUser) as User;
         const savedUser = storedProfile.nickname === "루크"
           ? { nickname: "루크", tier: "관리자", peakTier: "관리자", isAdmin: true }
           : { ...storedProfile, peakTier: storedProfile.peakTier ?? storedProfile.tier, primaryRole: storedProfile.primaryRole ?? "정글" };
+        const nextRanking = registerPersonalRanking(storedRanking, savedUser);
         localStorage.setItem(USER_KEY, JSON.stringify(savedUser));
+        localStorage.setItem(PERSONAL_RANKING_KEY, JSON.stringify(nextRanking));
         setUser(savedUser);
+        setPersonalRanking(nextRanking);
+      } else {
+        setPersonalRanking(storedRanking);
       }
       if (storedCase) {
         const savedCase = JSON.parse(storedCase) as LocalCase;
@@ -819,27 +833,63 @@ export default function HomePage() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const views: View[] = ["home", "ranking", "guide", "detail", "submit", "search", "admin"];
+    const baseUrl = `${window.location.pathname}${window.location.search}`;
+    window.history.replaceState({ view: "home" } satisfies NavigationState, "", baseUrl);
+    const restoreView = (event: PopStateEvent) => {
+      const state = event.state as NavigationState | null;
+      const nextView = state && views.includes(state.view) ? state.view : "home";
+      setView(nextView);
+      setLoginOpen(false);
+      setProfileOpen(false);
+      if (state?.title) setSelectedCaseTitle(state.title);
+      if (typeof state?.local === "boolean") setViewingLocal(state.local);
+      if (state?.query) setSearchQuery(state.query);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    window.addEventListener("popstate", restoreView);
+    return () => window.removeEventListener("popstate", restoreView);
+  }, []);
+
   const showToast = (message: string) => { setToastMessage(message); window.setTimeout(() => setToastMessage(""), 2800); };
   const requireLogin = () => { setLoginOpen(true); showToast("로그인이 필요한 기능입니다."); };
-  const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
-  const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); setView("home"); showToast("로그아웃했습니다."); };
+  const navigate = (nextView: View, state: Omit<NavigationState, "view"> = {}) => {
+    if (state.title) setSelectedCaseTitle(state.title);
+    if (typeof state.local === "boolean") setViewingLocal(state.local);
+    if (state.query) setSearchQuery(state.query);
+    setView(nextView);
+    const baseUrl = `${window.location.pathname}${window.location.search}`;
+    window.history.pushState({ view: nextView, ...state } satisfies NavigationState, "", nextView === "home" ? baseUrl : `${baseUrl}#${nextView}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const login = (nextUser: User) => {
+    const nextRanking = registerPersonalRanking(personalRanking, nextUser);
+    localStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+    localStorage.setItem(PERSONAL_RANKING_KEY, JSON.stringify(nextRanking));
+    setPersonalRanking(nextRanking);
+    setUser(nextUser);
+    setLoginOpen(false);
+    showToast(`${nextUser.nickname}님, 로그인했습니다. 개인 랭킹에 등록되었습니다.`);
+  };
+  const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); navigate("home"); showToast("로그아웃했습니다."); };
   const openSubmit = () => {
     if (!user) return requireLogin();
     if (isMasterPlus(user.tier) && !user.isAdmin) return showToast("마스터 이상은 사건을 작성할 수 없으며 공식 판결자로 참여합니다.");
-    setView("submit");
+    navigate("submit");
   };
-  const openDetail = (local = false, title?: string) => { setViewingLocal(local); if (title) setSelectedCaseTitle(title); setView("detail"); };
-  const search = (query: string) => { setSearchQuery(query); setView("search"); };
+  const openDetail = (local = false, title?: string) => navigate("detail", { local, title });
+  const search = (query: string) => navigate("search", { query });
 
-  return <div className="app-root"><Header view={view} setView={setView} user={user} onLogin={() => setLoginOpen(true)} onProfile={() => setProfileOpen(true)} />
+  return <div className="app-root"><Header view={view} setView={navigate} user={user} onLogin={() => setLoginOpen(true)} onProfile={() => setProfileOpen(true)} />
     {view === "home" && <Home openDetail={openDetail} localCase={localCase} localVideoUrl={localVideoUrl} onSubmit={openSubmit} onSearch={search} />}
     {view === "detail" && <Detail toast={showToast} user={user} requireLogin={requireLogin} localCase={localCase} localVideoUrl={localVideoUrl} viewingLocal={viewingLocal} selectedTitle={selectedCaseTitle} />}
-    {view === "ranking" && <Ranking />}
+    {view === "ranking" && <Ranking personalRanking={personalRanking} />}
     {view === "guide" && <Guide />}
     {view === "search" && <SearchResults query={searchQuery} openDetail={openDetail} localCase={localCase} />}
-    {view === "submit" && user && <SubmitCase setView={setView} toast={showToast} user={user} onSubmitted={(item, url) => { setLocalCase(item); setLocalVideoUrl(url); }} />}
+    {view === "submit" && user && <SubmitCase setView={navigate} toast={showToast} user={user} onSubmitted={(item, url) => { setLocalCase(item); setLocalVideoUrl(url); }} />}
     {view === "admin" && user?.isAdmin && <AdminApproval localCase={localCase} localVideoUrl={localVideoUrl} approve={() => { if (!localCase) return; const approvedCase = { ...localCase, approved: true }; localStorage.setItem(CASE_KEY, JSON.stringify(approvedCase)); setLocalCase(approvedCase); showToast("게시물을 승인해 홈에 공개했습니다."); }} remove={() => { localStorage.removeItem(CASE_KEY); deleteStoredVideo().catch(() => undefined); if (localVideoUrl) URL.revokeObjectURL(localVideoUrl); setLocalCase(null); setLocalVideoUrl(""); showToast("게시물과 영상을 삭제했습니다."); }} openDetail={() => openDetail(true, localCase?.title)} />}
-    <footer><Logo onClick={() => setView("home")} /><p>티어는 진짜로, 닉네임은 자유롭게. 함께 판결하는 롤 플레이 판결소.</p><small>LOL.VS는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</small></footer>
+    <footer><Logo onClick={() => navigate("home")} /><p>티어는 진짜로, 닉네임은 자유롭게. 함께 판결하는 롤 플레이 판결소.</p><small>LOL.VS는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</small></footer>
     {loginOpen && <LoginModal close={() => setLoginOpen(false)} onLogin={login} />}
     {profileOpen && user && <ProfileModal user={user} close={() => setProfileOpen(false)} logout={logout} />}
     {toastMessage && <div className="toast" role="status">✓ {toastMessage}</div>}
