@@ -885,6 +885,8 @@ footer small { padding-left: 18px; border-left: 1px solid var(--line-soft); colo
 .login-modal label { display: grid; gap: 7px; margin: 14px 0; color: #cbd5e1; font-size: 12px; font-weight: 800; }
 .login-modal input, .login-modal select { width: 100%; border: 1px solid #34465f; border-radius: 8px; outline: 0; padding: 12px 13px; background: #091522; color: var(--text); }
 .login-modal input:focus, .login-modal select:focus { border-color: var(--teal); }
+.login-error { margin: 8px 0 0 !important; color: #ff8e95 !important; font-size: 10px; font-weight: 800; text-align: left !important; }
+.admin-profile-badge { display: inline-flex; justify-content: center; margin: 0 auto 5px; padding: 6px 10px; border: 1px solid rgba(243,183,75,.38); border-radius: 20px; background: rgba(243,183,75,.08); color: var(--gold); font-size: 9px; font-weight: 900; }
 .demo-warning { margin: 18px 0; padding: 12px; border-radius: 8px; background: rgba(243,183,75,.1); color: #c7b17a; font-size: 11px; line-height: 1.6; }
 .report-modal { text-align: left; }
 .report-modal h2, .report-modal > p { text-align: center; }
@@ -1281,6 +1283,26 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
 .side-b { border-color: rgba(239,129,136,.62); color: #f5a4aa; background: linear-gradient(145deg, rgba(161,77,88,.7), rgba(105,56,68,.58)); }
 .big-vote-buttons button.a { border-color: var(--teal); background: linear-gradient(145deg, rgba(52,159,152,.84), rgba(40,122,119,.8)); }
 .big-vote-buttons button.b { border-color: var(--coral); background: linear-gradient(145deg, rgba(196,91,101,.86), rgba(151,67,80,.84)); }
+.admin-approval-page { padding: 46px 0 80px; }
+.admin-approval-page .section-heading { margin-bottom: 20px; }
+.admin-approval-page .section-heading > span { color: var(--gold); }
+.admin-approval-page .section-heading h1 { margin: 6px 0 7px; font-size: 31px; letter-spacing: -1.2px; }
+.admin-approval-page .section-heading p { margin: 0; color: var(--muted); font-size: 11px; }
+.approval-empty { min-height: 320px; display: grid; place-items: center; align-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 14px; background: #203149; text-align: center; }
+.approval-empty strong { font-size: 18px; }
+.approval-empty p { margin: 0; color: var(--muted); font-size: 11px; }
+.approval-card { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(320px, .75fr); overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: #203149; }
+.approval-video { min-height: 360px; display: grid; place-items: center; background: #07111d; color: var(--muted); }
+.approval-video video { width: 100%; height: 100%; max-height: 520px; object-fit: contain; }
+.approval-copy { display: flex; flex-direction: column; justify-content: center; padding: 30px; border-left: 1px solid var(--line); }
+.approval-copy h2 { margin: 12px 0 7px; font-size: 23px; }
+.approval-copy > p { margin: 0 0 18px; color: var(--muted); font-size: 11px; }
+.pending-status, .approved-status { width: max-content; padding: 6px 9px; border-radius: 6px; font-size: 9px; }
+.pending-status { background: rgba(243,183,75,.09); color: var(--gold); }
+.approved-status { background: rgba(88,201,190,.09); color: var(--teal); }
+.approval-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 25px; }
+.approval-actions button { min-height: 38px; padding: 0 13px; border-radius: 7px; cursor: pointer; font-size: 10px; font-weight: 850; }
+.approval-actions .danger-button { width: auto; margin: 0; }
 
 @media (max-width: 1180px) {
   .home-layout, .detail-layout { grid-template-columns: 1fr; }
@@ -1299,6 +1321,8 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
   .header-inner { gap: 16px; }
   .site-header nav { margin-left: auto; }
   .site-header nav button { padding: 0 10px; font-size: 12px; }
+  .approval-card { grid-template-columns: 1fr; }
+  .approval-copy { border-top: 1px solid var(--line); border-left: 0; }
   .header-actions { margin-left: 0; }
   .submit-small { min-width: 72px; padding: 0 10px; font-size: 12px; }
   .home-layout { padding-top: 28px; }

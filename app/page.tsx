@@ -3,10 +3,10 @@
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 
-type View = "home" | "ranking" | "guide" | "detail" | "submit" | "search";
+type View = "home" | "ranking" | "guide" | "detail" | "submit" | "search" | "admin";
 type VoteSide = "A" | "B";
 type CaseMode = "judgement" | "feedback";
-type User = { nickname: string; tier: string; peakTier?: string; primaryRole?: string };
+type User = { nickname: string; tier: string; peakTier?: string; primaryRole?: string; isAdmin?: boolean };
 type LocalCase = {
   title: string;
   mode: CaseMode;
@@ -16,6 +16,7 @@ type LocalCase = {
   thought?: string;
   author: string;
   tier: string;
+  approved?: boolean;
 };
 type Reply = { id: number; name: string; tier: string; text: string; vote?: VoteSide };
 type CommentItem = {
@@ -35,7 +36,6 @@ type ResolvedVerdict = { side: VoteSide; judge: string; judgeTier: string; judge
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const asset = (path: string) => `${basePath}${path}`;
 const USER_KEY = "lolvs-demo-user";
-const CHALLENGER_TEST_KEY = "lolvs-challenger-test-v1";
 const CASE_KEY = "lolvs-local-case";
 const VIDEO_KEY = "latest-case-video";
 const DEMO_ACCOUNTS: User[] = [
@@ -213,6 +213,16 @@ async function loadStoredVideo(): Promise<Blob | null> {
   });
 }
 
+async function deleteStoredVideo(): Promise<void> {
+  const db = await openVideoDb();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction("videos", "readwrite");
+    transaction.objectStore("videos").delete(VIDEO_KEY);
+    transaction.oncomplete = () => { db.close(); resolve(); };
+    transaction.onerror = () => { db.close(); reject(transaction.error); };
+  });
+}
+
 function BrandMark({ className = "" }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 64 64" aria-hidden="true">
@@ -247,6 +257,7 @@ function Header({ view, setView, user, onLogin, onProfile }: {
   onProfile: () => void;
 }) {
   const menus: [View, string][] = [["home", "홈"], ["ranking", "랭킹"], ["guide", "가이드"]];
+  if (user?.isAdmin) menus.push(["admin", "승인 관리"]);
   return (
     <header className="site-header">
       <div className="header-inner">
@@ -258,7 +269,7 @@ function Header({ view, setView, user, onLogin, onProfile }: {
           {user ? (
             <button className="profile" onClick={onProfile} aria-label="내 프로필 열기">
               <span className="avatar">{user.nickname[0]}</span>
-              <span className="profile-copy desktop-only"><strong>{user.nickname}</strong><small>{user.tier} · 데모 인증</small></span>
+              <span className="profile-copy desktop-only"><strong>{user.nickname}</strong><small>{user.isAdmin ? "관리자 · 승인 권한" : `${user.tier} · 데모 인증`}</small></span>
               <span className="chevron">⌄</span>
             </button>
           ) : <button className="login-button" onClick={onLogin}>로그인</button>}
@@ -297,7 +308,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const pageCount = Math.max(1, Math.ceil(filtered.length / casesPerPage));
   const pageItems = filtered.slice((page - 1) * casesPerPage, page * casesPerPage);
   const popularPosts = popularCycle % 2 === 0 ? weeklyPosts : [weeklyPosts[2], weeklyPosts[0], weeklyPosts[1], weeklyPosts[4], weeklyPosts[3]];
-  const showLocal = !showResolved && localCase && localCase.mode === serviceMode && (category === "전체" || localCase.category === category);
+  const showLocal = !showResolved && localCase && localCase.approved !== false && localCase.mode === serviceMode && (category === "전체" || localCase.category === category);
   const currentJudge = topJudges[judgeIndex];
   const moveJudge = (direction: number) => setJudgeIndex((index) => (index + direction + topJudges.length) % topJudges.length);
   return (
@@ -436,8 +447,11 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const visibleComments = comments.slice((commentPage - 1) * 5, commentPage * 5);
 
   useEffect(() => {
-    setComments(detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
-    setCommentPage(1);
+    const timer = window.setTimeout(() => {
+      setComments(detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
+      setCommentPage(1);
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, [detailMode, title]);
 
   useEffect(() => {
@@ -718,27 +732,43 @@ function SubmitCase({ setView, toast, user, onSubmitted }: { setView: (view: Vie
   };
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (isMasterPlus(user.tier)) return toast("마스터 이상은 공식 판결자 역할로 참여하며 사건을 작성할 수 없습니다.");
+    if (isMasterPlus(user.tier) && !user.isAdmin) return toast("마스터 이상은 공식 판결자 역할로 참여하며 사건을 작성할 수 없습니다.");
     if (!file) return toast("실제 영상 파일을 선택해 주세요.");
     const form = new FormData(event.currentTarget);
-    const item: LocalCase = { title: String(form.get("title")), mode, category: String(form.get("category")), aClaim: String(form.get("aClaim") ?? ""), bClaim: String(form.get("bClaim") ?? ""), thought: String(form.get("thought") ?? ""), author: user.nickname, tier: user.tier };
+    const item: LocalCase = { title: String(form.get("title")), mode, category: String(form.get("category")), aClaim: String(form.get("aClaim") ?? ""), bClaim: String(form.get("bClaim") ?? ""), thought: String(form.get("thought") ?? ""), author: user.nickname, tier: user.tier, approved: Boolean(user.isAdmin) };
     setSaving(true);
-    try { await storeVideo(file); localStorage.setItem(CASE_KEY, JSON.stringify(item)); onSubmitted(item, preview); toast("영상과 사건이 이 브라우저에 저장되었습니다."); setView("home"); } catch { toast("영상을 저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요."); } finally { setSaving(false); }
+    try { await storeVideo(file); localStorage.setItem(CASE_KEY, JSON.stringify(item)); onSubmitted(item, preview); toast(user.isAdmin ? "관리자 게시물이 바로 등록되었습니다." : "영상이 접수되었습니다. 관리자 승인 후 공개됩니다."); setView("home"); } catch { toast("영상을 저장하지 못했습니다. 브라우저 저장 공간을 확인해 주세요."); } finally { setSaving(false); }
   };
-  return <main className="submit-page page-shell"><button className="back-link" onClick={() => setView("home")}>← 홈으로</button><div className="submit-heading"><h1>어떤 도움을 받고 싶나요?</h1><p>판정을 받을지, 플레이를 지적받고 성장할지 먼저 선택해 주세요.</p></div><form className="submit-form" onSubmit={submit}><section><label>1. 게시글 유형</label><div className="case-mode-choice"><label><input type="radio" name="mode" value="judgement" checked={mode === "judgement"} onChange={() => setMode("judgement")} /><span><b>플레이 판정</b><small>누가 더 잘못했는지 공식 판정과 근거를 받습니다.</small></span></label><label><input type="radio" name="mode" value="feedback" checked={mode === "feedback"} onChange={() => setMode("feedback")} /><span><b>플레이 피드백</b><small>잘한 점과 문제점, 다음 플레이 방법을 받습니다.</small></span></label></div></section><section><label>2. 영상 업로드</label><input ref={inputRef} className="sr-only" type="file" accept="video/*" onChange={chooseFile} />{preview ? <div className="upload-preview"><video src={preview} controls /><button type="button" onClick={() => inputRef.current?.click()}>영상 다시 선택</button></div> : <button type="button" className="upload-box" onClick={() => inputRef.current?.click()}><span>↥</span><strong>내 기기에서 실제 영상 선택</strong><small>MP4, WebM 등 · 200MB 이하 권장</small></button>}</section><section><label htmlFor="case-title">3. 게시글 제목</label><input id="case-title" name="title" required placeholder={mode === "judgement" ? "예: 바론 스틸 시도, 미드가 잘못한 걸까요?" : "예: 이 장면에서 더 좋은 선택이 있었을까요?"} /></section><section><label htmlFor="case-category">4. 게임 카테고리</label><select id="case-category" name="category" defaultValue="솔로랭크"><option>솔로랭크</option><option>파티랭크</option><option>내전</option></select></section>{mode === "judgement" ? <div className="form-split"><section><label htmlFor="a-claim">5. A측 상황</label><textarea id="a-claim" name="aClaim" required placeholder="A측에서 본 상황과 판단을 적어주세요." /></section><section><label htmlFor="b-claim">6. B측 상황</label><textarea id="b-claim" name="bClaim" required placeholder="B측에서 본 상황과 판단을 적어주세요." /></section></div> : <section className="play-thought-field"><label htmlFor="play-thought">5. 당시 플레이 의도와 고민</label><textarea id="play-thought" name="thought" required placeholder="왜 이런 선택을 했는지, 당시 무엇을 보고 어떤 결과를 기대했는지 적어주세요." /><small>상위 티어 피드백 제공자가 결과가 아닌 당시 판단을 이해하는 데 사용합니다.</small></section>}<section><label>{mode === "judgement" ? "7" : "6"}. 참여 기간</label><div className="duration"><label><input type="radio" name="duration" value="1" />1일</label><label><input type="radio" name="duration" value="3" defaultChecked />3일</label><label><input type="radio" name="duration" value="7" />7일</label></div></section><div className="submit-notice"><span>ⓘ</span><p><strong>기기 로컬 저장 데모입니다.</strong><br />서버와 Riot API 연결 전이라 다른 사용자에게 공유되지는 않습니다.</p></div><button type="submit" className="primary-button full" disabled={saving}>{saving ? "영상 저장 중…" : "게시글 등록하기"}</button></form></main>;
+  return <main className="submit-page page-shell"><button className="back-link" onClick={() => setView("home")}>← 홈으로</button><div className="submit-heading"><h1>어떤 도움을 받고 싶나요?</h1><p>판정을 받을지, 플레이를 지적받고 성장할지 먼저 선택해 주세요.</p></div><form className="submit-form" onSubmit={submit}><section><label>1. 게시글 유형</label><div className="case-mode-choice"><label><input type="radio" name="mode" value="judgement" checked={mode === "judgement"} onChange={() => setMode("judgement")} /><span><b>플레이 판정</b><small>누가 더 잘못했는지 공식 판정과 근거를 받습니다.</small></span></label><label><input type="radio" name="mode" value="feedback" checked={mode === "feedback"} onChange={() => setMode("feedback")} /><span><b>플레이 피드백</b><small>잘한 점과 문제점, 다음 플레이 방법을 받습니다.</small></span></label></div></section><section><label>2. 영상 업로드</label><input ref={inputRef} className="sr-only" type="file" accept="video/*" onChange={chooseFile} />{preview ? <div className="upload-preview"><video src={preview} controls /><button type="button" onClick={() => inputRef.current?.click()}>영상 다시 선택</button></div> : <button type="button" className="upload-box" onClick={() => inputRef.current?.click()}><span>↥</span><strong>내 기기에서 실제 영상 선택</strong><small>MP4, WebM 등 · 200MB 이하 권장</small></button>}</section><section><label htmlFor="case-title">3. 게시글 제목</label><input id="case-title" name="title" required placeholder={mode === "judgement" ? "예: 바론 스틸 시도, 미드가 잘못한 걸까요?" : "예: 이 장면에서 더 좋은 선택이 있었을까요?"} /></section><section><label htmlFor="case-category">4. 게임 카테고리</label><select id="case-category" name="category" defaultValue="솔로랭크"><option>솔로랭크</option><option>파티랭크</option><option>내전</option></select></section>{mode === "judgement" ? <div className="form-split"><section><label htmlFor="a-claim">5. A측 상황</label><textarea id="a-claim" name="aClaim" required placeholder="A측에서 본 상황과 판단을 적어주세요." /></section><section><label htmlFor="b-claim">6. B측 상황</label><textarea id="b-claim" name="bClaim" required placeholder="B측에서 본 상황과 판단을 적어주세요." /></section></div> : <section className="play-thought-field"><label htmlFor="play-thought">5. 당시 플레이 의도와 고민</label><textarea id="play-thought" name="thought" required placeholder="왜 이런 선택을 했는지, 당시 무엇을 보고 어떤 결과를 기대했는지 적어주세요." /><small>상위 티어 피드백 제공자가 결과가 아닌 당시 판단을 이해하는 데 사용합니다.</small></section>}<section><label>{mode === "judgement" ? "7" : "6"}. 참여 기간</label><div className="duration"><label><input type="radio" name="duration" value="1" />1일</label><label><input type="radio" name="duration" value="3" defaultChecked />3일</label><label><input type="radio" name="duration" value="7" />7일</label></div></section><div className="submit-notice"><span>ⓘ</span><p><strong>{user.isAdmin ? "관리자 게시" : "관리자 승인 후 공개"}</strong><br />{user.isAdmin ? "관리자 계정으로 등록한 게시물은 바로 공개됩니다." : "일반 사용자의 영상은 승인 관리 화면에서 확인한 뒤 공개됩니다."}</p></div><button type="submit" className="primary-button full" disabled={saving}>{saving ? "영상 저장 중…" : user.isAdmin ? "게시글 바로 등록하기" : "관리자 승인 요청하기"}</button></form></main>;
+}
+
+function AdminApproval({ localCase, localVideoUrl, approve, remove, openDetail }: { localCase: LocalCase | null; localVideoUrl: string; approve: () => void; remove: () => void; openDetail: () => void }) {
+  const pending = localCase?.approved === false;
+  return <main className="page-shell section-page admin-approval-page"><div className="section-heading"><span>ADMIN</span><h1>게시물 승인 관리</h1><p>사용자가 올린 영상과 내용을 확인한 뒤 공개 여부를 결정합니다.</p></div>{!localCase ? <section className="approval-empty"><strong>검토 대기 0건</strong><p>새로 접수된 영상이 없습니다.</p></section> : <section className="approval-card"><div className="approval-video">{localVideoUrl ? <video src={localVideoUrl} controls playsInline /> : <span>영상을 불러오는 중입니다.</span>}</div><div className="approval-copy"><span className={localCase.mode === "judgement" ? "detail-mode-badge judgement" : "detail-mode-badge feedback"}>{localCase.mode === "judgement" ? "플레이 판정" : "플레이 피드백"}</span><h2>{localCase.title}</h2><p>{localCase.author} · {localCase.tier} · {localCase.category}</p><strong className={pending ? "pending-status" : "approved-status"}>{pending ? "승인 대기 중" : "현재 공개 중"}</strong><div className="approval-actions"><button className="secondary-button" onClick={openDetail}>내용 미리보기</button><button className="danger-button" onClick={remove}>게시물·영상 삭제</button>{pending && <button className="primary-button" onClick={approve}>게시 승인</button>}</div></div></section>}</main>;
 }
 
 function LoginModal({ close, onLogin }: { close: () => void; onLogin: (user: User) => void }) {
   const [nickname, setNickname] = useState("");
-  const [tier, setTier] = useState("챌린저");
-  const [peakTier, setPeakTier] = useState("챌린저");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [tier, setTier] = useState("다이아몬드 IV");
+  const [peakTier, setPeakTier] = useState("다이아몬드");
   const [primaryRole, setPrimaryRole] = useState("정글");
-  const submit = (event: FormEvent) => { event.preventDefault(); if (nickname.trim().length < 2) return; onLogin({ nickname: nickname.trim(), tier, peakTier, primaryRole }); };
-  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal judge-profile-login" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">데모 로그인</h2><p>역할별 계정으로 바로 체험하거나 직접 프로필을 만들 수 있습니다.</p><div className="demo-account-picker"><span>빠른 데모 계정</span><div>{DEMO_ACCOUNTS.map((account, index) => <button type="button" key={account.nickname} onClick={() => onLogin({ ...account })}><b>{index === 0 ? "글쓰기 계정" : "판정 계정"}</b><strong>{account.nickname}</strong><small>{account.tier} · {account.primaryRole}</small></button>)}</div></div><div className="custom-profile-divider"><span>직접 설정</span></div><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={12} required placeholder="2~12자" /></label><div className="login-profile-grid"><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label><label>최고 티어<select value={peakTier} onChange={(event) => setPeakTier(event.target.value)}>{["골드", "플래티넘", "에메랄드", "다이아몬드", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label></div><label>주 포지션<select value={primaryRole} onChange={(event) => setPrimaryRole(event.target.value)}>{["탑", "정글", "미드", "원딜", "서포터"].map((item) => <option key={item}>{item}</option>)}</select></label>{isMasterPlus(tier) && <div className="judge-profile-note"><b>공식 판정자 프로필</b><span>현재·최고 티어와 주 포지션이 판결문에 표시되며 같은 포지션 사건에 우선 연결됩니다.</span></div>}<div className="demo-warning">선택한 정보는 실제 Riot 인증이 아닌 <b>데모 인증</b>으로 표시됩니다.</div><button className="primary-button full" type="submit">이 정보로 로그인</button></form></div>;
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const cleanNickname = nickname.trim();
+    if (cleanNickname.length < 2 || password.length < 4) return setLoginError("닉네임과 비밀번호 4자리를 입력해주세요.");
+    if (cleanNickname === "루크") {
+      if (password !== "0091") return setLoginError("관리자 비밀번호가 올바르지 않습니다.");
+      return onLogin({ nickname: "루크", tier: "챌린저", peakTier: "챌린저", primaryRole: "정글", isAdmin: true });
+    }
+    onLogin({ nickname: cleanNickname, tier, peakTier, primaryRole, isAdmin: false });
+  };
+  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal judge-profile-login" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">로그인</h2><p>게시글은 누구나 볼 수 있습니다. 댓글과 영상 등록은 로그인 후 이용해주세요.</p><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => { setNickname(event.target.value); setLoginError(""); }} minLength={2} maxLength={12} required placeholder="2~12자" /></label><label>비밀번호<input value={password} onChange={(event) => { setPassword(event.target.value); setLoginError(""); }} minLength={4} maxLength={12} required type="password" placeholder="4자리 이상" /></label>{nickname.trim() !== "루크" && <><div className="login-profile-grid"><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label><label>최고 티어<select value={peakTier} onChange={(event) => setPeakTier(event.target.value)}>{["골드", "플래티넘", "에메랄드", "다이아몬드", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label></div><label>주 포지션<select value={primaryRole} onChange={(event) => setPrimaryRole(event.target.value)}>{["탑", "정글", "미드", "원딜", "서포터"].map((item) => <option key={item}>{item}</option>)}</select></label></>} {loginError && <p className="login-error">{loginError}</p>}<div className="demo-warning">{nickname.trim() === "루크" ? <><b>관리자 로그인</b> · 승인 관리 권한으로 접속합니다.</> : <>현재 계정과 티어 정보는 프로토타입용 <b>데모 인증</b>입니다.</>}</div><button className="primary-button full" type="submit">로그인하기</button></form></div>;
 }
 
 function ProfileModal({ user, close, logout, switchAccount }: { user: User; close: () => void; logout: () => void; switchAccount: (user: User) => void }) {
-  return <div className="modal-backdrop" onMouseDown={close}><section className="profile-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">{user.nickname[0]}</span><h2 id="profile-title">{user.nickname}</h2><VerifiedBadge tier={user.tier} demo /><div className="profile-play-info"><span><small>최고 티어</small><b>{user.peakTier ?? user.tier}</b></span><span><small>주 포지션</small><b>{user.primaryRole ?? "미설정"}</b></span></div><div className="demo-account-switcher"><span>데모 계정 전환</span>{DEMO_ACCOUNTS.map((account, index) => <button key={account.nickname} className={user.nickname === account.nickname ? "active" : ""} onClick={() => switchAccount({ ...account })}><span>{index === 0 ? "글" : "판"}</span><div><b>{index === 0 ? "글쓰기 계정" : "판정 계정"}</b><small>{account.nickname} · {account.tier}</small></div><em>{user.nickname === account.nickname ? "사용 중" : "전환"}</em></button>)}</div><p>다이아 계정은 글쓰기, 챌린저 계정은 공식 판정을 체험할 수 있습니다.</p><button className="secondary-button full" onClick={logout}>로그아웃</button></section></div>;
+  return <div className="modal-backdrop" onMouseDown={close}><section className="profile-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">{user.nickname[0]}</span><h2 id="profile-title">{user.nickname}</h2>{user.isAdmin ? <span className="admin-profile-badge">LOL.VS 관리자</span> : <VerifiedBadge tier={user.tier} demo />}<div className="profile-play-info"><span><small>최고 티어</small><b>{user.peakTier ?? user.tier}</b></span><span><small>{user.isAdmin ? "권한" : "주 포지션"}</small><b>{user.isAdmin ? "게시물 승인" : user.primaryRole ?? "미설정"}</b></span></div>{!user.isAdmin && <><div className="demo-account-switcher"><span>데모 계정 전환</span>{DEMO_ACCOUNTS.map((account, index) => <button key={account.nickname} className={user.nickname === account.nickname ? "active" : ""} onClick={() => switchAccount({ ...account, isAdmin: false })}><span>{index === 0 ? "글" : "판"}</span><div><b>{index === 0 ? "글쓰기 계정" : "판정 계정"}</b><small>{account.nickname} · {account.tier}</small></div><em>{user.nickname === account.nickname ? "사용 중" : "전환"}</em></button>)}</div><p>다이아 계정은 글쓰기, 챌린저 계정은 공식 판정을 체험할 수 있습니다.</p></>}<button className="secondary-button full" onClick={logout}>로그아웃</button></section></div>;
 }
 
 function ReportModal({ target, close, onSubmit }: { target: string; close: () => void; onSubmit: (reason: string) => void }) {
@@ -791,12 +821,7 @@ export default function HomePage() {
       if (storedUser) {
         const storedProfile = JSON.parse(storedUser) as User;
         const savedUser = { ...storedProfile, peakTier: storedProfile.peakTier ?? storedProfile.tier, primaryRole: storedProfile.primaryRole ?? "정글" };
-        if (!localStorage.getItem(CHALLENGER_TEST_KEY)) {
-          const challengerUser = { ...savedUser, tier: "챌린저", peakTier: "챌린저" };
-          localStorage.setItem(USER_KEY, JSON.stringify(challengerUser));
-          localStorage.setItem(CHALLENGER_TEST_KEY, "complete");
-          setUser(challengerUser);
-        } else setUser(savedUser);
+        setUser(savedUser);
       }
       if (storedCase) {
         const savedCase = JSON.parse(storedCase) as LocalCase;
@@ -809,12 +834,12 @@ export default function HomePage() {
 
   const showToast = (message: string) => { setToastMessage(message); window.setTimeout(() => setToastMessage(""), 2800); };
   const requireLogin = () => { setLoginOpen(true); showToast("로그인이 필요한 기능입니다."); };
-  const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); localStorage.setItem(CHALLENGER_TEST_KEY, "complete"); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
-  const switchDemoAccount = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); localStorage.setItem(CHALLENGER_TEST_KEY, "complete"); setUser(nextUser); showToast(`${nextUser.nickname} 계정으로 전환했습니다.`); };
-  const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); showToast("로그아웃했습니다."); };
+  const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
+  const switchDemoAccount = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); setUser(nextUser); showToast(`${nextUser.nickname} 계정으로 전환했습니다.`); };
+  const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); setView("home"); showToast("로그아웃했습니다."); };
   const openSubmit = () => {
     if (!user) return requireLogin();
-    if (isMasterPlus(user.tier)) return showToast("마스터 이상은 사건을 작성할 수 없으며 공식 판결자로 참여합니다.");
+    if (isMasterPlus(user.tier) && !user.isAdmin) return showToast("마스터 이상은 사건을 작성할 수 없으며 공식 판결자로 참여합니다.");
     setView("submit");
   };
   const openDetail = (local = false, title?: string) => { setViewingLocal(local); if (title) setSelectedCaseTitle(title); setView("detail"); };
@@ -827,6 +852,7 @@ export default function HomePage() {
     {view === "guide" && <Guide />}
     {view === "search" && <SearchResults query={searchQuery} openDetail={openDetail} localCase={localCase} />}
     {view === "submit" && user && <SubmitCase setView={setView} toast={showToast} user={user} onSubmitted={(item, url) => { setLocalCase(item); setLocalVideoUrl(url); }} />}
+    {view === "admin" && user?.isAdmin && <AdminApproval localCase={localCase} localVideoUrl={localVideoUrl} approve={() => { if (!localCase) return; const approvedCase = { ...localCase, approved: true }; localStorage.setItem(CASE_KEY, JSON.stringify(approvedCase)); setLocalCase(approvedCase); showToast("게시물을 승인해 홈에 공개했습니다."); }} remove={() => { localStorage.removeItem(CASE_KEY); deleteStoredVideo().catch(() => undefined); if (localVideoUrl) URL.revokeObjectURL(localVideoUrl); setLocalCase(null); setLocalVideoUrl(""); showToast("게시물과 영상을 삭제했습니다."); }} openDetail={() => openDetail(true, localCase?.title)} />}
     <footer><Logo onClick={() => setView("home")} /><p>티어는 진짜로, 닉네임은 자유롭게. 함께 판결하는 롤 플레이 판결소.</p><small>LOL.VS는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</small></footer>
     {loginOpen && <LoginModal close={() => setLoginOpen(false)} onLogin={login} />}
     {profileOpen && user && <ProfileModal user={user} close={() => setProfileOpen(false)} logout={logout} switchAccount={switchDemoAccount} />}
