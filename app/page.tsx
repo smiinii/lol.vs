@@ -409,7 +409,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [officialVerdict, setOfficialVerdict] = useState<VoteSide | null>(null);
   const [feedback, setFeedback] = useState("");
   const [evidence, setEvidence] = useState("");
-  const [comments, setComments] = useState(commentsSeed);
+  const [comments, setComments] = useState<CommentItem[]>(viewingLocal ? [] : commentsSeed);
   const [likedComments, setLikedComments] = useState<number[]>([]);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<number[]>([]);
@@ -423,7 +423,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [judgeModalOpen, setJudgeModalOpen] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [expertFeedback, setExpertFeedback] = useState<ExpertFeedbackDraft | null>(null);
-  const result = vote === "A" ? { a: 59, b: 41 } : vote === "B" ? { a: 57, b: 43 } : { a: 58, b: 42 };
+  const [localVoteCounts, setLocalVoteCounts] = useState({ A: 0, B: 0 });
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
   const detailMode: CaseMode = viewingLocal && localCase ? localCase.mode : compactCases.find((item) => item.title === title)?.mode ?? "judgement";
   const resolvedVerdict = detailMode === "judgement" && !viewingLocal ? resolvedVerdicts[title] : undefined;
@@ -433,6 +433,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const author = viewingLocal && localCase ? localCase.author : "한타는팀운";
   const tier = viewingLocal && localCase ? localCase.tier : "다이아몬드 IV";
   const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : asset("/media/demo.mp4");
+  const localVoteLedgerKey = viewingLocal ? `lolvs-local-votes:${title}` : "";
   const voteStorageKey = user ? `lolvs-vote:${user.nickname}:${title}` : "";
   const verdictStorageKey = user ? `lolvs-verdict:${user.nickname}:${title}` : "";
   const feedbackStorageKey = user ? `lolvs-expert-feedback:${user.nickname}:${title}` : "";
@@ -441,31 +442,47 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const judgeRequirement = diamondCase ? "그랜드마스터" : "마스터";
   const canJudge = Boolean(detailMode === "judgement" && user && tierLevel(user.tier) >= (diamondCase ? 8 : 7));
   const canGiveFeedback = Boolean(detailMode === "feedback" && user && tierLevel(user.tier) >= (diamondCase ? 8 : 7));
+  const localVoteTotal = localVoteCounts.A + localVoteCounts.B;
+  const localAPercent = localVoteTotal ? Math.round(localVoteCounts.A / localVoteTotal * 100) : 0;
+  const result = viewingLocal
+    ? { a: localAPercent, b: localVoteTotal ? 100 - localAPercent : 0 }
+    : vote === "A" ? { a: 59, b: 41 } : vote === "B" ? { a: 57, b: 43 } : { a: 58, b: 42 };
   const baseCommentCount = detailMode === "feedback" ? feedbackCommentsSeed.length : commentsSeed.length;
-  const commentTotal = (detailMode === "feedback" ? 38 : 125) + Math.max(0, comments.length - baseCommentCount);
+  const commentTotal = viewingLocal ? comments.length : (detailMode === "feedback" ? 38 : 125) + Math.max(0, comments.length - baseCommentCount);
   const commentPageCount = Math.max(1, Math.ceil(comments.length / 5));
   const visibleComments = comments.slice((commentPage - 1) * 5, commentPage * 5);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setComments(detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
+      setComments(viewingLocal ? [] : detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
       setCommentPage(1);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [detailMode, title]);
+  }, [detailMode, title, viewingLocal]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       setVote(null);
       setOfficialVerdict(null);
+      setLocalVoteCounts({ A: 0, B: 0 });
+      if (localVoteLedgerKey) {
+        const ledger = JSON.parse(localStorage.getItem(localVoteLedgerKey) ?? "{}") as Record<string, VoteSide>;
+        const sides = Object.values(ledger);
+        setLocalVoteCounts({
+          A: sides.filter((side) => side === "A").length,
+          B: sides.filter((side) => side === "B").length,
+        });
+        const savedLocalVote = user ? ledger[user.nickname] : undefined;
+        if (savedLocalVote === "A" || savedLocalVote === "B") setVote(savedLocalVote);
+      }
       if (!voteStorageKey) return;
       const savedVote = localStorage.getItem(voteStorageKey) as VoteSide | null;
       const savedVerdict = localStorage.getItem(verdictStorageKey) as VoteSide | null;
-      if (savedVote === "A" || savedVote === "B") setVote(savedVote);
+      if (!localVoteLedgerKey && (savedVote === "A" || savedVote === "B")) setVote(savedVote);
       if (savedVerdict === "A" || savedVerdict === "B") setOfficialVerdict(savedVerdict);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [voteStorageKey, verdictStorageKey]);
+  }, [voteStorageKey, verdictStorageKey, localVoteLedgerKey, user]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -494,6 +511,16 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const submitOpinionVote = (side: VoteSide) => {
     setVote(side);
     localStorage.setItem(voteStorageKey, side);
+    if (viewingLocal && user) {
+      const ledger = JSON.parse(localStorage.getItem(localVoteLedgerKey) ?? "{}") as Record<string, VoteSide>;
+      ledger[user.nickname] = side;
+      localStorage.setItem(localVoteLedgerKey, JSON.stringify(ledger));
+      const sides = Object.values(ledger);
+      setLocalVoteCounts({
+        A: sides.filter((savedSide) => savedSide === "A").length,
+        B: sides.filter((savedSide) => savedSide === "B").length,
+      });
+    }
     setPendingVote(null);
     toast(`${side}측 잘못으로 의견 투표했습니다.`);
   };
@@ -573,7 +600,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     <main className="page-shell detail-layout">
       <section className="detail-main">
         <div className="detail-title-row"><div className="detail-title"><span className={detailMode === "judgement" ? "detail-mode-badge judgement" : "detail-mode-badge feedback"}>{detailMode === "judgement" ? "플레이 판정" : "플레이 피드백"}</span>{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><div className="detail-title-actions"><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button>{canJudge && !resolvedVerdict && <button className={officialVerdict ? "judge-jump-button submitted" : "judge-jump-button"} disabled={Boolean(officialVerdict)} onClick={() => setJudgeModalOpen(true)}>{officialVerdict ? "판결 제출 완료" : "판결하기"}</button>}{canGiveFeedback && <button className={expertFeedback ? "expert-feedback-button submitted" : "expert-feedback-button"} disabled={Boolean(expertFeedback)} onClick={() => setFeedbackModalOpen(true)}>{expertFeedback ? "피드백 제출 완료" : "피드백 주기"}</button>}</div></div>
-        <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={viewingLocal} inline /></div><span className="post-view-count">조회수 <b>3,842</b></span></div>
+        <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={viewingLocal} inline /></div><span className="post-view-count">조회수 <b>{viewingLocal ? 0 : "3,842"}</b></span></div>
         <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
         {resolvedVerdict && <section className="inline-resolved-verdict official-verdict-document">
           <header><div><span>OFFICIAL VERDICT · 판결 완료</span><h2><b>{resolvedVerdict.side}측 잘못</b>으로 공식 판결했습니다.</h2></div><time>{resolvedVerdict.decidedAt}</time></header>
@@ -603,13 +630,14 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
               </div>
             </article>
           ))}
+          {comments.length === 0 && <div className="comments-empty"><strong>아직 댓글이 없습니다.</strong><span>첫 번째 의견을 남겨보세요.</span></div>}
         </section>
-        <nav className="comment-pagination standalone-comment-pagination" aria-label="댓글 페이지">{Array.from({ length: commentPageCount }, (_, index) => index + 1).map((number) => <button key={number} className={commentPage === number ? "active" : ""} onClick={() => setCommentPage(number)}>{number}</button>)}</nav>
+        {comments.length > 0 && <nav className="comment-pagination standalone-comment-pagination" aria-label="댓글 페이지">{Array.from({ length: commentPageCount }, (_, index) => index + 1).map((number) => <button key={number} className={commentPage === number ? "active" : ""} onClick={() => setCommentPage(number)}>{number}</button>)}</nav>}
       </section>
 
       <aside className="vote-rail">
         {detailMode === "judgement" ? <>
-          {resolvedVerdict ? <section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section> : <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} /><div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section>}
+          {resolvedVerdict ? <section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section> : <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} />{viewingLocal && <p className="local-vote-total">현재 <b>{localVoteTotal}</b>명 참여</p>}<div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section>}
           <section className="positions-card"><header><div><h2>양측 주장</h2><p>게시물 작성자가 정리한 입장입니다.</p></div><span><b>A</b><i>VS</i><em>B</em></span></header><article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article><div className="position-divider"><span>VS</span></div><article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article></section>
           <section className="guide-card"><h2>참여 가이드</h2><ul><li>의견 투표와 댓글은 모든 인증 사용자가 참여합니다.</li><li>공식 판결은 마스터 이상, 다이아 사건은 그랜드마스터 이상만 가능합니다.</li><li>비난보다 다음 플레이에 도움 되는 근거를 남겨 주세요.</li></ul></section>
         </> : <>
