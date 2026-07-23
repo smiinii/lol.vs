@@ -78,7 +78,7 @@ const topJudges = [
 const weeklyPosts = [{ title: REAL_CASE_TITLE, meta: "댓글 0 · 투표 0", trend: "same", delta: 0 }];
 const commentsSeed: CommentItem[] = [];
 const feedbackCommentsSeed: CommentItem[] = [];
-const judgeRankingSeed: string[][] = [];
+const judgeRankingSeed: string[][] = [["루크", "관리자", "0", "0", "0"]];
 const personalRankingSeed: string[][] = [];
 
 function openVideoDb(): Promise<IDBDatabase> {
