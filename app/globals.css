@@ -1239,19 +1239,6 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
 }
 
 /* Home A — board-first, quiet editorial layout */
-.app-root:has(.clean-home) {
-  background:
-    radial-gradient(circle at 13% 0, rgba(88, 201, 190, .055), transparent 31rem),
-    linear-gradient(180deg, #081321 0%, #07111e 100%);
-}
-.app-root:has(.clean-home) .site-header {
-  background: rgba(7, 17, 30, .92);
-  border-bottom-color: rgba(111, 139, 165, .2);
-}
-.app-root:has(.clean-home) > footer {
-  background: #091522;
-  border-top-color: rgba(111, 139, 165, .16);
-}
 .clean-home { padding: 26px 0 72px; }
 .clean-home-grid {
   display: grid;
