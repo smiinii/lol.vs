@@ -55,30 +55,106 @@ const isMasterPlus = (tier: string) => tierLevel(tier) >= 7;
 
 const REAL_CASE_TITLE = "이게 내가 잘못? ㅋ";
 
-const compactCases = [{
-  title: REAL_CASE_TITLE,
-  author: "루크",
-  tier: "",
-  category: "솔로랭크",
-  meta: "방금 전",
-  time: "판정 대기 중",
-  a: 0,
-  b: 0,
-  comments: 0,
-  clip: "PLAY",
-  video: asset("/media/lee-sin.mp4"),
-  mode: "judgement" as const,
-  likes: 0,
-}];
+const compactCases = [
+  {
+    title: REAL_CASE_TITLE,
+    author: "루크",
+    tier: "",
+    category: "솔로랭크",
+    meta: "방금 전",
+    time: "판정 대기 중",
+    aClaim: "리신이 룰루를 잡으러 갔어야 했다.",
+    bClaim: "리신이 유나라를 잡고 올라가는 게 맞다.",
+    a: 0,
+    b: 0,
+    comments: 0,
+    clip: "PLAY",
+    video: asset("/media/lee-sin.mp4"),
+    mode: "judgement" as const,
+    likes: 0,
+  },
+  {
+    title: "용 한타 전 먼저 들어간 게 맞나요?",
+    author: "파티리더",
+    tier: "에메랄드 II",
+    category: "파티랭크",
+    meta: "12분 전",
+    time: "판정 대기 중",
+    aClaim: "용이 나오기 전에 먼저 자리를 잡고 교전을 열었어야 했다.",
+    bClaim: "아군이 도착하기 전이라 한 번 더 기다렸어야 했다.",
+    a: 0,
+    b: 0,
+    comments: 0,
+    clip: "00:31",
+    video: asset("/media/lee-sin.mp4"),
+    mode: "judgement" as const,
+    likes: 0,
+  },
+  {
+    title: "바텀 다이브, 합류가 늦은 게 문제인가요?",
+    author: "합류핑찍음",
+    tier: "플래티넘 I",
+    category: "파티랭크",
+    meta: "25분 전",
+    time: "판정 대기 중",
+    aClaim: "웨이브가 들어갈 때 바로 다이브를 시작하는 게 맞았다.",
+    bClaim: "상대 정글 위치를 확인한 뒤 합류를 기다렸어야 했다.",
+    a: 0,
+    b: 0,
+    comments: 0,
+    clip: "00:24",
+    video: asset("/media/lee-sin.mp4"),
+    mode: "judgement" as const,
+    likes: 0,
+  },
+  {
+    title: "미드 로밍을 따라가지 않은 판단, 누구 잘못?",
+    author: "내전정글",
+    tier: "다이아몬드 IV",
+    category: "내전",
+    meta: "41분 전",
+    time: "판정 대기 중",
+    aClaim: "미드가 사라진 순간 바로 따라가서 교전을 막았어야 했다.",
+    bClaim: "시야가 없어서 라인을 밀고 손해를 줄이는 판단이 맞았다.",
+    a: 0,
+    b: 0,
+    comments: 0,
+    clip: "00:28",
+    video: asset("/media/lee-sin.mp4"),
+    mode: "judgement" as const,
+    likes: 0,
+  },
+  {
+    title: "바론 앞 시야 싸움, 먼저 걸어야 했나요?",
+    author: "시야체크",
+    tier: "에메랄드 I",
+    category: "내전",
+    meta: "58분 전",
+    time: "판정 대기 중",
+    aClaim: "상대가 흩어진 타이밍에 먼저 교전을 열었어야 했다.",
+    bClaim: "와드가 부족해서 시야부터 확보하는 게 맞았다.",
+    a: 0,
+    b: 0,
+    comments: 0,
+    clip: "00:35",
+    video: asset("/media/lee-sin.mp4"),
+    mode: "judgement" as const,
+    likes: 0,
+  },
+];
 
 const resolvedVerdicts: Record<string, ResolvedVerdict> = {};
 const topJudges = [
-  { name: "루크", tier: "관리자", role: "운영자", judgements: 0, recognitions: 0, acceptance: 0 },
+  { name: "루크", tier: "챌린저", role: "정글", judgements: 0, recognitions: 0, acceptance: 0 },
+  { name: "천상계판독기", tier: "챌린저", role: "탑", judgements: 0, recognitions: 0, acceptance: 0 },
+  { name: "맵리딩중", tier: "그랜드마스터", role: "정글", judgements: 0, recognitions: 0, acceptance: 0 },
+  { name: "라인의정석", tier: "그랜드마스터", role: "미드", judgements: 0, recognitions: 0, acceptance: 0 },
+  { name: "시야먼저", tier: "마스터", role: "서포터", judgements: 0, recognitions: 0, acceptance: 0 },
 ];
-const weeklyPosts = [{ title: REAL_CASE_TITLE, meta: "댓글 0 · 투표 0", trend: "same", delta: 0 }];
+const weeklyPosts = compactCases.map((item) => ({ title: item.title, meta: "댓글 0 · 투표 0" }));
 const commentsSeed: CommentItem[] = [];
 const feedbackCommentsSeed: CommentItem[] = [];
-const judgeRankingSeed: string[][] = [["루크", "관리자", "0", "0", "0"]];
+const judgeRankingSeed: string[][] = topJudges.map((judge) => [judge.name, judge.tier, "0", "0", "0"]);
 const personalRankingSeed: string[][] = [];
 
 function openVideoDb(): Promise<IDBDatabase> {
@@ -190,12 +266,18 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const [page, setPage] = useState(1);
   const [showResolved, setShowResolved] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [judgeIndex, setJudgeIndex] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setJudgeIndex((index) => (index + 1) % topJudges.length), 6000);
+    return () => window.clearInterval(timer);
+  }, []);
   const filtered = compactCases.filter((item) => item.mode === serviceMode && (category === "전체" || item.category === category) && Boolean(resolvedVerdicts[item.title]) === showResolved);
   const casesPerPage = 8;
   const pageCount = Math.max(1, Math.ceil(filtered.length / casesPerPage));
   const pageItems = filtered.slice((page - 1) * casesPerPage, page * casesPerPage);
   const showLocal = !showResolved && localCase && localCase.approved !== false && localCase.mode === serviceMode && (category === "전체" || localCase.category === category);
-  const currentJudge = topJudges[0];
+  const currentJudge = topJudges[judgeIndex];
+  const moveJudge = (direction: number) => setJudgeIndex((index) => (index + direction + topJudges.length) % topJudges.length);
   return (
     <main className="page-shell clean-home">
       <div className="clean-home-grid">
@@ -253,7 +335,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           <section className="judge-slider-card" aria-roledescription="carousel" aria-label="인기 판정자">
             <header><span><i /> 인기 판정자</span></header>
             <div className="judge-slide" key={currentJudge.name}>
-              <em>TOP 01</em>
+              <em>TOP {String(judgeIndex + 1).padStart(2, "0")}</em>
               <span className="judge-slide-avatar">{currentJudge.name[0]}</span>
               <strong>{currentJudge.name}<i>✓</i></strong>
               <small>{currentJudge.tier} · {currentJudge.role} · Riot 인증</small>
@@ -263,6 +345,12 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
                 <div><dt>판정</dt><dd>{currentJudge.judgements}</dd></div>
               </dl>
             </div>
+            <footer>
+              <button onClick={() => moveJudge(-1)} aria-label="이전 판정자">‹</button>
+              <span className="judge-dots">{topJudges.map((judge, index) => <button key={judge.name} className={judgeIndex === index ? "active" : ""} onClick={() => setJudgeIndex(index)} aria-label={`${index + 1}위 ${judge.name}`} />)}</span>
+              <em>{judgeIndex + 1} / {topJudges.length}</em>
+              <button onClick={() => moveJudge(1)} aria-label="다음 판정자">›</button>
+            </footer>
           </section>
           <section className="clean-hot-card">
             <header><h2><i className="live-dot" /> 실시간 인기 글</h2></header>
@@ -303,15 +391,16 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [expertFeedback, setExpertFeedback] = useState<ExpertFeedbackDraft | null>(null);
   const [localVoteCounts, setLocalVoteCounts] = useState({ A: 0, B: 0 });
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
-  const emptyActivityCase = viewingLocal || title === REAL_CASE_TITLE;
-  const detailMode: CaseMode = viewingLocal && localCase ? localCase.mode : compactCases.find((item) => item.title === title)?.mode ?? "judgement";
+  const selectedCase = compactCases.find((item) => item.title === title);
+  const emptyActivityCase = viewingLocal || Boolean(selectedCase);
+  const detailMode: CaseMode = viewingLocal && localCase ? localCase.mode : selectedCase?.mode ?? "judgement";
   const resolvedVerdict = detailMode === "judgement" && !viewingLocal ? resolvedVerdicts[title] : undefined;
-  const aClaim = viewingLocal && localCase ? localCase.aClaim ?? "" : title === REAL_CASE_TITLE ? "리신이 룰루를 잡으러 갔어야 했다." : "";
-  const bClaim = viewingLocal && localCase ? localCase.bClaim ?? "" : title === REAL_CASE_TITLE ? "리신이 유나라를 잡고 올라가는 게 맞다." : "";
+  const aClaim = viewingLocal && localCase ? localCase.aClaim ?? "" : selectedCase?.aClaim ?? "";
+  const bClaim = viewingLocal && localCase ? localCase.bClaim ?? "" : selectedCase?.bClaim ?? "";
   const playThought = viewingLocal && localCase ? localCase.thought ?? "당시 어떤 판단으로 플레이했는지 작성하지 않았습니다." : "라인을 먼저 밀어 두면 상대보다 빠르게 합류할 수 있다고 생각했습니다. 상대 정글 위치를 정확히 확인하지 못했지만, 아군이 바로 교전을 열지는 않을 것으로 판단했습니다.";
-  const author = viewingLocal && localCase ? localCase.author : title === REAL_CASE_TITLE ? "루크" : "";
-  const tier = viewingLocal && localCase ? localCase.tier : "";
-  const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : title === REAL_CASE_TITLE ? asset("/media/lee-sin.mp4") : "";
+  const author = viewingLocal && localCase ? localCase.author : selectedCase?.author ?? "";
+  const tier = viewingLocal && localCase ? localCase.tier : selectedCase?.tier ?? "";
+  const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : selectedCase?.video ?? "";
   const localVoteLedgerKey = emptyActivityCase ? `lolvs-local-votes:${title}` : "";
   const voteStorageKey = user ? `lolvs-vote:${user.nickname}:${title}` : "";
   const verdictStorageKey = user ? `lolvs-verdict:${user.nickname}:${title}` : "";
