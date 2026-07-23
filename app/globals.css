@@ -1477,7 +1477,6 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
   gap: 28px;
   align-items: start;
 }
-.clean-home-grid.single-feed { grid-template-columns: minmax(0, 1fr); }
 .clean-home-intro {
   min-height: 132px;
   display: flex;

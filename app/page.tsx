@@ -37,10 +37,6 @@ const asset = (path: string) => `${basePath}${path}`;
 const USER_KEY = "lolvs-demo-user";
 const CASE_KEY = "lolvs-local-case-v2";
 const VIDEO_KEY = "latest-case-video-v2";
-const DEMO_ACCOUNTS: User[] = [
-  { nickname: "억울한플레이어", tier: "다이아몬드 IV", peakTier: "다이아몬드 I", primaryRole: "미드" },
-  { nickname: "판결하는사람", tier: "챌린저", peakTier: "챌린저", primaryRole: "정글" },
-];
 
 const tierLevel = (tier: string) => {
   if (tier.includes("챌린저")) return 9;
@@ -57,12 +53,12 @@ const tierLevel = (tier: string) => {
 
 const isMasterPlus = (tier: string) => tierLevel(tier) >= 7;
 
-const REAL_CASE_TITLE = "리신 플레이 판정";
+const REAL_CASE_TITLE = "이게 내가 잘못? ㅋ";
 
 const compactCases = [{
   title: REAL_CASE_TITLE,
   author: "루크",
-  tier: "챌린저",
+  tier: "",
   category: "솔로랭크",
   meta: "방금 전",
   time: "판정 대기 중",
@@ -76,6 +72,10 @@ const compactCases = [{
 }];
 
 const resolvedVerdicts: Record<string, ResolvedVerdict> = {};
+const topJudges = [
+  { name: "루크", tier: "관리자", role: "운영자", judgements: 0, recognitions: 0, acceptance: 0 },
+];
+const weeklyPosts = [{ title: REAL_CASE_TITLE, meta: "댓글 0 · 투표 0", trend: "same", delta: 0 }];
 const commentsSeed: CommentItem[] = [];
 const feedbackCommentsSeed: CommentItem[] = [];
 const judgeRankingSeed: string[][] = [];
@@ -195,9 +195,10 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const pageCount = Math.max(1, Math.ceil(filtered.length / casesPerPage));
   const pageItems = filtered.slice((page - 1) * casesPerPage, page * casesPerPage);
   const showLocal = !showResolved && localCase && localCase.approved !== false && localCase.mode === serviceMode && (category === "전체" || localCase.category === category);
+  const currentJudge = topJudges[0];
   return (
     <main className="page-shell clean-home">
-      <div className="clean-home-grid single-feed">
+      <div className="clean-home-grid">
         <section className="feed-column">
           <header className="clean-home-intro">
             <div>
@@ -237,7 +238,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
             {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; return (
               <button className={resolved ? "clean-case-row case-resolved" : "clean-case-row"} key={item.title} onClick={() => openDetail(false, item.title)}>
                 <span className="thumb"><video src={item.video} muted playsInline preload="metadata" /><i>▶</i><small>{item.clip}</small>{resolved && <b className="resolved-stamp">판정 완료</b>}</span>
-                <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author}<VerifiedBadge tier={item.tier} inline /></span><small>{item.category} · {item.meta}{resolved ? ` · ${resolved.side}측 잘못` : ""}</small></span>
+                <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author}{item.tier && <VerifiedBadge tier={item.tier} inline />}</span><small>{item.category} · {item.meta}{resolved ? ` · ${resolved.side}측 잘못` : ""}</small></span>
                 <span className="case-status">
                   {serviceMode === "judgement" ? <span className="row-votes"><small className={resolved ? "resolved-time" : ""}>{resolved ? "판정 완료" : item.time}</small><VoteBar a={item.a} b={item.b} compact /></span> : <span className="feedback-row-summary"><small>{item.time}</small><span><b>전문 피드백 {Math.max(1, Math.round(item.comments / 24))}개</b><em>댓글 {item.comments}</em></span></span>}
                   <span className="case-engagement"><span><i className="like-icon" aria-hidden="true">♥</i><b>{item.likes}</b></span><span><i className="comment-icon" aria-hidden="true" /><b>{item.comments}</b></span></span>
@@ -248,6 +249,26 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           </div>
           {pageCount > 1 && <nav className="pagination" aria-label="사건 목록 페이지">{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button key={number} className={page === number ? "active" : ""} onClick={() => { setPage(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{number}</button>)}</nav>}
         </section>
+        <aside className="clean-right-rail">
+          <section className="judge-slider-card" aria-roledescription="carousel" aria-label="인기 판정자">
+            <header><span><i /> 인기 판정자</span></header>
+            <div className="judge-slide" key={currentJudge.name}>
+              <em>TOP 01</em>
+              <span className="judge-slide-avatar">{currentJudge.name[0]}</span>
+              <strong>{currentJudge.name}<i>✓</i></strong>
+              <small>{currentJudge.tier} · {currentJudge.role} · Riot 인증</small>
+              <dl>
+                <div><dt>수용률</dt><dd>{currentJudge.acceptance}%</dd></div>
+                <div><dt>인정</dt><dd>{currentJudge.recognitions.toLocaleString("ko-KR")}</dd></div>
+                <div><dt>판정</dt><dd>{currentJudge.judgements}</dd></div>
+              </dl>
+            </div>
+          </section>
+          <section className="clean-hot-card">
+            <header><h2><i className="live-dot" /> 실시간 인기 글</h2></header>
+            <ol>{weeklyPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className="rank hot">{index + 1}</span><span><strong>{post.title}</strong><small>{post.meta}</small></span><em className="trend-same">—</em></button></li>)}</ol>
+          </section>
+        </aside>
       </div>
     </main>
   );
@@ -285,11 +306,11 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const emptyActivityCase = viewingLocal || title === REAL_CASE_TITLE;
   const detailMode: CaseMode = viewingLocal && localCase ? localCase.mode : compactCases.find((item) => item.title === title)?.mode ?? "judgement";
   const resolvedVerdict = detailMode === "judgement" && !viewingLocal ? resolvedVerdicts[title] : undefined;
-  const aClaim = viewingLocal && localCase ? localCase.aClaim ?? "" : title === REAL_CASE_TITLE ? "A측 입장은 아직 등록되지 않았습니다." : "";
-  const bClaim = viewingLocal && localCase ? localCase.bClaim ?? "" : title === REAL_CASE_TITLE ? "B측 입장은 아직 등록되지 않았습니다." : "";
+  const aClaim = viewingLocal && localCase ? localCase.aClaim ?? "" : title === REAL_CASE_TITLE ? "리신이 룰루를 잡으러 갔어야 했다." : "";
+  const bClaim = viewingLocal && localCase ? localCase.bClaim ?? "" : title === REAL_CASE_TITLE ? "리신이 유나라를 잡고 올라가는 게 맞다." : "";
   const playThought = viewingLocal && localCase ? localCase.thought ?? "당시 어떤 판단으로 플레이했는지 작성하지 않았습니다." : "라인을 먼저 밀어 두면 상대보다 빠르게 합류할 수 있다고 생각했습니다. 상대 정글 위치를 정확히 확인하지 못했지만, 아군이 바로 교전을 열지는 않을 것으로 판단했습니다.";
   const author = viewingLocal && localCase ? localCase.author : title === REAL_CASE_TITLE ? "루크" : "";
-  const tier = viewingLocal && localCase ? localCase.tier : title === REAL_CASE_TITLE ? "챌린저" : "";
+  const tier = viewingLocal && localCase ? localCase.tier : "";
   const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : title === REAL_CASE_TITLE ? asset("/media/lee-sin.mp4") : "";
   const localVoteLedgerKey = emptyActivityCase ? `lolvs-local-votes:${title}` : "";
   const voteStorageKey = user ? `lolvs-vote:${user.nickname}:${title}` : "";
@@ -298,8 +319,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const recognitionStorageKey = user && resolvedVerdict ? `lolvs-recognition:${user.nickname}:${title}` : "";
   const diamondCase = tier.includes("다이아몬드");
   const judgeRequirement = diamondCase ? "그랜드마스터" : "마스터";
-  const canJudge = Boolean(detailMode === "judgement" && user && tierLevel(user.tier) >= (diamondCase ? 8 : 7));
-  const canGiveFeedback = Boolean(detailMode === "feedback" && user && tierLevel(user.tier) >= (diamondCase ? 8 : 7));
+  const canJudge = Boolean(detailMode === "judgement" && user && (user.isAdmin || tierLevel(user.tier) >= (diamondCase ? 8 : 7)));
+  const canGiveFeedback = Boolean(detailMode === "feedback" && user && (user.isAdmin || tierLevel(user.tier) >= (diamondCase ? 8 : 7)));
   const localVoteTotal = localVoteCounts.A + localVoteCounts.B;
   const localAPercent = localVoteTotal ? Math.round(localVoteCounts.A / localVoteTotal * 100) : 0;
   const result = emptyActivityCase
@@ -458,7 +479,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     <main className="page-shell detail-layout">
       <section className="detail-main">
         <div className="detail-title-row"><div className="detail-title"><span className={detailMode === "judgement" ? "detail-mode-badge judgement" : "detail-mode-badge feedback"}>{detailMode === "judgement" ? "플레이 판정" : "플레이 피드백"}</span>{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><div className="detail-title-actions"><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button>{canJudge && !resolvedVerdict && <button className={officialVerdict ? "judge-jump-button submitted" : "judge-jump-button"} disabled={Boolean(officialVerdict)} onClick={() => setJudgeModalOpen(true)}>{officialVerdict ? "판결 제출 완료" : "판결하기"}</button>}{canGiveFeedback && <button className={expertFeedback ? "expert-feedback-button submitted" : "expert-feedback-button"} disabled={Boolean(expertFeedback)} onClick={() => setFeedbackModalOpen(true)}>{expertFeedback ? "피드백 제출 완료" : "피드백 주기"}</button>}</div></div>
-        <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={emptyActivityCase} inline /></div><span className="post-view-count">조회수 <b>{emptyActivityCase ? 0 : "3,842"}</b></span></div>
+        <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span>{tier && <VerifiedBadge tier={tier} demo={emptyActivityCase} inline />}</div><span className="post-view-count">조회수 <b>{emptyActivityCase ? 0 : "3,842"}</b></span></div>
         <div className="video-card real-video"><video src={videoSrc} controls playsInline preload="metadata">브라우저가 영상을 지원하지 않습니다.</video></div>
         {resolvedVerdict && <section className="inline-resolved-verdict official-verdict-document">
           <header><div><span>OFFICIAL VERDICT · 판결 완료</span><h2><b>{resolvedVerdict.side}측 잘못</b>으로 공식 판결했습니다.</h2></div><time>{resolvedVerdict.decidedAt}</time></header>
@@ -634,15 +655,15 @@ function LoginModal({ close, onLogin }: { close: () => void; onLogin: (user: Use
     if (cleanNickname.length < 2 || password.length < 4) return setLoginError("닉네임과 비밀번호 4자리를 입력해주세요.");
     if (cleanNickname === "루크") {
       if (password !== "0091") return setLoginError("관리자 비밀번호가 올바르지 않습니다.");
-      return onLogin({ nickname: "루크", tier: "챌린저", peakTier: "챌린저", primaryRole: "정글", isAdmin: true });
+      return onLogin({ nickname: "루크", tier: "관리자", peakTier: "관리자", isAdmin: true });
     }
     onLogin({ nickname: cleanNickname, tier, peakTier, primaryRole, isAdmin: false });
   };
   return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal judge-profile-login" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">로그인</h2><p>게시글은 누구나 볼 수 있습니다. 댓글과 영상 등록은 로그인 후 이용해주세요.</p><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => { setNickname(event.target.value); setLoginError(""); }} minLength={2} maxLength={12} required placeholder="2~12자" /></label><label>비밀번호<input value={password} onChange={(event) => { setPassword(event.target.value); setLoginError(""); }} minLength={4} maxLength={12} required type="password" placeholder="4자리 이상" /></label>{nickname.trim() !== "루크" && <><div className="login-profile-grid"><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label><label>최고 티어<select value={peakTier} onChange={(event) => setPeakTier(event.target.value)}>{["골드", "플래티넘", "에메랄드", "다이아몬드", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label></div><label>주 포지션<select value={primaryRole} onChange={(event) => setPrimaryRole(event.target.value)}>{["탑", "정글", "미드", "원딜", "서포터"].map((item) => <option key={item}>{item}</option>)}</select></label></>} {loginError && <p className="login-error">{loginError}</p>}<div className="demo-warning">{nickname.trim() === "루크" ? <><b>관리자 로그인</b> · 승인 관리 권한으로 접속합니다.</> : <>현재 계정과 티어 정보는 프로토타입용 <b>데모 인증</b>입니다.</>}</div><button className="primary-button full" type="submit">로그인하기</button></form></div>;
 }
 
-function ProfileModal({ user, close, logout, switchAccount }: { user: User; close: () => void; logout: () => void; switchAccount: (user: User) => void }) {
-  return <div className="modal-backdrop" onMouseDown={close}><section className="profile-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">{user.nickname[0]}</span><h2 id="profile-title">{user.nickname}</h2>{user.isAdmin ? <span className="admin-profile-badge">LOL.VS 관리자</span> : <VerifiedBadge tier={user.tier} demo />}<div className="profile-play-info"><span><small>최고 티어</small><b>{user.peakTier ?? user.tier}</b></span><span><small>{user.isAdmin ? "권한" : "주 포지션"}</small><b>{user.isAdmin ? "게시물 승인" : user.primaryRole ?? "미설정"}</b></span></div>{!user.isAdmin && <><div className="demo-account-switcher"><span>데모 계정 전환</span>{DEMO_ACCOUNTS.map((account, index) => <button key={account.nickname} className={user.nickname === account.nickname ? "active" : ""} onClick={() => switchAccount({ ...account, isAdmin: false })}><span>{index === 0 ? "글" : "판"}</span><div><b>{index === 0 ? "글쓰기 계정" : "판정 계정"}</b><small>{account.nickname} · {account.tier}</small></div><em>{user.nickname === account.nickname ? "사용 중" : "전환"}</em></button>)}</div><p>다이아 계정은 글쓰기, 챌린저 계정은 공식 판정을 체험할 수 있습니다.</p></>}<button className="secondary-button full" onClick={logout}>로그아웃</button></section></div>;
+function ProfileModal({ user, close, logout }: { user: User; close: () => void; logout: () => void }) {
+  return <div className="modal-backdrop" onMouseDown={close}><section className="profile-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">{user.nickname[0]}</span><h2 id="profile-title">{user.nickname}</h2>{user.isAdmin ? <span className="admin-profile-badge">LOL.VS 관리자</span> : <VerifiedBadge tier={user.tier} demo />}<div className="profile-play-info"><span><small>{user.isAdmin ? "계정" : "최고 티어"}</small><b>{user.isAdmin ? "관리자" : user.peakTier ?? user.tier}</b></span><span><small>{user.isAdmin ? "권한" : "주 포지션"}</small><b>{user.isAdmin ? "게시물 승인 · 판결" : user.primaryRole ?? "미설정"}</b></span></div><button className="secondary-button full" onClick={logout}>로그아웃</button></section></div>;
 }
 
 function ReportModal({ target, close, onSubmit }: { target: string; close: () => void; onSubmit: (reason: string) => void }) {
@@ -685,7 +706,7 @@ export default function HomePage() {
   const [localCase, setLocalCase] = useState<LocalCase | null>(null);
   const [localVideoUrl, setLocalVideoUrl] = useState("");
   const [viewingLocal, setViewingLocal] = useState(false);
-  const [selectedCaseTitle, setSelectedCaseTitle] = useState("바론 스틸 시도, 이건 미드 잘못인가요?");
+  const [selectedCaseTitle, setSelectedCaseTitle] = useState(REAL_CASE_TITLE);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -694,7 +715,10 @@ export default function HomePage() {
       const storedCase = localStorage.getItem(CASE_KEY);
       if (storedUser) {
         const storedProfile = JSON.parse(storedUser) as User;
-        const savedUser = { ...storedProfile, peakTier: storedProfile.peakTier ?? storedProfile.tier, primaryRole: storedProfile.primaryRole ?? "정글" };
+        const savedUser = storedProfile.nickname === "루크"
+          ? { nickname: "루크", tier: "관리자", peakTier: "관리자", isAdmin: true }
+          : { ...storedProfile, peakTier: storedProfile.peakTier ?? storedProfile.tier, primaryRole: storedProfile.primaryRole ?? "정글" };
+        localStorage.setItem(USER_KEY, JSON.stringify(savedUser));
         setUser(savedUser);
       }
       if (storedCase) {
@@ -709,7 +733,6 @@ export default function HomePage() {
   const showToast = (message: string) => { setToastMessage(message); window.setTimeout(() => setToastMessage(""), 2800); };
   const requireLogin = () => { setLoginOpen(true); showToast("로그인이 필요한 기능입니다."); };
   const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
-  const switchDemoAccount = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); setUser(nextUser); showToast(`${nextUser.nickname} 계정으로 전환했습니다.`); };
   const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); setView("home"); showToast("로그아웃했습니다."); };
   const openSubmit = () => {
     if (!user) return requireLogin();
@@ -729,7 +752,7 @@ export default function HomePage() {
     {view === "admin" && user?.isAdmin && <AdminApproval localCase={localCase} localVideoUrl={localVideoUrl} approve={() => { if (!localCase) return; const approvedCase = { ...localCase, approved: true }; localStorage.setItem(CASE_KEY, JSON.stringify(approvedCase)); setLocalCase(approvedCase); showToast("게시물을 승인해 홈에 공개했습니다."); }} remove={() => { localStorage.removeItem(CASE_KEY); deleteStoredVideo().catch(() => undefined); if (localVideoUrl) URL.revokeObjectURL(localVideoUrl); setLocalCase(null); setLocalVideoUrl(""); showToast("게시물과 영상을 삭제했습니다."); }} openDetail={() => openDetail(true, localCase?.title)} />}
     <footer><Logo onClick={() => setView("home")} /><p>티어는 진짜로, 닉네임은 자유롭게. 함께 판결하는 롤 플레이 판결소.</p><small>LOL.VS는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</small></footer>
     {loginOpen && <LoginModal close={() => setLoginOpen(false)} onLogin={login} />}
-    {profileOpen && user && <ProfileModal user={user} close={() => setProfileOpen(false)} logout={logout} switchAccount={switchDemoAccount} />}
+    {profileOpen && user && <ProfileModal user={user} close={() => setProfileOpen(false)} logout={logout} />}
     {toastMessage && <div className="toast" role="status">✓ {toastMessage}</div>}
   </div>;
 }
