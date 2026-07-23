@@ -36,6 +36,10 @@ const USER_KEY = "lolvs-demo-user";
 const CHALLENGER_TEST_KEY = "lolvs-challenger-test-v1";
 const CASE_KEY = "lolvs-local-case";
 const VIDEO_KEY = "latest-case-video";
+const DEMO_ACCOUNTS: User[] = [
+  { nickname: "억울한플레이어", tier: "다이아몬드 IV", peakTier: "다이아몬드 I", primaryRole: "미드" },
+  { nickname: "판결하는사람", tier: "챌린저", peakTier: "챌린저", primaryRole: "정글" },
+];
 
 const tierLevel = (tier: string) => {
   if (tier.includes("챌린저")) return 9;
@@ -324,10 +328,6 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
             </button>
           )}
 
-          <div className="clean-list-caption">
-            <span>{showResolved ? "판정이 완료된 장면" : serviceMode === "judgement" ? "판정을 기다리는 장면" : "피드백을 기다리는 장면"}</span>
-            <small>{filtered.length}개의 장면</small>
-          </div>
           <div className="clean-case-list">
             {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; return (
               <button className={resolved ? "clean-case-row case-resolved" : "clean-case-row"} key={item.title} onClick={() => openDetail(false, item.title)}>
@@ -366,7 +366,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
             </footer>
           </section>
           <section className="clean-hot-card">
-            <header><h2><i className="live-dot" /> 실시간 인기 글</h2><small>지금 많이 보는 장면</small></header>
+            <header><h2><i className="live-dot" /> 실시간 인기 글</h2></header>
             <ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><span><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol>
           </section>
         </aside>
@@ -675,11 +675,11 @@ function LoginModal({ close, onLogin }: { close: () => void; onLogin: (user: Use
   const [peakTier, setPeakTier] = useState("챌린저");
   const [primaryRole, setPrimaryRole] = useState("정글");
   const submit = (event: FormEvent) => { event.preventDefault(); if (nickname.trim().length < 2) return; onLogin({ nickname: nickname.trim(), tier, peakTier, primaryRole }); };
-  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal judge-profile-login" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">데모 로그인</h2><p>Riot API 연결 전까지 활동 닉네임과 플레이 정보를 직접 선택합니다.</p><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={12} required placeholder="2~12자" autoFocus /></label><div className="login-profile-grid"><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label><label>최고 티어<select value={peakTier} onChange={(event) => setPeakTier(event.target.value)}>{["골드", "플래티넘", "에메랄드", "다이아몬드", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label></div><label>주 포지션<select value={primaryRole} onChange={(event) => setPrimaryRole(event.target.value)}>{["탑", "정글", "미드", "원딜", "서포터"].map((item) => <option key={item}>{item}</option>)}</select></label>{isMasterPlus(tier) && <div className="judge-profile-note"><b>공식 판정자 프로필</b><span>현재·최고 티어와 주 포지션이 판결문에 표시되며 같은 포지션 사건에 우선 연결됩니다.</span></div>}<div className="demo-warning">선택한 정보는 실제 Riot 인증이 아닌 <b>데모 인증</b>으로 표시됩니다.</div><button className="primary-button full" type="submit">이 정보로 로그인</button></form></div>;
+  return <div className="modal-backdrop" onMouseDown={close}><form className="profile-modal login-modal judge-profile-login" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="login-title"><button className="modal-close" type="button" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">VS</span><h2 id="login-title">데모 로그인</h2><p>역할별 계정으로 바로 체험하거나 직접 프로필을 만들 수 있습니다.</p><div className="demo-account-picker"><span>빠른 데모 계정</span><div>{DEMO_ACCOUNTS.map((account, index) => <button type="button" key={account.nickname} onClick={() => onLogin({ ...account })}><b>{index === 0 ? "글쓰기 계정" : "판정 계정"}</b><strong>{account.nickname}</strong><small>{account.tier} · {account.primaryRole}</small></button>)}</div></div><div className="custom-profile-divider"><span>직접 설정</span></div><label>사이트 활동 닉네임<input value={nickname} onChange={(event) => setNickname(event.target.value)} minLength={2} maxLength={12} required placeholder="2~12자" /></label><div className="login-profile-grid"><label>현재 티어<select value={tier} onChange={(event) => setTier(event.target.value)}>{["아이언 I", "브론즈 I", "실버 I", "골드 IV", "플래티넘 IV", "에메랄드 IV", "다이아몬드 IV", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label><label>최고 티어<select value={peakTier} onChange={(event) => setPeakTier(event.target.value)}>{["골드", "플래티넘", "에메랄드", "다이아몬드", "마스터", "그랜드마스터", "챌린저"].map((item) => <option key={item}>{item}</option>)}</select></label></div><label>주 포지션<select value={primaryRole} onChange={(event) => setPrimaryRole(event.target.value)}>{["탑", "정글", "미드", "원딜", "서포터"].map((item) => <option key={item}>{item}</option>)}</select></label>{isMasterPlus(tier) && <div className="judge-profile-note"><b>공식 판정자 프로필</b><span>현재·최고 티어와 주 포지션이 판결문에 표시되며 같은 포지션 사건에 우선 연결됩니다.</span></div>}<div className="demo-warning">선택한 정보는 실제 Riot 인증이 아닌 <b>데모 인증</b>으로 표시됩니다.</div><button className="primary-button full" type="submit">이 정보로 로그인</button></form></div>;
 }
 
-function ProfileModal({ user, close, logout }: { user: User; close: () => void; logout: () => void }) {
-  return <div className="modal-backdrop" onMouseDown={close}><section className="profile-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">{user.nickname[0]}</span><h2 id="profile-title">{user.nickname}</h2><VerifiedBadge tier={user.tier} demo /><div className="profile-play-info"><span><small>최고 티어</small><b>{user.peakTier ?? user.tier}</b></span><span><small>주 포지션</small><b>{user.primaryRole ?? "미설정"}</b></span></div><p>이 브라우저에 저장된 데모 프로필입니다.<br />실제 Riot ID는 연결하지 않았습니다.</p><button className="secondary-button full" onClick={logout}>로그아웃</button></section></div>;
+function ProfileModal({ user, close, logout, switchAccount }: { user: User; close: () => void; logout: () => void; switchAccount: (user: User) => void }) {
+  return <div className="modal-backdrop" onMouseDown={close}><section className="profile-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="profile-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="profile-emblem">{user.nickname[0]}</span><h2 id="profile-title">{user.nickname}</h2><VerifiedBadge tier={user.tier} demo /><div className="profile-play-info"><span><small>최고 티어</small><b>{user.peakTier ?? user.tier}</b></span><span><small>주 포지션</small><b>{user.primaryRole ?? "미설정"}</b></span></div><div className="demo-account-switcher"><span>데모 계정 전환</span>{DEMO_ACCOUNTS.map((account, index) => <button key={account.nickname} className={user.nickname === account.nickname ? "active" : ""} onClick={() => switchAccount({ ...account })}><span>{index === 0 ? "글" : "판"}</span><div><b>{index === 0 ? "글쓰기 계정" : "판정 계정"}</b><small>{account.nickname} · {account.tier}</small></div><em>{user.nickname === account.nickname ? "사용 중" : "전환"}</em></button>)}</div><p>다이아 계정은 글쓰기, 챌린저 계정은 공식 판정을 체험할 수 있습니다.</p><button className="secondary-button full" onClick={logout}>로그아웃</button></section></div>;
 }
 
 function ReportModal({ target, close, onSubmit }: { target: string; close: () => void; onSubmit: (reason: string) => void }) {
@@ -742,6 +742,7 @@ export default function HomePage() {
   const showToast = (message: string) => { setToastMessage(message); window.setTimeout(() => setToastMessage(""), 2800); };
   const requireLogin = () => { setLoginOpen(true); showToast("로그인이 필요한 기능입니다."); };
   const login = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); localStorage.setItem(CHALLENGER_TEST_KEY, "complete"); setUser(nextUser); setLoginOpen(false); showToast(`${nextUser.nickname}님, 로그인했습니다.`); };
+  const switchDemoAccount = (nextUser: User) => { localStorage.setItem(USER_KEY, JSON.stringify(nextUser)); localStorage.setItem(CHALLENGER_TEST_KEY, "complete"); setUser(nextUser); showToast(`${nextUser.nickname} 계정으로 전환했습니다.`); };
   const logout = () => { localStorage.removeItem(USER_KEY); setUser(null); setProfileOpen(false); showToast("로그아웃했습니다."); };
   const openSubmit = () => {
     if (!user) return requireLogin();
@@ -760,7 +761,7 @@ export default function HomePage() {
     {view === "submit" && user && <SubmitCase setView={setView} toast={showToast} user={user} onSubmitted={(item, url) => { setLocalCase(item); setLocalVideoUrl(url); }} />}
     <footer><Logo onClick={() => setView("home")} /><p>티어는 진짜로, 닉네임은 자유롭게. 함께 판결하는 롤 플레이 판결소.</p><small>LOL.VS는 Riot Games가 보증하거나 후원하는 서비스가 아닙니다.</small></footer>
     {loginOpen && <LoginModal close={() => setLoginOpen(false)} onLogin={login} />}
-    {profileOpen && user && <ProfileModal user={user} close={() => setProfileOpen(false)} logout={logout} />}
+    {profileOpen && user && <ProfileModal user={user} close={() => setProfileOpen(false)} logout={logout} switchAccount={switchDemoAccount} />}
     {toastMessage && <div className="toast" role="status">✓ {toastMessage}</div>}
   </div>;
 }

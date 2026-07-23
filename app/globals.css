@@ -1118,6 +1118,84 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
 .profile-play-info span { display: grid; gap: 3px; padding: 10px; border: 1px solid var(--line-soft); border-radius: 8px; background: rgba(12,24,40,.16); }
 .profile-play-info small { color: #788b9f; font-size: 8px; }
 .profile-play-info b { color: #dce5ed; font-size: 10px; }
+.judge-profile-login { max-height: calc(100vh - 36px); overflow-y: auto; }
+.demo-account-picker { margin: 18px 0 4px; }
+.demo-account-picker > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #93a5b8;
+  font-size: 9px;
+  font-weight: 850;
+}
+.demo-account-picker > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.demo-account-picker button {
+  --account-color: var(--teal);
+  min-height: 76px;
+  display: grid;
+  gap: 4px;
+  padding: 11px;
+  border: 1px solid color-mix(in srgb, var(--account-color) 32%, #40536b);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--account-color) 7%, rgba(25,43,65,.9));
+  cursor: pointer;
+  text-align: left;
+}
+.demo-account-picker button:last-child { --account-color: var(--coral); }
+.demo-account-picker button:hover { border-color: var(--account-color); transform: translateY(-1px); }
+.demo-account-picker button b { color: var(--account-color); font-size: 8px; }
+.demo-account-picker button strong { color: #e7edf2; font-size: 11px; }
+.demo-account-picker button small { color: #7f91a5; font-size: 8px; }
+.custom-profile-divider {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 16px 0 4px;
+  color: #6f8195;
+  font-size: 8px;
+}
+.custom-profile-divider::before, .custom-profile-divider::after { content: ""; flex: 1; height: 1px; background: var(--line-soft); }
+.demo-account-switcher { display: grid; gap: 7px; margin-top: 16px; text-align: left; }
+.demo-account-switcher > span { color: #93a5b8; font-size: 9px; font-weight: 850; }
+.demo-account-switcher > button {
+  --account-color: var(--teal);
+  min-height: 57px;
+  display: grid;
+  grid-template-columns: 32px minmax(0,1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #40536b;
+  border-radius: 9px;
+  background: rgba(28,46,68,.78);
+  cursor: pointer;
+  text-align: left;
+}
+.demo-account-switcher > button:nth-of-type(2) { --account-color: var(--coral); }
+.demo-account-switcher > button:hover, .demo-account-switcher > button.active {
+  border-color: color-mix(in srgb, var(--account-color) 54%, #40536b);
+  background: color-mix(in srgb, var(--account-color) 8%, rgba(28,46,68,.9));
+}
+.demo-account-switcher > button > span {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--account-color) 38%, transparent);
+  border-radius: 8px;
+  color: var(--account-color);
+  font-size: 9px;
+  font-weight: 950;
+}
+.demo-account-switcher > button > div { min-width: 0; display: grid; gap: 3px; }
+.demo-account-switcher b { color: #e3eaf0; font-size: 10px; }
+.demo-account-switcher small { color: #788a9e; font-size: 8px; }
+.demo-account-switcher em {
+  color: var(--account-color);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 850;
+}
+.demo-account-switcher + p { margin: 14px 0 18px; font-size: 10px; }
 
 .detail-mode-badge { display: inline-flex; width: fit-content; margin-bottom: 7px; padding: 4px 7px; border: 1px solid rgba(88,201,190,.3); border-radius: 5px; background: rgba(88,201,190,.07); color: var(--teal); font-size: 8px; font-weight: 900; }
 .detail-mode-badge.feedback { border-color: rgba(239,129,136,.3); background: rgba(239,129,136,.07); color: var(--coral); }
