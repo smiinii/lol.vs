@@ -269,8 +269,13 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const [showResolved, setShowResolved] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [popularCycle, setPopularCycle] = useState(0);
+  const [judgeIndex, setJudgeIndex] = useState(0);
   useEffect(() => {
     const timer = window.setInterval(() => setPopularCycle((cycle) => cycle + 1), 30 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    const timer = window.setInterval(() => setJudgeIndex((index) => (index + 1) % topJudges.length), 6000);
     return () => window.clearInterval(timer);
   }, []);
   const filtered = compactCases.filter((item) => item.mode === serviceMode && (category === "전체" || item.category === category) && Boolean(resolvedVerdicts[item.title]) === showResolved);
@@ -279,63 +284,92 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const pageItems = filtered.slice((page - 1) * casesPerPage, page * casesPerPage);
   const popularPosts = popularCycle % 2 === 0 ? weeklyPosts : [weeklyPosts[2], weeklyPosts[0], weeklyPosts[1], weeklyPosts[4], weeklyPosts[3]];
   const showLocal = !showResolved && localCase && localCase.mode === serviceMode && (category === "전체" || localCase.category === category);
+  const currentJudge = topJudges[judgeIndex];
+  const moveJudge = (direction: number) => setJudgeIndex((index) => (index + direction + topJudges.length) % topJudges.length);
   return (
-    <main className="page-shell home-redesign">
-      <section className="evidence-hero">
-        <div className="evidence-hero-copy">
-          <span className="evidence-eyebrow"><i /> 검증된 판정자에게 받는 롤 장면 리뷰</span>
-          <h1><b>누가 잘못했는지 판정받고,</b><em>다음 플레이 방법까지 확인하세요.</em></h1>
-          <p>티어만 높은 한 줄 판정이 아니라, 당시 보였던 정보와 핵심 타임스탬프를 근거로 더 나은 선택까지 알려드립니다.</p>
-          <div className="evidence-actions"><button onClick={onSubmit}>내 장면 등록하기</button><button onClick={() => document.querySelector(".case-board-heading")?.scrollIntoView({ behavior: "smooth" })}>판정 둘러보기 <span>↓</span></button></div>
-        </div>
-        <article className="verdict-spotlight">
-          <header><span><i /> 최근 공식 판정</span><em>8분 전</em></header>
-          <div className="spotlight-result"><b>B</b><div><small>공식 판정 결과</small><strong>B측의 무리한 진입</strong></div><span>확신도 92%</span></div>
-          <blockquote><b>24:05</b><p>상대 정글 위치가 사라진 뒤에도 시야 확보 없이 진입했습니다. 다음에는 강가 시야를 먼저 확보하고 미드 합류 거리를 확인해야 합니다.</p></blockquote>
-          <footer><span className="judge-avatar">정</span><span><strong>정글교과서</strong><small>챌린저 · 정글 · Riot 인증</small></span><em>수용률 91% · 인정 4,820</em></footer>
-        </article>
-      </section>
+    <main className="page-shell clean-home">
+      <div className="clean-home-grid">
+        <section className="feed-column">
+          <header className="clean-home-intro">
+            <div>
+              <span className="clean-eyebrow">검증된 플레이 판정</span>
+              <h1>누가 잘못했는지 판정받고,<em>다음 플레이 방법까지 확인하세요.</em></h1>
+            </div>
+            <button className="clean-write-button" onClick={onSubmit}>글쓰기</button>
+          </header>
 
-      <div className="home-content-grid">
-      <section className="feed-column">
-        <div className="board-mode-tabs" role="tablist" aria-label="게시판 종류"><button role="tab" aria-selected={serviceMode === "judgement"} className={serviceMode === "judgement" ? "active judgement" : "judgement"} onClick={() => { setServiceMode("judgement"); setPage(1); setShowResolved(false); }}><span>01</span><b>플레이 판정</b><small>누가 더 잘못했는지 공식 판정을 받습니다</small></button><button role="tab" aria-selected={serviceMode === "feedback"} className={serviceMode === "feedback" ? "active feedback" : "feedback"} onClick={() => { setServiceMode("feedback"); setPage(1); setShowResolved(false); }}><span>02</span><b>플레이 피드백</b><small>플레이를 지적받고 다음 선택을 배웁니다</small></button></div>
-        <div className="home-title-row compact-title evidence-feed-head"><div><span>{serviceMode === "judgement" ? "OFFICIAL JUDGEMENT" : "PLAY FEEDBACK"}</span><h2>{serviceMode === "judgement" ? "판정이 필요한 장면" : "피드백을 기다리는 플레이"}</h2><p>{serviceMode === "judgement" ? "포지션과 티어가 맞는 판정자를 우선 연결합니다." : "장점과 문제점, 다음에 더 나은 선택을 함께 확인합니다."}</p></div><div className="home-primary-actions"><form className="home-search" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}><span>⌕</span><input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="장면 또는 포지션 검색" aria-label="사건 검색" /><button type="submit">검색</button></form><button className="home-write-button" onClick={onSubmit}><span>＋</span> 등록</button></div></div>
-        <div className="toolbar">
-          <div className="category-tabs" role="tablist" aria-label="게임 유형">
-            {["전체", "솔로랭크", "파티랭크", "내전"].map((item) => <button key={item} className={category === item ? "selected" : ""} onClick={() => { setCategory(item); setPage(1); }}>{item}</button>)}
+          <div className="clean-mode-tabs" role="tablist" aria-label="게시판 종류">
+            <button role="tab" aria-selected={serviceMode === "judgement"} className={serviceMode === "judgement" ? "active" : ""} onClick={() => { setServiceMode("judgement"); setPage(1); setShowResolved(false); }}>플레이 판정</button>
+            <button role="tab" aria-selected={serviceMode === "feedback"} className={serviceMode === "feedback" ? "active" : ""} onClick={() => { setServiceMode("feedback"); setPage(1); setShowResolved(false); }}>플레이 피드백</button>
           </div>
-          {serviceMode === "judgement" && <button className={showResolved ? "resolved-filter active" : "resolved-filter"} onClick={() => { setShowResolved((value) => !value); setPage(1); }}><span>{showResolved ? "◷" : "✓"}</span>{showResolved ? "진행 중 보기" : "판결 완료 보기"}</button>}
-        </div>
 
-        {showLocal && (
-          <button className="uploaded-case-banner" onClick={() => openDetail(true, localCase.title)}>
-            <span className="uploaded-thumb">{localVideoUrl ? <video src={localVideoUrl} muted /> : <span>▶</span>}</span>
-            <span><small>방금 등록한 사건 · {localCase.category}</small><strong>{localCase.title}</strong><em>{localCase.author} · {localCase.tier} 데모 인증</em></span>
-            <b>판결 보기 →</b>
-          </button>
-        )}
+          <div className="clean-toolbar">
+            <div className="clean-category-tabs" role="tablist" aria-label="게임 유형">
+              {["전체", "솔로랭크", "파티랭크", "내전"].map((item) => <button key={item} className={category === item ? "selected" : ""} onClick={() => { setCategory(item); setPage(1); }}>{item}</button>)}
+            </div>
+            <div className="clean-toolbar-actions">
+              {serviceMode === "judgement" && <button className={showResolved ? "clean-resolved-filter active" : "clean-resolved-filter"} onClick={() => { setShowResolved((value) => !value); setPage(1); }}>{showResolved ? "진행 중" : "판정 완료"}</button>}
+              <form className="clean-search" onSubmit={(event) => { event.preventDefault(); if (searchText.trim()) onSearch(searchText.trim()); }}>
+                <input value={searchText} onChange={(event) => setSearchText(event.target.value)} placeholder="장면 검색" aria-label="사건 검색" />
+                <button type="submit" aria-label="검색">⌕</button>
+              </form>
+            </div>
+          </div>
 
-        <div className="case-board-heading"><div><h2>{showResolved ? "공식 판정이 완료된 장면" : serviceMode === "judgement" ? "공식 판정을 기다리는 장면" : "개선 피드백을 기다리는 장면"}</h2><span>{filtered.length}개</span></div><small>{serviceMode === "judgement" ? "인증 판정자의 근거와 확신도를 확인하세요" : "포지션별 지적과 다음 선택을 확인하세요"}</small></div>
-        <div className="case-list board-style">
-          {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; return (
-            <button className={resolved ? "case-row case-resolved" : "case-row"} key={item.title} onClick={() => openDetail(false, item.title)}>
-              <span className="thumb"><img src={item.image} alt="" /><i>▶</i><small>{item.clip}</small>{resolved && <b className="resolved-stamp">판결 완료</b>}</span>
-              <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author}<VerifiedBadge tier={item.tier} inline /></span><small>{item.category} · {item.meta}{resolved ? ` · ${resolved.side}측 잘못` : ""}</small><span className="case-review-signals"><em>{serviceMode === "judgement" ? resolved ? "공식 판정 완료" : "공식 판정 대기" : "플레이 피드백"}</em><em>근거 {Math.max(3, Math.round(item.comments / 7))}</em><em>{serviceMode === "feedback" || item.comments % 2 === 0 ? "개선안 있음" : "개선안 대기"}</em></span></span>
-              <span className="case-status">
-                <span className="row-votes"><small className={resolved ? "resolved-time" : ""}>{resolved ? "판결 완료" : item.time}</small><VoteBar a={item.a} b={item.b} compact /></span>
-                <span className="case-engagement"><span><i className="like-icon" aria-hidden="true">♥</i><em>좋아요</em><b>{item.likes}</b></span><span><i className="comment-icon" aria-hidden="true" /><em>댓글</em><b>{item.comments}</b></span></span>
-              </span>
+          {showLocal && (
+            <button className="uploaded-case-banner" onClick={() => openDetail(true, localCase.title)}>
+              <span className="uploaded-thumb">{localVideoUrl ? <video src={localVideoUrl} muted /> : <span>▶</span>}</span>
+              <span><small>방금 등록한 사건 · {localCase.category}</small><strong>{localCase.title}</strong><em>{localCase.author} · {localCase.tier} 데모 인증</em></span>
+              <b>판결 보기 →</b>
             </button>
-          ); })}
-          {!filtered.length && !showLocal && <div className="empty-state">이 카테고리의 사건을 준비하고 있습니다.</div>}
-        </div>
-        {pageCount > 1 && <nav className="pagination" aria-label="사건 목록 페이지">{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button key={number} className={page === number ? "active" : ""} onClick={() => { setPage(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{number}</button>)}</nav>}
-      </section>
+          )}
 
-      <aside className="right-rail evidence-rail">
-        <section className="rail-card top-judges-card"><header><span>VERIFIED JUDGES</span><div><h2>인기 판정자</h2><b>TOP 5</b></div><p>근거 인정과 판정 수용률을 함께 반영합니다.</p></header><ol>{topJudges.map((judge, index) => <li key={judge.name}><span className={index < 3 ? `judge-rank rank-${index + 1}` : "judge-rank"}>{index + 1}</span><span className="judge-list-avatar">{judge.name[0]}</span><span className="judge-list-copy"><strong>{judge.name}<i>✓</i></strong><small>{judge.tier} · {judge.role}</small></span><span className="judge-list-score"><b>{judge.recognitions.toLocaleString("ko-KR")}</b><small>인정 · 수용 {judge.acceptance}%</small></span></li>)}</ol></section>
-        <section className="rail-card hot-card"><div className="hot-card-head"><h2><i className="live-dot" /><span>실시간</span> 인기 글</h2></div><ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><img src={asset(index === 0 ? "/media/gameplay-detail.png" : "/media/gameplay-feed.png")} alt="" /><span className="hot-copy"><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol></section>
-      </aside>
+          <div className="clean-list-caption">
+            <span>{showResolved ? "판정이 완료된 장면" : serviceMode === "judgement" ? "판정을 기다리는 장면" : "피드백을 기다리는 장면"}</span>
+            <small>{filtered.length}개의 장면</small>
+          </div>
+          <div className="clean-case-list">
+            {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; return (
+              <button className={resolved ? "clean-case-row case-resolved" : "clean-case-row"} key={item.title} onClick={() => openDetail(false, item.title)}>
+                <span className="thumb"><img src={item.image} alt="" /><i>▶</i><small>{item.clip}</small>{resolved && <b className="resolved-stamp">판정 완료</b>}</span>
+                <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author}<VerifiedBadge tier={item.tier} inline /></span><small>{item.category} · {item.meta}{resolved ? ` · ${resolved.side}측 잘못` : ""}</small></span>
+                <span className="case-status">
+                  <span className="row-votes"><small className={resolved ? "resolved-time" : ""}>{resolved ? "판정 완료" : item.time}</small><VoteBar a={item.a} b={item.b} compact /></span>
+                  <span className="case-engagement"><span><i className="like-icon" aria-hidden="true">♥</i><b>{item.likes}</b></span><span><i className="comment-icon" aria-hidden="true" /><b>{item.comments}</b></span></span>
+                </span>
+              </button>
+            ); })}
+            {!filtered.length && !showLocal && <div className="empty-state">이 카테고리의 사건을 준비하고 있습니다.</div>}
+          </div>
+          {pageCount > 1 && <nav className="pagination" aria-label="사건 목록 페이지">{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button key={number} className={page === number ? "active" : ""} onClick={() => { setPage(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{number}</button>)}</nav>}
+        </section>
+
+        <aside className="clean-right-rail">
+          <section className="judge-slider-card" aria-roledescription="carousel" aria-label="인기 판정자">
+            <header><span><i /> 인기 판정자</span><small>근거 인정순</small></header>
+            <div className="judge-slide" key={currentJudge.name}>
+              <em>TOP {String(judgeIndex + 1).padStart(2, "0")}</em>
+              <span className="judge-slide-avatar">{currentJudge.name[0]}</span>
+              <strong>{currentJudge.name}<i>✓</i></strong>
+              <small>{currentJudge.tier} · {currentJudge.role} · Riot 인증</small>
+              <dl>
+                <div><dt>수용률</dt><dd>{currentJudge.acceptance}%</dd></div>
+                <div><dt>인정</dt><dd>{currentJudge.recognitions.toLocaleString("ko-KR")}</dd></div>
+                <div><dt>판정</dt><dd>{currentJudge.judgements}</dd></div>
+              </dl>
+            </div>
+            <footer>
+              <button onClick={() => moveJudge(-1)} aria-label="이전 판정자">‹</button>
+              <span className="judge-dots">{topJudges.map((judge, index) => <button key={judge.name} className={judgeIndex === index ? "active" : ""} onClick={() => setJudgeIndex(index)} aria-label={`${index + 1}위 ${judge.name}`} />)}</span>
+              <em>{judgeIndex + 1} / {topJudges.length}</em>
+              <button onClick={() => moveJudge(1)} aria-label="다음 판정자">›</button>
+            </footer>
+          </section>
+          <section className="clean-hot-card">
+            <header><h2><i className="live-dot" /> 실시간 인기 글</h2><small>지금 많이 보는 장면</small></header>
+            <ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><span><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol>
+          </section>
+        </aside>
       </div>
     </main>
   );
