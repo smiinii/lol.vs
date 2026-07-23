@@ -611,7 +611,24 @@ function Guide() {
     <section className="guide-section usage-guide"><div className="guide-section-heading"><span>사용 순서</span><h2><b>장면에서</b><em>판결까지</em></h2></div><div className="usage-steps"><article><b>01</b><div><strong>장면 확인</strong><small>영상과 양측 입장</small></div></article><article><b>02</b><div><strong>의견 투표</strong><small>A/B 한 번 선택</small></div></article><article><b>03</b><div><strong>근거 댓글</strong><small>타임스탬프와 피드백</small></div></article><article><b>04</b><div><strong>결과 확인</strong><small>의견과 공식 판결 비교</small></div></article></div></section>
     <section className="guide-section policy-board"><div className="guide-section-heading"><span>참여 권한</span><h2><b>누가 무엇을</b><em>할 수 있나요?</em></h2></div><div className="policy-cards"><article className="policy-opinion"><span className="policy-token">01</span><div><h3>의견 투표 · 댓글</h3><p>A/B 선택과 근거 피드백</p></div><strong>모든 인증 사용자</strong></article><article className="policy-verdict"><span className="policy-token">02</span><div><h3>공식 판결</h3><p>다이아 사건은 그랜드마스터 이상</p></div><strong>마스터 이상</strong></article><article className="policy-submit"><span className="policy-token">03</span><div><h3>사건 작성</h3><p>영상과 양측 입장 등록</p></div><strong>다이아 이하</strong></article></div></section>
     <section className="guide-privacy"><span className="privacy-shield">✓</span><div><small>티어는 인증하고, 활동은 자유롭게</small><h2>Riot ID 대신 사이트 닉네임으로 참여합니다.</h2><p>실제 계정과 티어는 인증에만 사용하고 게시글·투표·댓글에는 선택한 활동 닉네임이 표시됩니다.</p></div></section>
-    <div className="guide-grid"><section className="guide-panel accent-teal"><span className="guide-icon">✓</span><h2>사건 제보 체크리스트</h2><ul><li>핵심 장면이 보이는 짧은 영상</li><li>공정하게 정리한 A측·B측 입장</li><li>Riot ID와 개인정보 가림 처리</li></ul></section><section className="guide-panel accent-coral"><span className="guide-icon">VS</span><h2>좋은 판결의 기준</h2><ul><li>결과보다 당시 보였던 정보를 확인합니다.</li><li>사람이 아니라 플레이를 평가합니다.</li><li>다음 선택에 도움이 되는 근거를 남깁니다.</li></ul></section></div>
+    <div className="guide-grid guide-core-grid">
+      <section className="guide-panel guide-choice-panel">
+        <header><span>게시판 선택</span><h2>어떤 방식으로 도움받을까요?</h2><p>글을 올릴 때 원하는 결과에 맞춰 유형을 선택합니다.</p></header>
+        <div className="guide-choice-list">
+          <article><span>01</span><div><b>플레이 판정</b><p>누가 더 잘못했는지 A/B 책임을 판단받습니다.</p></div><em>A/B 책임</em></article>
+          <article><span>02</span><div><b>플레이 피드백</b><p>잘못을 가리기보다 장단점과 다음 선택을 확인합니다.</p></div><em>성장·복기</em></article>
+        </div>
+      </section>
+      <section className="guide-panel guide-result-panel">
+        <header><span>결과 이해</span><h2>투표와 공식 판정은 다릅니다.</h2><p>여러 사람의 의견과 자격을 갖춘 판정자의 결론을 구분합니다.</p></header>
+        <div className="guide-result-flow">
+          <article><span>의견</span><b>커뮤니티 투표</b><p>모든 인증 사용자가 A/B 의견과 댓글을 남깁니다.</p></article>
+          <i>→</i>
+          <article><span>판정</span><b>공식 판정</b><p>상위 티어 판정자가 근거와 다음 선택을 작성합니다.</p></article>
+        </div>
+        <div className="verdict-essentials" aria-label="공식 판정 필수 항목"><span>타임스탬프</span><span>확인 정보</span><span>판단 근거</span><span>다음 선택</span><span>확신도</span></div>
+      </section>
+    </div>
     <section className="faq"><h2>서비스 안내</h2><details open><summary>티어는 정말 인증되나요?</summary><p>현재 공개 버전은 Riot API 연결 전이라 사용자가 선택한 티어를 ‘데모 인증’으로 표시합니다. 실제 서비스에서는 Riot 인증 결과로 권한을 결정할 예정입니다.</p></details><details><summary>업로드한 영상은 어디에 저장되나요?</summary><p>현재 프로토타입에서는 선택한 기기의 브라우저에만 저장됩니다. 서버 업로드는 백엔드 연결 후 제공됩니다.</p></details></section>
   </main>;
 }
