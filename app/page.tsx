@@ -346,7 +346,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
 
         <aside className="clean-right-rail">
           <section className="judge-slider-card" aria-roledescription="carousel" aria-label="인기 판정자">
-            <header><span><i /> 인기 판정자</span><small>근거 인정순</small></header>
+            <header><span><i /> 인기 판정자</span></header>
             <div className="judge-slide" key={currentJudge.name}>
               <em>TOP {String(judgeIndex + 1).padStart(2, "0")}</em>
               <span className="judge-slide-avatar">{currentJudge.name[0]}</span>
@@ -558,6 +558,11 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   );
 }
 
+function PersonalActivityMetric({ value }: { value: string }) {
+  const [votes, matches] = value.split(" / ");
+  return <span className="personal-activity-metric"><span><b>{votes}</b><small>참여</small></span><i /><span><b>{matches}</b><small>합의 일치</small></span></span>;
+}
+
 function Ranking({ user }: { user: User | null }) {
   const [mode, setMode] = useState<"personal" | "judge">("personal");
   const [query, setQuery] = useState("");
@@ -591,12 +596,12 @@ function Ranking({ user }: { user: User | null }) {
           <button type="submit">검색</button>
         </form>
       </div>
-      {searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · {mode === "personal" ? `투표 / 합의 ${match.metricA}` : `받은 인정 ${match.metricB}`}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 사용자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}
+      {searched && (match ? <section className="rank-result"><b>{match.rank}위</b><span className="avatar">{match.name[0]}</span><div><strong>{match.name} · {match.points}P</strong><small>{match.tier} · {mode === "personal" ? `투표 참여 ${match.metricA.split(" / ")[0]}회 · 합의 일치 ${match.metricA.split(" / ")[1]}회` : `받은 인정 ${match.metricB}`}</small></div><em>{match.rank <= 5 ? "TOP 5" : "상위 31%"}</em></section> : <div className="rank-empty">일치하는 사용자를 찾지 못했습니다. 닉네임을 다시 확인해 주세요.</div>)}
       {mode === "personal" ? <section className="score-rules personal-score-rules"><div><b>+5</b><span>의견 투표 참여</span></div><div><b>+15</b><span>최종 합의와 일치</span></div><div><b>+1</b><span>판단 근거 공감</span></div><div><b>-20</b><span>신고 제재 확정</span></div></section> : <section className="score-rules judge-score-rules"><div><b>+5</b><span>공식 판결 참여</span></div><div><b>+1</b><span>판결·근거 인정</span></div><div><b>-100</b><span>신고 제재 확정</span></div><div><b>OUT</b><span>누적 -100점<br />자격 박탈 · 판결 금지</span></div></section>}
       <section className="ranking-card elite-ranking">
-        <div className="ranking-head"><span>순위</span><span>{mode === "personal" ? "플레이어" : "판결자"}</span><span>{mode === "personal" ? "투표 / 합의" : "판결 참여"}</span><span>{mode === "personal" ? "근거 공감" : "받은 인정"}</span><span>점수</span></div>
-        {visibleRanking.map((row, index) => { const rank = (rankingPage - 1) * rankingPageSize + index + 1; return <div className={rank <= 3 ? `ranking-row podium rank-${rank}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][rank - 1] ?? ""}</span>{rank}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · {mode === "personal" ? "인증" : "판결 자격"}</small></span><span>{row[2]}</span><span>{row[3]}</span><strong>{row[4]}P</strong></div>; })}
-        {currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span><span>{currentRank.metricA}</span><span>{currentRank.metricB}</span><strong>{currentRank.points}P</strong></div></>}
+        <div className="ranking-head"><span>순위</span><span>{mode === "personal" ? "플레이어" : "판결자"}</span>{mode === "personal" ? <span className="activity-column-title">투표 활동<small>참여 · 합의 일치</small></span> : <span>판결 참여</span>}<span>{mode === "personal" ? "근거 공감" : "받은 인정"}</span><span>점수</span></div>
+        {visibleRanking.map((row, index) => { const rank = (rankingPage - 1) * rankingPageSize + index + 1; return <div className={rank <= 3 ? `ranking-row podium rank-${rank}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][rank - 1] ?? ""}</span>{rank}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · {mode === "personal" ? "인증" : "판결 자격"}</small></span>{mode === "personal" ? <PersonalActivityMetric value={row[2]} /> : <span>{row[2]}</span>}<span>{row[3]}</span><strong>{row[4]}P</strong></div>; })}
+        {currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span>{mode === "personal" ? <PersonalActivityMetric value={currentRank.metricA} /> : <span>{currentRank.metricA}</span>}<span>{currentRank.metricB}</span><strong>{currentRank.points}P</strong></div></>}
         {!user && <div className="rank-login-note">로그인하면 내 순위를 바로 확인할 수 있습니다.</div>}
         {mode === "judge" && user && !isMasterPlus(user.tier) && <div className="rank-login-note">마스터 이상부터 공식 판결자 랭킹에 등록됩니다.</div>}
       </section>
