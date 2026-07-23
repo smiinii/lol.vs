@@ -1486,9 +1486,12 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
   justify-items: center;
   align-content: center;
   padding: 18px 16px 15px;
-  border: 1px solid rgba(109, 135, 161, .26);
+  border: 1px solid var(--line);
   border-radius: 10px;
-  background: linear-gradient(150deg, rgba(17, 31, 48, .84), rgba(10, 22, 37, .9));
+  background:
+    radial-gradient(circle at 88% 4%, rgba(88, 201, 190, .09), transparent 34%),
+    linear-gradient(145deg, #243750, #1d3048);
+  box-shadow: 0 12px 30px rgba(7, 17, 31, .12);
   animation: judgeSlideIn .32s ease both;
 }
 @keyframes judgeSlideIn {
@@ -1544,10 +1547,10 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
 .judge-slider-card > footer > button {
   width: 28px;
   height: 28px;
-  border: 1px solid rgba(122, 147, 171, .24);
+  border: 1px solid #465a72;
   border-radius: 50%;
-  background: transparent;
-  color: #728399;
+  background: #203149;
+  color: #91a2b4;
   cursor: pointer;
   font-size: 16px;
 }
@@ -1560,7 +1563,7 @@ footer { border-top-color: rgba(121,143,169,.18); background: linear-gradient(90
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: #334359;
+  background: #53667c;
   cursor: pointer;
 }
 .judge-dots button.active { width: 14px; border-radius: 5px; background: var(--teal); }
