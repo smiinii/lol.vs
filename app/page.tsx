@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @next/next/no-img-element */
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 
@@ -36,8 +35,8 @@ type ResolvedVerdict = { side: VoteSide; judge: string; judgeTier: string; judge
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const asset = (path: string) => `${basePath}${path}`;
 const USER_KEY = "lolvs-demo-user";
-const CASE_KEY = "lolvs-local-case";
-const VIDEO_KEY = "latest-case-video";
+const CASE_KEY = "lolvs-local-case-v2";
+const VIDEO_KEY = "latest-case-video-v2";
 const DEMO_ACCOUNTS: User[] = [
   { nickname: "억울한플레이어", tier: "다이아몬드 IV", peakTier: "다이아몬드 I", primaryRole: "미드" },
   { nickname: "판결하는사람", tier: "챌린저", peakTier: "챌린저", primaryRole: "정글" },
@@ -58,131 +57,29 @@ const tierLevel = (tier: string) => {
 
 const isMasterPlus = (tier: string) => tierLevel(tier) >= 7;
 
-const compactCases = [
-  { title: "바론 스틸 시도, 이건 미드 잘못인가요?", author: "정글은못말려", tier: "다이아몬드 IV", category: "솔로랭크", meta: "25분 전", time: "마감까지 1일 9시간", a: 71, b: 29, comments: 96, clip: "00:25", image: asset("/media/gameplay-detail.png") },
-  { title: "라인전 푸시 후 다이브, 누구 잘못일까요?", author: "탑은외로워", tier: "플래티넘 I", category: "파티랭크", meta: "1시간 전", time: "마감까지 20시간", a: 45, b: 55, comments: 73, clip: "00:28", image: asset("/media/gameplay-feed.png") },
-  { title: "용 앞 한타에서 포지셔닝 문제?", author: "서폿의하루", tier: "에메랄드 III", category: "내전", meta: "3시간 전", time: "마감까지 18시간", a: 34, b: 66, comments: 54, clip: "00:31", image: asset("/media/gameplay-feed.png") },
-  { title: "바텀 2대2 교전, 원딜과 서폿 중 누구 판단이 문제였나요?", author: "바텀연구소", tier: "다이아몬드 II", category: "솔로랭크", meta: "4시간 전", time: "마감까지 16시간", a: 57, b: 43, comments: 81, clip: "00:34", image: asset("/media/gameplay-detail.png") },
-  { title: "전령 앞에서 먼저 물린 탑, 팀이 버렸다는 게 맞나요?", author: "탑텔있음", tier: "에메랄드 I", category: "파티랭크", meta: "5시간 전", time: "마감까지 15시간", a: 63, b: 37, comments: 42, clip: "00:22", image: asset("/media/gameplay-feed.png") },
-  { title: "상대 정글 위치를 알았는데도 카정 간 선택, 무리였나요?", author: "블루내꺼", tier: "플래티넘 II", category: "솔로랭크", meta: "6시간 전", time: "마감까지 14시간", a: 41, b: 59, comments: 68, clip: "00:29", image: asset("/media/gameplay-detail.png") },
-  { title: "미드 로밍을 따라가지 않은 게 잘못인가요?", author: "라인먼저", tier: "에메랄드 IV", category: "내전", meta: "7시간 전", time: "마감까지 13시간", a: 52, b: 48, comments: 39, clip: "00:26", image: asset("/media/gameplay-feed.png") },
-  { title: "한타 전 와드하러 간 서폿, 팀 이탈로 봐야 하나요?", author: "시야점수왕", tier: "다이아몬드 III", category: "솔로랭크", meta: "8시간 전", time: "마감까지 12시간", a: 28, b: 72, comments: 105, clip: "00:38", image: asset("/media/gameplay-detail.png") },
-  { title: "탑 억제기 대신 용 합류, 이 판단이 맞았을까요?", author: "운영이먼저", tier: "다이아몬드 I", category: "파티랭크", meta: "9시간 전", time: "마감까지 11시간", a: 76, b: 24, comments: 117, clip: "00:33", image: asset("/media/gameplay-feed.png") },
-  { title: "정글이 콜한 다이브를 거절한 미드가 잘못인가요?", author: "핑은찍었어", tier: "플래티넘 I", category: "솔로랭크", meta: "10시간 전", time: "마감까지 10시간", a: 49, b: 51, comments: 64, clip: "00:27", image: asset("/media/gameplay-detail.png") },
-  { title: "포킹 조합인데 먼저 진입한 탱커, 누구 콜이 맞나요?", author: "한타각보는중", tier: "에메랄드 II", category: "내전", meta: "11시간 전", time: "마감까지 9시간", a: 32, b: 68, comments: 77, clip: "00:36", image: asset("/media/gameplay-feed.png") },
-  { title: "바론 버스트 중 상대 정글을 막지 못한 책임은 누구에게?", author: "강타는있음", tier: "다이아몬드 I", category: "파티랭크", meta: "12시간 전", time: "마감까지 8시간", a: 66, b: 34, comments: 91, clip: "00:30", image: asset("/media/gameplay-detail.png") },
-  { title: "라인 프리징 중 로밍 간 서폿, 원딜이 억울할 만한가요?", author: "혼자먹을게", tier: "골드 I", category: "솔로랭크", meta: "13시간 전", time: "마감까지 7시간", a: 58, b: 42, comments: 45, clip: "00:24", image: asset("/media/gameplay-feed.png") },
-  { title: "첫 용을 포기하고 유충을 택한 교환, 손해인가요?", author: "오브젝트계산", tier: "에메랄드 III", category: "내전", meta: "14시간 전", time: "마감까지 6시간", a: 47, b: 53, comments: 58, clip: "00:32", image: asset("/media/gameplay-detail.png") },
-  { title: "텔레포트가 있는데도 한타에 늦은 탑, 고의적인 건가요?", author: "사이드운영", tier: "플래티넘 III", category: "파티랭크", meta: "15시간 전", time: "마감까지 5시간", a: 69, b: 31, comments: 83, clip: "00:35", image: asset("/media/gameplay-feed.png") },
-  { title: "마지막 한타에서 원딜을 지키지 않은 서폿 판단", author: "원딜지켜줘", tier: "다이아몬드 IV", category: "솔로랭크", meta: "16시간 전", time: "마감까지 4시간", a: 38, b: 62, comments: 112, clip: "00:41", image: asset("/media/gameplay-detail.png") },
-  { title: "상대 텔 위치를 놓친 미드, 콜을 안 한 탑 책임도 있나요?", author: "미아핑세번", tier: "에메랄드 II", category: "솔로랭크", meta: "17시간 전", time: "마감까지 3시간", a: 54, b: 46, comments: 49, clip: "00:27", image: asset("/media/gameplay-feed.png") },
-  { title: "용을 앞두고 귀환한 원딜, 오브젝트 포기 판단이 맞나요?", author: "템은사야지", tier: "플래티넘 I", category: "파티랭크", meta: "18시간 전", time: "마감까지 3시간", a: 36, b: 64, comments: 62, clip: "00:30", image: asset("/media/gameplay-detail.png") },
-  { title: "유리한 한타 뒤 바론 대신 억제기를 민 선택", author: "운영토론회", tier: "다이아몬드 III", category: "내전", meta: "19시간 전", time: "마감까지 2시간", a: 61, b: 39, comments: 88, clip: "00:35", image: asset("/media/gameplay-feed.png") },
-  { title: "레드 양보를 거절한 정글, 성장 차이면 정당한가요?", author: "버프는공유", tier: "에메랄드 IV", category: "솔로랭크", meta: "20시간 전", time: "마감까지 2시간", a: 43, b: 57, comments: 71, clip: "00:23", image: asset("/media/gameplay-detail.png") },
-  { title: "사이드 압박 중 본대가 교전한 상황, 합류가 늦었나요?", author: "스플릿장인", tier: "다이아몬드 II", category: "파티랭크", meta: "21시간 전", time: "마감까지 1시간", a: 72, b: 28, comments: 93, clip: "00:39", image: asset("/media/gameplay-feed.png") },
-  { title: "상대 궁극기를 뺀 뒤 바로 재진입한 콜, 성급했나요?", author: "쿨타임체크", tier: "플래티넘 II", category: "내전", meta: "22시간 전", time: "마감까지 1시간", a: 48, b: 52, comments: 56, clip: "00:28", image: asset("/media/gameplay-detail.png") },
-  { title: "첫 갱 실패 뒤 같은 라인을 다시 간 정글 판단", author: "한번만더", tier: "골드 I", category: "솔로랭크", meta: "23시간 전", time: "마감까지 58분", a: 29, b: 71, comments: 84, clip: "00:26", image: asset("/media/gameplay-feed.png") },
-  { title: "한타 승리 후 귀환 핑을 무시한 추격, 누구 콜이 문제였나요?", author: "집에갈시간", tier: "에메랄드 I", category: "파티랭크", meta: "1일 전", time: "마감까지 42분", a: 65, b: 35, comments: 99, clip: "00:32", image: asset("/media/gameplay-detail.png") },
-].map((item, index) => ({ ...item, mode: index % 3 === 1 && item.title !== "전령 앞에서 먼저 물린 탑, 팀이 버렸다는 게 맞나요?" && item.title !== "미드 로밍을 따라가지 않은 게 잘못인가요?" ? ("feedback" as const) : ("judgement" as const), likes: item.comments * 2 + 41 - index * 2 }));
+const REAL_CASE_TITLE = "리신 플레이 판정";
 
-const resolvedVerdicts: Record<string, ResolvedVerdict> = {
-  "전령 앞에서 먼저 물린 탑, 팀이 버렸다는 게 맞나요?": { side: "A", judge: "맵리딩중", judgeTier: "그랜드마스터 612P", judgeRole: "정글", peakTier: "챌린저 781P", timestamp: "24:05", visibleInfo: "상대 정글과 미드가 시야에서 사라졌고, 아군 딜러는 강가에 합류하기 전이었습니다.", reason: "상대 위치가 확인되지 않은 상태에서 먼저 시야 밖으로 진입했고, 팀이 합류할 수 있는 거리도 아니었습니다. 후속 대응보다 선진입 판단의 책임이 더 큽니다.", nextChoice: "강가 입구에 시야를 먼저 확보하고, 딜러 합류 거리와 상대 위치를 확인한 뒤 진입해야 합니다.", confidence: 92, recognitions: 1284, acceptance: 89, positionJudgements: 184, decidedAt: "오늘 02:18" },
-  "미드 로밍을 따라가지 않은 게 잘못인가요?": { side: "B", judge: "판결요정", judgeTier: "챌린저 942P", judgeRole: "미드", peakTier: "챌린저 1,021P", timestamp: "12:42", visibleInfo: "미드는 라인 손실 핑을 남겼고, 사이드 교전은 합류 시간을 확인하지 않은 채 먼저 시작됐습니다.", reason: "미드가 먼저 라인 손실을 알렸지만 교전 시작 핑이 늦었습니다. 로밍을 따라가지 않은 선택보다 아군 상황을 확인하지 않고 교전을 연 판단이 더 큰 원인입니다.", nextChoice: "교전 시작 전 미드의 라인 상태와 합류 가능 시간을 확인하고, 불가능하면 시야만 확보한 뒤 빠져야 합니다.", confidence: 88, recognitions: 1769, acceptance: 93, positionJudgements: 231, decidedAt: "어제 23:41" },
-};
+const compactCases = [{
+  title: REAL_CASE_TITLE,
+  author: "루크",
+  tier: "챌린저",
+  category: "솔로랭크",
+  meta: "방금 전",
+  time: "판정 대기 중",
+  a: 0,
+  b: 0,
+  comments: 0,
+  clip: "PLAY",
+  video: asset("/media/lee-sin.mp4"),
+  mode: "judgement" as const,
+  likes: 0,
+}];
 
-const topJudges = [
-  { name: "판결요정", tier: "챌린저 942P", role: "미드", judgements: 248, recognitions: 6821, acceptance: 93 },
-  { name: "맵리딩중", tier: "그랜드마스터 612P", role: "정글", judgements: 184, recognitions: 5930, acceptance: 89 },
-  { name: "라인의정석", tier: "챌린저 811P", role: "탑", judgements: 172, recognitions: 5426, acceptance: 91 },
-  { name: "바텀연구원", tier: "그랜드마스터 488P", role: "원딜", judgements: 156, recognitions: 4890, acceptance: 87 },
-  { name: "시야먼저", tier: "마스터 376P", role: "서포터", judgements: 139, recognitions: 4312, acceptance: 86 },
-];
-
-const weeklyPosts = [
-  { title: "바론 스틸, 이건 누구 잘못?", meta: "댓글 212 · 투표 1.2만", trend: "up", delta: 2 },
-  { title: "탑 다이브 교환, 합리적인 선택?", meta: "댓글 158 · 투표 8,745", trend: "down", delta: 1 },
-  { title: "용 한타 진입 타이밍 논란", meta: "댓글 134 · 투표 6,312", trend: "up", delta: 1 },
-  { title: "미드 로밍 vs 라인 손해", meta: "댓글 98 · 투표 5,102", trend: "same", delta: 0 },
-  { title: "정글 동선 꼬임, 누구 책임?", meta: "댓글 87 · 투표 4,210", trend: "down", delta: 2 },
-];
-
-const commentsSeed: CommentItem[] = [
-  {
-    id: 1,
-    name: "전령의눈",
-    tier: "플래티넘 II",
-    text: "미드가 라인 관리한 건 아쉽지만, 시야 없이 먼저 들어간 상황을 더 크게 봐야 할 것 같아요.",
-    evidence: "24:18 바론 체력 50%인데 미드가 아직 강가에 없었습니다.",
-    vote: "A",
-    likes: 256,
-    replies: [{ id: 11, name: "바위게장인", tier: "에메랄드 IV", text: "저도 합류 핑이 없었던 점까지 같이 봐야 한다고 생각해요.", vote: "A" }],
-  },
-  {
-    id: 2,
-    name: "바텀은신이야",
-    tier: "다이아몬드 III",
-    text: "바론 체력이 낮았어도 팀원 합류 핑을 확인하고 시도했으면 결과가 달랐을 것 같습니다.",
-    evidence: "23:52부터 미드가 라인을 밀고 있다는 사실을 팀이 알고 있었습니다.",
-    vote: "B",
-    likes: 138,
-    replies: [],
-  },
-  ...Array.from({ length: 18 }, (_, index) => {
-    const names = ["강타확인", "라인관리중", "와드두개", "한타천천히", "사이드장인", "핑찍고간다"];
-    const tiers = ["에메랄드 II", "플래티넘 I", "다이아몬드 IV", "골드 I", "에메랄드 IV", "플래티넘 III"];
-    const texts = [
-      "이 장면만 보면 미드 합류보다 바론을 먼저 시작한 콜이 더 위험해 보입니다.",
-      "라인 상황까지 같이 보면 한 명의 잘못으로 보기 어렵고, 시작 핑이 핵심인 것 같아요.",
-      "상대 정글 위치가 보이지 않았기 때문에 버스트보다 입구 차단을 먼저 했어야 합니다.",
-      "결과와 별개로 24분대 인원 배치를 보면 한 번 기다리는 선택이 더 안정적이었습니다.",
-      "미드도 늦었지만 팀이 빠질 수 있는 타이밍이 두 번 있었던 점을 같이 봐야 합니다.",
-      "다음에는 오브젝트 체력보다 아군 합류 상태를 먼저 확인하면 같은 실수를 줄일 수 있어요.",
-    ];
-    const evidence = ["24:18 미드가 강가에 도착하기 전에 바론 체력이 절반 아래였습니다.", "23:52 라인을 정리하는 동안 별도의 합류 핑이 확인되지 않습니다.", "24:05 상대 정글 위치가 사라진 뒤에도 시야 확보 없이 진행했습니다."];
-    return {
-      id: index + 20,
-      name: names[index % names.length],
-      tier: tiers[index % tiers.length],
-      text: texts[index % texts.length],
-      evidence: evidence[index % evidence.length],
-      vote: index % 3 === 0 ? "B" : "A" as VoteSide,
-      likes: 97 - index * 3,
-      replies: index % 4 === 0 ? [{ id: index + 200, name: "복기하는사람", tier: "다이아몬드 II", text: "이 부분은 저도 영상 다시 보니 같은 생각입니다. 핑이 조금만 빨랐으면 달라졌을 것 같아요.", vote: index % 3 === 0 ? "B" as VoteSide : "A" as VoteSide }] : [],
-    };
-  }),
-];
-
-const feedbackCommentsSeed: CommentItem[] = [
-  { id: 501, name: "라인연구중", tier: "에메랄드 I", text: "라인을 먼저 밀고 합류하려던 의도는 이해됩니다. 다만 상대 정글이 보이지 않을 때는 한 웨이브를 포기하더라도 강가 입구를 먼저 확인하는 편이 안전해 보여요.", evidence: "00:24 상대 정글 위치가 사라진 뒤에도 미니맵 확인 없이 이동했습니다.", likes: 84, replies: [] },
-  { id: 502, name: "미드복기노트", tier: "다이아몬드 III", text: "스킬을 쓰기 전 한 번 더 거리를 벌렸다면 상대 진입기를 빼고 교전할 수 있었습니다. 다음에는 딜보다 상대 핵심 스킬을 먼저 확인해 보세요.", evidence: "00:27 상대 진입기가 남아 있는 상태에서 먼저 사거리 안으로 들어갔습니다.", likes: 67, replies: [{ id: 520, name: "천천히보자", tier: "마스터", text: "동의합니다. 여기서는 피해량보다 스킬 교환 순서를 보는 게 핵심입니다." }] },
-  { id: 503, name: "와드먼저", tier: "플래티넘 I", text: "작성자가 노린 선택 자체는 좋았어요. 핑을 한 번 더 남겨서 팀이 같은 타이밍에 움직이게 했으면 성공 확률이 높아졌을 것 같습니다.", likes: 51, replies: [] },
-  { id: 504, name: "한타복기왕", tier: "마스터", text: "교전 시작보다 빠져나올 경로를 먼저 정했으면 좋겠습니다. 진입 전 아군 위치와 상대 주요 스킬 두 가지만 확인하는 습관을 들여보세요.", evidence: "00:29 아군 원딜과의 거리가 화면 한 칸 이상 벌어진 상태였습니다.", likes: 46, replies: [] },
-  { id: 505, name: "다음플레이", tier: "에메랄드 II", text: "결과는 아쉬웠지만 상대 시선을 끌어준 점은 좋았습니다. 다음에는 같은 움직임을 하더라도 아군이 이득을 볼 수 있는 타이밍인지 먼저 확인하면 좋겠어요.", likes: 39, replies: [] },
-];
-
-const judgeNames = ["판결요정", "맵리딩중", "한타복기왕", "와드먼저", "천천히보자"];
-const personalNames = ["핑찍고간다", "라인은밀었어", "바론은천천히", "와드두개", "한타만보자"];
-const judgeTiers = ["챌린저 942P", "그랜드마스터 612P", "마스터 438P", "마스터 276P", "마스터 154P"];
-const personalTiers = ["다이아몬드 II", "에메랄드 I", "플래티넘 I", "다이아몬드 IV", "골드 I", "에메랄드 III"];
-const formatScore = (value: number) => value.toLocaleString("ko-KR");
-
-const judgeRankingSeed = Array.from({ length: 100 }, (_, index) => {
-  const participation = Math.max(22, 160 - Math.floor(index * .46));
-  const recognition = Math.max(80, 4200 - index * 13);
-  const sanctions = index > 0 && index % 97 === 0 ? 1 : 0;
-  const points = participation * 5 + recognition - sanctions * 100;
-  return [judgeNames[index] ?? `판결복기${String(index + 1).padStart(3, "0")}`, judgeTiers[index] ?? `마스터 ${Math.max(1, 150 - Math.floor(index / 3))}P`, `${participation}회`, `${formatScore(recognition)}개`, formatScore(points)];
-}).sort((a, b) => Number(b[4].replaceAll(",", "")) - Number(a[4].replaceAll(",", "")));
-
-const personalRankingSeed = Array.from({ length: 100 }, (_, index) => {
-  const votes = Math.max(42, 720 - index * 2);
-  const agreementRate = Math.max(52, 91 - Math.floor(index / 8));
-  const matches = Math.floor(votes * agreementRate / 100);
-  const empathy = Math.max(20, 1600 - index * 5);
-  const sanctions = index > 0 && index % 83 === 0 ? 1 : 0;
-  const points = votes * 5 + matches * 15 + empathy - sanctions * 20;
-  return [personalNames[index] ?? `플레이복기${String(index + 1).padStart(3, "0")}`, personalTiers[index % personalTiers.length], `${votes} / ${matches}`, `${formatScore(empathy)}개`, formatScore(points)];
-}).sort((a, b) => Number(b[4].replaceAll(",", "")) - Number(a[4].replaceAll(",", "")));
+const resolvedVerdicts: Record<string, ResolvedVerdict> = {};
+const commentsSeed: CommentItem[] = [];
+const feedbackCommentsSeed: CommentItem[] = [];
+const judgeRankingSeed: string[][] = [];
+const personalRankingSeed: string[][] = [];
 
 function openVideoDb(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {
@@ -293,27 +190,14 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const [page, setPage] = useState(1);
   const [showResolved, setShowResolved] = useState(false);
   const [searchText, setSearchText] = useState("");
-  const [popularCycle, setPopularCycle] = useState(0);
-  const [judgeIndex, setJudgeIndex] = useState(0);
-  useEffect(() => {
-    const timer = window.setInterval(() => setPopularCycle((cycle) => cycle + 1), 30 * 60 * 1000);
-    return () => window.clearInterval(timer);
-  }, []);
-  useEffect(() => {
-    const timer = window.setInterval(() => setJudgeIndex((index) => (index + 1) % topJudges.length), 6000);
-    return () => window.clearInterval(timer);
-  }, []);
   const filtered = compactCases.filter((item) => item.mode === serviceMode && (category === "전체" || item.category === category) && Boolean(resolvedVerdicts[item.title]) === showResolved);
   const casesPerPage = 8;
   const pageCount = Math.max(1, Math.ceil(filtered.length / casesPerPage));
   const pageItems = filtered.slice((page - 1) * casesPerPage, page * casesPerPage);
-  const popularPosts = popularCycle % 2 === 0 ? weeklyPosts : [weeklyPosts[2], weeklyPosts[0], weeklyPosts[1], weeklyPosts[4], weeklyPosts[3]];
   const showLocal = !showResolved && localCase && localCase.approved !== false && localCase.mode === serviceMode && (category === "전체" || localCase.category === category);
-  const currentJudge = topJudges[judgeIndex];
-  const moveJudge = (direction: number) => setJudgeIndex((index) => (index + direction + topJudges.length) % topJudges.length);
   return (
     <main className="page-shell clean-home">
-      <div className="clean-home-grid">
+      <div className="clean-home-grid single-feed">
         <section className="feed-column">
           <header className="clean-home-intro">
             <div>
@@ -352,7 +236,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           <div className="clean-case-list">
             {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; return (
               <button className={resolved ? "clean-case-row case-resolved" : "clean-case-row"} key={item.title} onClick={() => openDetail(false, item.title)}>
-                <span className="thumb"><img src={item.image} alt="" /><i>▶</i><small>{item.clip}</small>{resolved && <b className="resolved-stamp">판정 완료</b>}</span>
+                <span className="thumb"><video src={item.video} muted playsInline preload="metadata" /><i>▶</i><small>{item.clip}</small>{resolved && <b className="resolved-stamp">판정 완료</b>}</span>
                 <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author}<VerifiedBadge tier={item.tier} inline /></span><small>{item.category} · {item.meta}{resolved ? ` · ${resolved.side}측 잘못` : ""}</small></span>
                 <span className="case-status">
                   {serviceMode === "judgement" ? <span className="row-votes"><small className={resolved ? "resolved-time" : ""}>{resolved ? "판정 완료" : item.time}</small><VoteBar a={item.a} b={item.b} compact /></span> : <span className="feedback-row-summary"><small>{item.time}</small><span><b>전문 피드백 {Math.max(1, Math.round(item.comments / 24))}개</b><em>댓글 {item.comments}</em></span></span>}
@@ -364,33 +248,6 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           </div>
           {pageCount > 1 && <nav className="pagination" aria-label="사건 목록 페이지">{Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => <button key={number} className={page === number ? "active" : ""} onClick={() => { setPage(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{number}</button>)}</nav>}
         </section>
-
-        <aside className="clean-right-rail">
-          <section className="judge-slider-card" aria-roledescription="carousel" aria-label="인기 판정자">
-            <header><span><i /> 인기 판정자</span></header>
-            <div className="judge-slide" key={currentJudge.name}>
-              <em>TOP {String(judgeIndex + 1).padStart(2, "0")}</em>
-              <span className="judge-slide-avatar">{currentJudge.name[0]}</span>
-              <strong>{currentJudge.name}<i>✓</i></strong>
-              <small>{currentJudge.tier} · {currentJudge.role} · Riot 인증</small>
-              <dl>
-                <div><dt>수용률</dt><dd>{currentJudge.acceptance}%</dd></div>
-                <div><dt>인정</dt><dd>{currentJudge.recognitions.toLocaleString("ko-KR")}</dd></div>
-                <div><dt>판정</dt><dd>{currentJudge.judgements}</dd></div>
-              </dl>
-            </div>
-            <footer>
-              <button onClick={() => moveJudge(-1)} aria-label="이전 판정자">‹</button>
-              <span className="judge-dots">{topJudges.map((judge, index) => <button key={judge.name} className={judgeIndex === index ? "active" : ""} onClick={() => setJudgeIndex(index)} aria-label={`${index + 1}위 ${judge.name}`} />)}</span>
-              <em>{judgeIndex + 1} / {topJudges.length}</em>
-              <button onClick={() => moveJudge(1)} aria-label="다음 판정자">›</button>
-            </footer>
-          </section>
-          <section className="clean-hot-card">
-            <header><h2><i className="live-dot" /> 실시간 인기 글</h2></header>
-            <ol>{popularPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className={index < 3 ? "rank hot" : "rank"}>{index + 1}</span><span><strong>{post.title}</strong><small>{post.meta}</small></span><em className={`trend-${post.trend}`}>{post.trend === "up" ? "▲" : post.trend === "down" ? "▼" : "—"} {post.delta || ""}</em></button></li>)}</ol>
-          </section>
-        </aside>
       </div>
     </main>
   );
@@ -425,15 +282,16 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [expertFeedback, setExpertFeedback] = useState<ExpertFeedbackDraft | null>(null);
   const [localVoteCounts, setLocalVoteCounts] = useState({ A: 0, B: 0 });
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
+  const emptyActivityCase = viewingLocal || title === REAL_CASE_TITLE;
   const detailMode: CaseMode = viewingLocal && localCase ? localCase.mode : compactCases.find((item) => item.title === title)?.mode ?? "judgement";
   const resolvedVerdict = detailMode === "judgement" && !viewingLocal ? resolvedVerdicts[title] : undefined;
-  const aClaim = viewingLocal && localCase ? localCase.aClaim ?? "" : "미드가 바론 시야를 확보하지 않고 라인을 밀다가 합류했습니다. 미드의 지도 관리 소홀과 합류 지연이 원인입니다.";
-  const bClaim = viewingLocal && localCase ? localCase.bClaim ?? "" : "정글이 바론 핑을 찍지 않았고, 미드가 라인을 밀 수밖에 없는 상황이었습니다. 팀 전체의 판단 실수가 더 큽니다.";
+  const aClaim = viewingLocal && localCase ? localCase.aClaim ?? "" : title === REAL_CASE_TITLE ? "A측 입장은 아직 등록되지 않았습니다." : "";
+  const bClaim = viewingLocal && localCase ? localCase.bClaim ?? "" : title === REAL_CASE_TITLE ? "B측 입장은 아직 등록되지 않았습니다." : "";
   const playThought = viewingLocal && localCase ? localCase.thought ?? "당시 어떤 판단으로 플레이했는지 작성하지 않았습니다." : "라인을 먼저 밀어 두면 상대보다 빠르게 합류할 수 있다고 생각했습니다. 상대 정글 위치를 정확히 확인하지 못했지만, 아군이 바로 교전을 열지는 않을 것으로 판단했습니다.";
-  const author = viewingLocal && localCase ? localCase.author : "한타는팀운";
-  const tier = viewingLocal && localCase ? localCase.tier : "다이아몬드 IV";
-  const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : asset("/media/demo.mp4");
-  const localVoteLedgerKey = viewingLocal ? `lolvs-local-votes:${title}` : "";
+  const author = viewingLocal && localCase ? localCase.author : title === REAL_CASE_TITLE ? "루크" : "";
+  const tier = viewingLocal && localCase ? localCase.tier : title === REAL_CASE_TITLE ? "챌린저" : "";
+  const videoSrc = viewingLocal && localVideoUrl ? localVideoUrl : title === REAL_CASE_TITLE ? asset("/media/lee-sin.mp4") : "";
+  const localVoteLedgerKey = emptyActivityCase ? `lolvs-local-votes:${title}` : "";
   const voteStorageKey = user ? `lolvs-vote:${user.nickname}:${title}` : "";
   const verdictStorageKey = user ? `lolvs-verdict:${user.nickname}:${title}` : "";
   const feedbackStorageKey = user ? `lolvs-expert-feedback:${user.nickname}:${title}` : "";
@@ -444,21 +302,21 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const canGiveFeedback = Boolean(detailMode === "feedback" && user && tierLevel(user.tier) >= (diamondCase ? 8 : 7));
   const localVoteTotal = localVoteCounts.A + localVoteCounts.B;
   const localAPercent = localVoteTotal ? Math.round(localVoteCounts.A / localVoteTotal * 100) : 0;
-  const result = viewingLocal
+  const result = emptyActivityCase
     ? { a: localAPercent, b: localVoteTotal ? 100 - localAPercent : 0 }
     : vote === "A" ? { a: 59, b: 41 } : vote === "B" ? { a: 57, b: 43 } : { a: 58, b: 42 };
   const baseCommentCount = detailMode === "feedback" ? feedbackCommentsSeed.length : commentsSeed.length;
-  const commentTotal = viewingLocal ? comments.length : (detailMode === "feedback" ? 38 : 125) + Math.max(0, comments.length - baseCommentCount);
+  const commentTotal = emptyActivityCase ? comments.length : (detailMode === "feedback" ? 38 : 125) + Math.max(0, comments.length - baseCommentCount);
   const commentPageCount = Math.max(1, Math.ceil(comments.length / 5));
   const visibleComments = comments.slice((commentPage - 1) * 5, commentPage * 5);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setComments(viewingLocal ? [] : detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
+      setComments(emptyActivityCase ? [] : detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
       setCommentPage(1);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [detailMode, title, viewingLocal]);
+  }, [detailMode, title, emptyActivityCase]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -511,7 +369,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const submitOpinionVote = (side: VoteSide) => {
     setVote(side);
     localStorage.setItem(voteStorageKey, side);
-    if (viewingLocal && user) {
+    if (emptyActivityCase && user) {
       const ledger = JSON.parse(localStorage.getItem(localVoteLedgerKey) ?? "{}") as Record<string, VoteSide>;
       ledger[user.nickname] = side;
       localStorage.setItem(localVoteLedgerKey, JSON.stringify(ledger));
@@ -600,8 +458,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     <main className="page-shell detail-layout">
       <section className="detail-main">
         <div className="detail-title-row"><div className="detail-title"><span className={detailMode === "judgement" ? "detail-mode-badge judgement" : "detail-mode-badge feedback"}>{detailMode === "judgement" ? "플레이 판정" : "플레이 피드백"}</span>{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><div className="detail-title-actions"><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button>{canJudge && !resolvedVerdict && <button className={officialVerdict ? "judge-jump-button submitted" : "judge-jump-button"} disabled={Boolean(officialVerdict)} onClick={() => setJudgeModalOpen(true)}>{officialVerdict ? "판결 제출 완료" : "판결하기"}</button>}{canGiveFeedback && <button className={expertFeedback ? "expert-feedback-button submitted" : "expert-feedback-button"} disabled={Boolean(expertFeedback)} onClick={() => setFeedbackModalOpen(true)}>{expertFeedback ? "피드백 제출 완료" : "피드백 주기"}</button>}</div></div>
-        <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={viewingLocal} inline /></div><span className="post-view-count">조회수 <b>{viewingLocal ? 0 : "3,842"}</b></span></div>
-        <div className="video-card real-video"><video src={videoSrc} controls playsInline poster={viewingLocal ? undefined : asset("/media/gameplay-detail.png")}>브라우저가 영상을 지원하지 않습니다.</video></div>
+        <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span><VerifiedBadge tier={tier} demo={emptyActivityCase} inline /></div><span className="post-view-count">조회수 <b>{emptyActivityCase ? 0 : "3,842"}</b></span></div>
+        <div className="video-card real-video"><video src={videoSrc} controls playsInline preload="metadata">브라우저가 영상을 지원하지 않습니다.</video></div>
         {resolvedVerdict && <section className="inline-resolved-verdict official-verdict-document">
           <header><div><span>OFFICIAL VERDICT · 판결 완료</span><h2><b>{resolvedVerdict.side}측 잘못</b>으로 공식 판결했습니다.</h2></div><time>{resolvedVerdict.decidedAt}</time></header>
           <div className="verdict-document-body">
@@ -637,7 +495,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
 
       <aside className="vote-rail">
         {detailMode === "judgement" ? <>
-          {resolvedVerdict ? <section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section> : <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} />{viewingLocal && <p className="local-vote-total">현재 <b>{localVoteTotal}</b>명 참여</p>}<div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section>}
+          {resolvedVerdict ? <section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section> : <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} />{emptyActivityCase && <p className="local-vote-total">현재 <b>{localVoteTotal}</b>명 참여</p>}<div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section>}
           <section className="positions-card"><header><div><h2>양측 주장</h2><p>게시물 작성자가 정리한 입장입니다.</p></div><span><b>A</b><i>VS</i><em>B</em></span></header><article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article><div className="position-divider"><span>VS</span></div><article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article></section>
           <section className="guide-card"><h2>참여 가이드</h2><ul><li>의견 투표와 댓글은 모든 인증 사용자가 참여합니다.</li><li>공식 판결은 마스터 이상, 다이아 사건은 그랜드마스터 이상만 가능합니다.</li><li>비난보다 다음 플레이에 도움 되는 근거를 남겨 주세요.</li></ul></section>
         </> : <>
@@ -658,25 +516,16 @@ function PersonalActivityMetric({ value }: { value: string }) {
   return <span className="personal-activity-metric"><span><b>{votes}</b><small>참여</small></span><i /><span><b>{matches}</b><small>합의 일치</small></span></span>;
 }
 
-function Ranking({ user }: { user: User | null }) {
+function Ranking() {
   const [mode, setMode] = useState<"personal" | "judge">("personal");
   const [query, setQuery] = useState("");
   const [searched, setSearched] = useState(false);
   const [rankingPage, setRankingPage] = useState(1);
   const ranking = mode === "personal" ? personalRankingSeed : judgeRankingSeed;
   const rankingPageSize = 20;
-  const rankingPageCount = Math.ceil(ranking.length / rankingPageSize);
+  const rankingPageCount = Math.max(1, Math.ceil(ranking.length / rankingPageSize));
   const visibleRanking = ranking.slice((rankingPage - 1) * rankingPageSize, rankingPage * rankingPageSize);
   const candidates = ranking.map((row, index) => ({ rank: index + 1, name: row[0], tier: row[1], metricA: row[2], metricB: row[3], points: row[4] }));
-  const currentRank = user
-    ? mode === "personal"
-      ? { rank: 76, name: user.nickname, tier: user.tier, metricA: "570 / 467", metricB: "1,225개", points: "11,080" }
-      : isMasterPlus(user.tier)
-        ? { rank: 88, name: user.nickname, tier: user.tier, metricA: "120회", metricB: "3,069개", points: "3,669" }
-        : null
-    : null;
-  const userIsTopFive = user ? ranking.some((row) => row[0].toLowerCase() === user.nickname.toLowerCase()) : false;
-  if (currentRank && !userIsTopFive) candidates.push(currentRank);
   const match = searched ? candidates.find((item) => item.name.toLowerCase() === query.trim().toLowerCase()) : undefined;
   const changeMode = (nextMode: "personal" | "judge") => { setMode(nextMode); setSearched(false); setQuery(""); setRankingPage(1); };
   return (
@@ -696,11 +545,9 @@ function Ranking({ user }: { user: User | null }) {
       <section className="ranking-card elite-ranking">
         <div className="ranking-head"><span>순위</span><span>{mode === "personal" ? "플레이어" : "판결자"}</span><span>{mode === "personal" ? "투표 활동" : "판결 참여"}</span><span>{mode === "personal" ? "근거 공감" : "받은 인정"}</span><span>점수</span></div>
         {visibleRanking.map((row, index) => { const rank = (rankingPage - 1) * rankingPageSize + index + 1; return <div className={rank <= 3 ? `ranking-row podium rank-${rank}` : "ranking-row"} key={row[0]}><b className="rank-number"><span>{["1ST", "2ND", "3RD"][rank - 1] ?? ""}</span>{rank}</b><span className="rank-player"><strong>{row[0]}</strong><small>{row[1]} · {mode === "personal" ? "인증" : "판결 자격"}</small></span>{mode === "personal" ? <PersonalActivityMetric value={row[2]} /> : <span>{row[2]}</span>}<span>{row[3]}</span><strong>{row[4]}P</strong></div>; })}
-        {currentRank && !userIsTopFive && <><div className="ranking-divider"><span>내 순위</span></div><div className="ranking-row current-rank-row"><b className="rank-number">{currentRank.rank}</b><span className="rank-player"><strong>{currentRank.name}</strong><small>{currentRank.tier} · 데모 인증</small></span>{mode === "personal" ? <PersonalActivityMetric value={currentRank.metricA} /> : <span>{currentRank.metricA}</span>}<span>{currentRank.metricB}</span><strong>{currentRank.points}P</strong></div></>}
-        {!user && <div className="rank-login-note">로그인하면 내 순위를 바로 확인할 수 있습니다.</div>}
-        {mode === "judge" && user && !isMasterPlus(user.tier) && <div className="rank-login-note">마스터 이상부터 공식 판결자 랭킹에 등록됩니다.</div>}
+        {!ranking.length && <div className="rank-empty">아직 집계된 랭킹이 없습니다.</div>}
       </section>
-      <nav className="ranking-pagination" aria-label="랭킹 페이지">{Array.from({ length: rankingPageCount }, (_, index) => index + 1).map((number) => <button key={number} className={rankingPage === number ? "active" : ""} onClick={() => { setRankingPage(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{number}</button>)}</nav>
+      {ranking.length > rankingPageSize && <nav className="ranking-pagination" aria-label="랭킹 페이지">{Array.from({ length: rankingPageCount }, (_, index) => index + 1).map((number) => <button key={number} className={rankingPage === number ? "active" : ""} onClick={() => { setRankingPage(number); window.scrollTo({ top: 0, behavior: "smooth" }); }}>{number}</button>)}</nav>}
     </main>
   );
 }
@@ -738,7 +585,6 @@ function SearchResults({ query, openDetail, localCase }: { query: string; openDe
   const cases = [
     ...(localCase ? [{ title: localCase.title, category: localCase.category, local: true }] : []),
     ...compactCases.map((item) => ({ title: item.title, category: item.category, local: false })),
-    ...weeklyPosts.map(({ title }) => ({ title, category: "실시간 인기", local: false })),
   ].filter((item, index, array) => item.title.toLowerCase().includes(keyword) && array.findIndex((other) => other.title === item.title) === index);
   return <main className="page-shell section-page search-page"><div className="search-heading"><span>사건 검색</span><h1>“{query}” 검색 결과</h1><p>진행 중인 사건과 실시간 인기 판결에서 찾았습니다.</p></div><section className="search-result-section"><div><h2>사건</h2><b>{cases.length}</b></div>{cases.length ? <div className="search-result-list">{cases.map((item) => <button key={item.title} onClick={() => openDetail(item.local, item.title)}><span>판결</span><strong>{item.title}</strong><small>{item.category} · 사건 열기 →</small></button>)}</div> : <p className="search-none">일치하는 사건이 없습니다.</p>}</section></main>;
 }
@@ -876,7 +722,7 @@ export default function HomePage() {
   return <div className="app-root"><Header view={view} setView={setView} user={user} onLogin={() => setLoginOpen(true)} onProfile={() => setProfileOpen(true)} />
     {view === "home" && <Home openDetail={openDetail} localCase={localCase} localVideoUrl={localVideoUrl} onSubmit={openSubmit} onSearch={search} />}
     {view === "detail" && <Detail toast={showToast} user={user} requireLogin={requireLogin} localCase={localCase} localVideoUrl={localVideoUrl} viewingLocal={viewingLocal} selectedTitle={selectedCaseTitle} />}
-    {view === "ranking" && <Ranking user={user} />}
+    {view === "ranking" && <Ranking />}
     {view === "guide" && <Guide />}
     {view === "search" && <SearchResults query={searchQuery} openDetail={openDetail} localCase={localCase} />}
     {view === "submit" && user && <SubmitCase setView={setView} toast={showToast} user={user} onSubmitted={(item, url) => { setLocalCase(item); setLocalVideoUrl(url); }} />}
