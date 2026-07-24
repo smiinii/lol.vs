@@ -448,7 +448,6 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
 }) {
   const [vote, setVote] = useState<VoteSide | null>(null);
   const [officialVerdict, setOfficialVerdict] = useState<VoteSide | null>(null);
-  const [feedback, setFeedback] = useState("");
   const [evidence, setEvidence] = useState("");
   const [videoDuration, setVideoDuration] = useState(0);
   const [commentSegments, setCommentSegments] = useState<FeedbackSegment[]>([{ start: 0, end: 5, text: "" }]);
@@ -458,6 +457,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [expandedReplies, setExpandedReplies] = useState<number[]>([]);
   const [replyText, setReplyText] = useState("");
   const [reportTarget, setReportTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; owner: string; label: string } | null>(null);
   const [commentPage, setCommentPage] = useState(1);
   const [composerOpen, setComposerOpen] = useState(false);
   const [recognizedVerdict, setRecognizedVerdict] = useState(false);
@@ -667,7 +667,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
       id: Date.now(),
       name: user.nickname,
       tier: user.tier,
-      text: feedback.trim() || "구간별 피드백",
+      text: "구간별 피드백",
       evidence: evidence.trim() || undefined,
       segments: normalizedSegments,
       vote: detailMode === "judgement" ? vote ?? undefined : undefined,
@@ -694,7 +694,6 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     }
     setCommentPage(1);
     setComposerOpen(false);
-    setFeedback("");
     setEvidence("");
     setCommentSegments([{ start: 0, end: Math.min(5, segmentMax), text: "" }]);
     toast(isSupabaseConfigured ? "댓글을 모든 사용자에게 공개했습니다." : "댓글과 판단 근거를 등록했습니다.");
@@ -730,6 +729,27 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const requestReport = (target: string) => {
     if (!user) return requireLogin();
     setReportTarget(target);
+  };
+
+  const deleteComment = async () => {
+    if (!user || !deleteTarget) return requireLogin();
+    if (!user.isAdmin && deleteTarget.owner !== user.nickname) {
+      setDeleteTarget(null);
+      return toast("본인이 작성한 댓글만 삭제할 수 있습니다.");
+    }
+    if (supabase) {
+      const { error } = await supabase.from("comments").delete().eq("id", deleteTarget.id);
+      if (error) return toast(`댓글을 삭제하지 못했습니다: ${error.message}`);
+      await loadComments();
+    } else {
+      const nextComments = comments
+        .filter((comment) => comment.id !== deleteTarget.id)
+        .map((comment) => ({ ...comment, replies: comment.replies.filter((reply) => reply.id !== deleteTarget.id) }));
+      setComments(nextComments);
+      localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
+    }
+    setDeleteTarget(null);
+    toast("댓글을 삭제했습니다.");
   };
 
   const likeComment = async (commentId: number) => {
@@ -792,10 +812,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
           </video>
         </div>
         {detailMode === "judgement" && <section className="positions-card main-positions-card">
-          <header>
-            <div><span className="positions-eyebrow">CASE VIEW</span><h2>양측 주장</h2><p>영상을 보기 전에 작성자가 정리한 두 입장을 확인하세요.</p></div>
-            <span className="position-legend"><b>A</b><i>VS</i><em>B</em></span>
-          </header>
+          <header><h2>양측 주장</h2></header>
           <div className="positions-body">
             <article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article>
             <div className="position-divider"><span>VS</span></div>
@@ -834,7 +851,6 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
             </div>
             <div className={detailMode === "feedback" ? "segment-summary-fields feedback-summary" : "segment-summary-fields"}>
               {detailMode === "judgement" && <input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="판단 근거 요약 (선택)" aria-label="판단 근거 요약" />}
-              <textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="전체 의견 요약 (선택)" aria-label="전체 의견 요약" />
               <button className="segment-comment-submit" type="submit">피드백 등록</button>
             </div>
           </form>}
@@ -851,8 +867,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
                   </article>)}
                 </div>}
                 {item.evidence && <blockquote><b>판단 근거 요약</b>{item.evidence}</blockquote>}
-                <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button>{item.replies.length > 0 && <button className="reply-toggle" onClick={() => toggleReplies(item.id)}>{expandedReplies.includes(item.id) ? "답글 접기" : `답글 ${item.replies.length}개 보기`}</button>}<button onClick={() => { if (!user) return requireLogin(); setReplyingTo(replyingTo === item.id ? null : item.id); setExpandedReplies((ids) => ids.includes(item.id) ? ids : [...ids, item.id]); }}>답글 달기</button><button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
-                {expandedReplies.includes(item.id) && item.replies.map((reply) => <div className="reply" key={reply.id}><span className="reply-arrow">↳</span><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><em>답글</em><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} inline />{detailMode === "judgement" && <OpinionBadge side={activityVoteFor(reply.name, reply.vote)} />}</span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
+                <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button>{item.replies.length > 0 && <button className="reply-toggle" onClick={() => toggleReplies(item.id)}>{expandedReplies.includes(item.id) ? "답글 접기" : `답글 ${item.replies.length}개 보기`}</button>}<button onClick={() => { if (!user) return requireLogin(); setReplyingTo(replyingTo === item.id ? null : item.id); setExpandedReplies((ids) => ids.includes(item.id) ? ids : [...ids, item.id]); }}>답글 달기</button>{user && (user.isAdmin || item.name === user.nickname) && <button className="comment-delete" onClick={() => setDeleteTarget({ id: item.id, owner: item.name, label: `${item.name}님의 댓글` })}>삭제</button>}<button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
+                {expandedReplies.includes(item.id) && item.replies.map((reply) => <div className="reply" key={reply.id}><span className="reply-arrow">↳</span><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><em>답글</em><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} inline />{detailMode === "judgement" && <OpinionBadge side={activityVoteFor(reply.name, reply.vote)} />}</span><span className="reply-management">{user && (user.isAdmin || reply.name === user.nickname) && <button className="reply-delete" onClick={() => setDeleteTarget({ id: reply.id, owner: reply.name, label: `${reply.name}님의 대댓글` })}>삭제</button>}<button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></span></div><p>{reply.text}</p></div></div>)}
                 {replyingTo === item.id && <div className="reply-form"><input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`${item.name}님에게 답글 남기기`} aria-label="대댓글 작성" /><button onClick={() => addReply(item.id)}>등록</button></div>}
               </div>
             </article>
@@ -872,6 +888,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
         </>}
       </aside>
       {reportTarget && <ReportModal target={reportTarget} close={() => setReportTarget(null)} onSubmit={(reason) => { const target = reportTarget; setReportTarget(null); toast(`${target} 신고가 접수되었습니다: ${reason}`); }} />}
+      {deleteTarget && <DeleteCommentModal label={deleteTarget.label} close={() => setDeleteTarget(null)} confirm={() => void deleteComment()} />}
       {pendingVote && <VoteConfirmModal side={pendingVote} close={() => setPendingVote(null)} confirm={() => submitOpinionVote(pendingVote)} />}
       {judgeModalOpen && <JudgeVerdictModal close={() => setJudgeModalOpen(false)} requirement={judgeRequirement} submit={submitOfficialVerdict} />}
       {feedbackModalOpen && <ExpertFeedbackModal close={() => setFeedbackModalOpen(false)} requirement={judgeRequirement} submit={submitExpertFeedback} />}
@@ -1022,6 +1039,10 @@ function ReportModal({ target, close, onSubmit }: { target: string; close: () =>
 
 function VoteConfirmModal({ side, close, confirm }: { side: VoteSide; close: () => void; confirm: () => void }) {
   return <div className="modal-backdrop" onMouseDown={close}><section className={`profile-modal vote-confirm vote-confirm-${side.toLowerCase()}`} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="vote-confirm-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="vote-confirm-side">{side}</span><h2 id="vote-confirm-title">{side}측 주장에 동의할까요?</h2><p>투표를 완료하면 변경할 수 없습니다.<br />작성한 댓글과 대댓글에도 이 선택이 표시됩니다.</p><div><button className="secondary-button" onClick={close}>다시 생각하기</button><button className="vote-confirm-submit" onClick={confirm}>동의 확정</button></div></section></div>;
+}
+
+function DeleteCommentModal({ label, close, confirm }: { label: string; close: () => void; confirm: () => void }) {
+  return <div className="modal-backdrop" onMouseDown={close}><section className="profile-modal delete-comment-modal" onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="delete-comment-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="delete-comment-icon">×</span><h2 id="delete-comment-title">댓글을 삭제할까요?</h2><p><strong>{label}</strong><br />삭제한 내용은 다시 복구할 수 없습니다.</p><div><button className="secondary-button" onClick={close}>취소</button><button className="delete-comment-confirm" onClick={confirm}>삭제하기</button></div></section></div>;
 }
 
 function JudgeVerdictModal({ close, requirement, submit }: { close: () => void; requirement: string; submit: (draft: JudgeVerdictDraft) => void }) {
