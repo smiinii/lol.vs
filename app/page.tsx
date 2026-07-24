@@ -413,6 +413,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const verdictStorageKey = user ? `lolvs-verdict:${user.nickname}:${title}` : "";
   const feedbackStorageKey = user ? `lolvs-expert-feedback:${user.nickname}:${title}` : "";
   const recognitionStorageKey = user && resolvedVerdict ? `lolvs-recognition:${user.nickname}:${title}` : "";
+  const commentStorageKey = `lolvs-comments:${title}`;
+  const likedCommentsStorageKey = user ? `lolvs-comment-likes:${user.nickname}:${title}` : "";
   const diamondCase = tier.includes("다이아몬드");
   const judgeRequirement = diamondCase ? "그랜드마스터" : "마스터";
   const canJudge = Boolean(detailMode === "judgement" && user && (user.isAdmin || tierLevel(user.tier) >= (diamondCase ? 8 : 7)));
@@ -429,11 +431,13 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setComments(emptyActivityCase ? [] : detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
+      const savedComments = localStorage.getItem(commentStorageKey);
+      setComments(savedComments ? JSON.parse(savedComments) as CommentItem[] : emptyActivityCase ? [] : detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
+      setLikedComments(likedCommentsStorageKey ? JSON.parse(localStorage.getItem(likedCommentsStorageKey) ?? "[]") as number[] : []);
       setCommentPage(1);
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [detailMode, title, emptyActivityCase]);
+  }, [detailMode, title, emptyActivityCase, commentStorageKey, likedCommentsStorageKey]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -528,7 +532,9 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     if (!feedback.trim()) return toast("댓글 내용을 입력해 주세요.");
     if (detailMode === "judgement" && !evidence.trim()) return toast("댓글과 판단 근거를 함께 적어주세요.");
     const item: CommentItem = { id: Date.now(), name: user.nickname, tier: user.tier, text: feedback.trim(), evidence: evidence.trim() || undefined, vote: detailMode === "judgement" ? vote ?? undefined : undefined, likes: 0, replies: [] };
-    setComments([item, ...comments]);
+    const nextComments = [item, ...comments];
+    setComments(nextComments);
+    localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
     setCommentPage(1);
     setComposerOpen(false);
     setFeedback("");
@@ -539,7 +545,9 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const addReply = (commentId: number) => {
     if (!user) return requireLogin();
     if (!replyText.trim()) return;
-    setComments(comments.map((comment) => comment.id === commentId ? { ...comment, replies: [...comment.replies, { id: Date.now(), name: user.nickname, tier: user.tier, text: replyText.trim(), vote: detailMode === "judgement" ? vote ?? undefined : undefined }] } : comment));
+    const nextComments = comments.map((comment) => comment.id === commentId ? { ...comment, replies: [...comment.replies, { id: Date.now(), name: user.nickname, tier: user.tier, text: replyText.trim(), vote: detailMode === "judgement" ? vote ?? undefined : undefined }] } : comment);
+    setComments(nextComments);
+    localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
     setExpandedReplies((ids) => ids.includes(commentId) ? ids : [...ids, commentId]);
     setReplyText("");
     setReplyingTo(null);
@@ -554,8 +562,12 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const likeComment = (commentId: number) => {
     if (!user) return requireLogin();
     if (likedComments.includes(commentId)) return toast("이미 좋아요를 눌렀습니다.");
-    setComments(comments.map((comment) => comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment));
-    setLikedComments([...likedComments, commentId]);
+    const nextComments = comments.map((comment) => comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment);
+    const nextLikedComments = [...likedComments, commentId];
+    setComments(nextComments);
+    setLikedComments(nextLikedComments);
+    localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
+    if (likedCommentsStorageKey) localStorage.setItem(likedCommentsStorageKey, JSON.stringify(nextLikedComments));
   };
 
   const recognizeOfficialVerdict = () => {
