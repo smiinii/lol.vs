@@ -32,6 +32,7 @@ type CommentItem = {
   likes: number;
   replies: Reply[];
 };
+type CaseActivity = { comments: number; likes: number };
 type JudgeVerdictDraft = { side: VoteSide; timestamp: string; visibleInfo: string; reason: string; nextChoice: string; confidence: number };
 type ExpertFeedbackDraft = { timestamp: string; observedInfo: string; analysis: string; nextChoice: string; author?: string; tier?: string; role?: string };
 type ResolvedVerdict = { side: VoteSide; judge: string; judgeTier: string; judgeRole: string; peakTier: string; timestamp: string; visibleInfo: string; reason: string; nextChoice: string; confidence: number; recognitions: number; acceptance: number; positionJudgements: number; decidedAt: string };
@@ -221,7 +222,6 @@ const topJudges = [
   { name: "라인의정석", tier: "그랜드마스터", role: "미드", judgements: 0, recognitions: 0, acceptance: 0 },
   { name: "시야먼저", tier: "마스터", role: "서포터", judgements: 0, recognitions: 0, acceptance: 0 },
 ];
-const weeklyPosts = compactCases.map((item) => ({ title: item.title, meta: "댓글 0 · 투표 0" }));
 const commentsSeed: CommentItem[] = [];
 const feedbackCommentsSeed: CommentItem[] = [];
 const judgeRankingSeed: string[][] = topJudges.map((judge) => [judge.name, judge.tier, "0", "0", "0"]);
@@ -343,6 +343,55 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
   const [showResolved, setShowResolved] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [judgeIndex, setJudgeIndex] = useState(0);
+  const [caseActivity, setCaseActivity] = useState<Record<string, CaseActivity>>({});
+
+  const loadCaseActivity = useCallback(async () => {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("case_id, likes");
+      if (error) {
+        console.error("홈 활동 수를 불러오지 못했습니다.", error);
+        return;
+      }
+      const nextActivity = (data ?? []).reduce<Record<string, CaseActivity>>((activity, row) => {
+        const current = activity[row.case_id] ?? { comments: 0, likes: 0 };
+        activity[row.case_id] = {
+          comments: current.comments + 1,
+          likes: current.likes + Number(row.likes ?? 0),
+        };
+        return activity;
+      }, {});
+      setCaseActivity(nextActivity);
+      return;
+    }
+
+    const nextActivity = compactCases.reduce<Record<string, CaseActivity>>((activity, item) => {
+      const saved = localStorage.getItem(`lolvs-comments:${item.title}`);
+      const storedComments = saved ? JSON.parse(saved) as CommentItem[] : [];
+      activity[item.title] = {
+        comments: storedComments.reduce((count, comment) => count + 1 + comment.replies.length, 0),
+        likes: storedComments.reduce((count, comment) => count + comment.likes, 0),
+      };
+      return activity;
+    }, {});
+    setCaseActivity(nextActivity);
+  }, []);
+
+  useEffect(() => {
+    const loadTimer = window.setTimeout(() => { void loadCaseActivity(); }, 0);
+    const client = supabase;
+    if (!client) return () => window.clearTimeout(loadTimer);
+    const channel = client
+      .channel("home-case-activity")
+      .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, () => void loadCaseActivity())
+      .subscribe();
+    return () => {
+      window.clearTimeout(loadTimer);
+      void client.removeChannel(channel);
+    };
+  }, [loadCaseActivity]);
+
   useEffect(() => {
     const timer = window.setInterval(() => setJudgeIndex((index) => (index + 1) % topJudges.length), 6000);
     return () => window.clearInterval(timer);
@@ -392,13 +441,13 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           )}
 
           <div className="clean-case-list">
-            {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; return (
+            {pageItems.map((item) => { const resolved = resolvedVerdicts[item.title]; const activity = caseActivity[item.title] ?? { comments: item.comments, likes: item.likes }; return (
               <button className={resolved ? "clean-case-row case-resolved" : "clean-case-row"} key={item.title} onClick={() => openDetail(false, item.title)}>
                 <span className="thumb"><video src={item.video} muted playsInline preload="metadata" /><i>▶</i><small>{item.clip}</small>{resolved && <b className="resolved-stamp">판정 완료</b>}</span>
                 <span className="case-copy"><strong>{item.title}</strong><span className="author-line">{item.author}{item.tier && <VerifiedBadge tier={item.tier} inline />}</span><small>{item.category} · {item.meta}{resolved ? ` · ${resolved.side}측 잘못` : ""}</small></span>
                 <span className="case-status">
-                  {serviceMode === "judgement" ? <span className="row-votes"><small className={resolved ? "resolved-time" : ""}>{resolved ? "판정 완료" : item.time}</small><VoteBar a={item.a} b={item.b} compact /></span> : <span className="feedback-row-summary"><small>{item.time}</small><span><b>전문 피드백 {Math.max(1, Math.round(item.comments / 24))}개</b><em>댓글 {item.comments}</em></span></span>}
-                  <span className="case-engagement"><span><i className="like-icon" aria-hidden="true">♥</i><b>{item.likes}</b></span><span><i className="comment-icon" aria-hidden="true" /><b>{item.comments}</b></span></span>
+                  {serviceMode === "judgement" ? <span className="row-votes"><small className={resolved ? "resolved-time" : ""}>{resolved ? "판정 완료" : item.time}</small><VoteBar a={item.a} b={item.b} compact /></span> : <span className="feedback-row-summary"><small>{item.time}</small><span><b>전문 피드백 {Math.max(1, Math.round(activity.comments / 24))}개</b><em>댓글 {activity.comments}</em></span></span>}
+                  <span className="case-engagement"><span><i className="like-icon" aria-hidden="true">♥</i><b>{activity.likes}</b></span><span><i className="comment-icon" aria-hidden="true" /><b>{activity.comments}</b></span></span>
                 </span>
               </button>
             ); })}
@@ -429,7 +478,7 @@ function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { op
           </section>
           <section className="clean-hot-card">
             <header><h2><i className="live-dot" /> 실시간 인기 글</h2></header>
-            <ol>{weeklyPosts.map((post, index) => <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className="rank hot">{index + 1}</span><span><strong>{post.title}</strong><small>{post.meta}</small></span><em className="trend-same">—</em></button></li>)}</ol>
+            <ol>{compactCases.map((post, index) => { const activity = caseActivity[post.title] ?? { comments: post.comments, likes: post.likes }; return <li key={post.title}><button onClick={() => openDetail(false, post.title)}><span className="rank hot">{index + 1}</span><span><strong>{post.title}</strong><small>댓글 {activity.comments} · 좋아요 {activity.likes}</small></span><em className="trend-same">—</em></button></li>; })}</ol>
           </section>
         </aside>
       </div>
