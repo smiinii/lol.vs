@@ -20,12 +20,14 @@ type LocalCase = {
   approved?: boolean;
 };
 type Reply = { id: number; name: string; tier: string; text: string; vote?: VoteSide };
+type FeedbackSegment = { start: number; end: number; text: string };
 type CommentItem = {
   id: number;
   name: string;
   tier: string;
   text: string;
   evidence?: string;
+  segments?: FeedbackSegment[];
   vote?: VoteSide;
   likes: number;
   replies: Reply[];
@@ -44,6 +46,16 @@ function mapCommentRows(rows: CommentRow[]): CommentItem[] {
     tier: row.tier,
     text: row.content,
     evidence: row.evidence ?? undefined,
+    segments: Array.isArray(row.segments)
+      ? row.segments
+          .filter((segment): segment is FeedbackSegment => (
+            typeof segment === "object"
+            && segment !== null
+            && typeof segment.start === "number"
+            && typeof segment.end === "number"
+            && typeof segment.text === "string"
+          ))
+      : [],
     vote: row.vote ?? undefined,
     likes: row.likes,
     replies: rows
@@ -66,6 +78,13 @@ const USER_KEY = "lolvs-demo-user";
 const CASE_KEY = "lolvs-local-case-v2";
 const VIDEO_KEY = "latest-case-video-v2";
 const PERSONAL_RANKING_KEY = "lolvs-personal-ranking-v1";
+
+function formatVideoTime(value: number) {
+  const safeValue = Math.max(0, Math.floor(value));
+  const minutes = Math.floor(safeValue / 60);
+  const seconds = safeValue % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
 
 function navigationFromHash(hash: string): NavigationState {
   const [rawView, rawParams = ""] = hash.replace(/^#/, "").split("?");
@@ -314,7 +333,7 @@ function VoteBar({ a, b, compact = false }: { a: number; b: number; compact?: bo
 }
 
 function OpinionBadge({ side }: { side?: VoteSide }) {
-  return side ? <span className={`comment-vote vote-${side.toLowerCase()}`}>{side} 의견</span> : null;
+  return side ? <span className={`comment-vote vote-${side.toLowerCase()}`}>{side} 동의</span> : null;
 }
 
 function Home({ openDetail, localCase, localVideoUrl, onSubmit, onSearch }: { openDetail: (local?: boolean, title?: string) => void; localCase: LocalCase | null; localVideoUrl: string; onSubmit: () => void; onSearch: (query: string) => void }) {
@@ -431,6 +450,8 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [officialVerdict, setOfficialVerdict] = useState<VoteSide | null>(null);
   const [feedback, setFeedback] = useState("");
   const [evidence, setEvidence] = useState("");
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [commentSegments, setCommentSegments] = useState<FeedbackSegment[]>([{ start: 0, end: 5, text: "" }]);
   const [comments, setComments] = useState<CommentItem[]>(viewingLocal ? [] : commentsSeed);
   const [likedComments, setLikedComments] = useState<number[]>([]);
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
@@ -446,6 +467,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [expertFeedback, setExpertFeedback] = useState<ExpertFeedbackDraft | null>(null);
   const [localVoteCounts, setLocalVoteCounts] = useState({ A: 0, B: 0 });
+  const videoRef = useRef<HTMLVideoElement>(null);
   const title = viewingLocal && localCase ? localCase.title : selectedTitle;
   const selectedCase = compactCases.find((item) => item.title === title);
   const emptyActivityCase = viewingLocal || Boolean(selectedCase);
@@ -477,12 +499,13 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const commentTotal = emptyActivityCase ? comments.length : (detailMode === "feedback" ? 38 : 125) + Math.max(0, comments.length - baseCommentCount);
   const commentPageCount = Math.max(1, Math.ceil(comments.length / 5));
   const visibleComments = comments.slice((commentPage - 1) * 5, commentPage * 5);
+  const segmentMax = Math.max(1, Math.floor(videoDuration));
 
   const loadComments = useCallback(async () => {
     if (supabase) {
       const { data, error } = await supabase
         .from("comments")
-        .select("id, case_id, parent_id, nickname, tier, content, evidence, vote, likes, created_at")
+        .select("id, case_id, parent_id, nickname, tier, content, evidence, segments, vote, likes, created_at")
         .eq("case_id", title)
         .order("created_at", { ascending: false });
       if (error) {
@@ -575,7 +598,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
       });
     }
     setPendingVote(null);
-    toast(`${side}측 잘못으로 의견 투표했습니다.`);
+    toast(`${side}측 주장에 동의했습니다.`);
   };
 
   const submitOfficialVerdict = (draft: JudgeVerdictDraft) => {
@@ -600,12 +623,57 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     toast("근거와 다음 플레이 방법을 포함한 전문 피드백을 등록했습니다.");
   };
 
+  const updateCommentSegment = (index: number, patch: Partial<FeedbackSegment>) => {
+    setCommentSegments((segments) => segments.map((segment, segmentIndex) => {
+      if (segmentIndex !== index) return segment;
+      const next = { ...segment, ...patch };
+      if (patch.start !== undefined && next.start >= next.end) next.end = Math.min(segmentMax, next.start + 1);
+      if (patch.end !== undefined && next.end <= next.start) next.start = Math.max(0, next.end - 1);
+      return next;
+    }));
+  };
+
+  const addCommentSegment = () => {
+    if (commentSegments.length >= 5) return toast("영상 구간은 댓글 하나에 최대 5개까지 추가할 수 있습니다.");
+    const previous = commentSegments[commentSegments.length - 1];
+    const start = Math.min(segmentMax - 1, previous?.end ?? 0);
+    const end = Math.min(segmentMax, start + Math.max(1, Math.min(5, segmentMax)));
+    setCommentSegments((segments) => [...segments, { start, end, text: "" }]);
+  };
+
+  const removeCommentSegment = (index: number) => {
+    if (commentSegments.length === 1) return toast("피드백 구간은 하나 이상 필요합니다.");
+    setCommentSegments((segments) => segments.filter((_, segmentIndex) => segmentIndex !== index));
+  };
+
+  const jumpToSegment = (start: number) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = start;
+    void videoRef.current.play();
+  };
+
   const addComment = async (event: FormEvent) => {
     event.preventDefault();
     if (!user) return requireLogin();
-    if (!feedback.trim()) return toast("댓글 내용을 입력해 주세요.");
-    if (detailMode === "judgement" && !evidence.trim()) return toast("댓글과 판단 근거를 함께 적어주세요.");
-    const item: CommentItem = { id: Date.now(), name: user.nickname, tier: user.tier, text: feedback.trim(), evidence: evidence.trim() || undefined, vote: detailMode === "judgement" ? vote ?? undefined : undefined, likes: 0, replies: [] };
+    const normalizedSegments = commentSegments.map((segment) => ({
+      start: Math.max(0, Math.min(segmentMax, Math.floor(segment.start))),
+      end: Math.max(0, Math.min(segmentMax, Math.floor(segment.end))),
+      text: segment.text.trim(),
+    }));
+    if (videoDuration <= 0) return toast("영상 길이를 확인한 뒤 다시 시도해 주세요.");
+    if (normalizedSegments.some((segment) => !segment.text)) return toast("각 영상 구간마다 피드백을 작성해 주세요.");
+    if (normalizedSegments.some((segment) => segment.end <= segment.start)) return toast("종료 시간은 시작 시간보다 뒤여야 합니다.");
+    const item: CommentItem = {
+      id: Date.now(),
+      name: user.nickname,
+      tier: user.tier,
+      text: feedback.trim() || "구간별 피드백",
+      evidence: evidence.trim() || undefined,
+      segments: normalizedSegments,
+      vote: detailMode === "judgement" ? vote ?? undefined : undefined,
+      likes: 0,
+      replies: [],
+    };
     if (supabase) {
       const { error } = await supabase.from("comments").insert({
         case_id: title,
@@ -614,6 +682,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
         tier: item.tier,
         content: item.text,
         evidence: item.evidence ?? null,
+        segments: item.segments,
         vote: item.vote ?? null,
       });
       if (error) return toast(`댓글을 저장하지 못했습니다: ${error.message}`);
@@ -627,6 +696,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     setComposerOpen(false);
     setFeedback("");
     setEvidence("");
+    setCommentSegments([{ start: 0, end: Math.min(5, segmentMax), text: "" }]);
     toast(isSupabaseConfigured ? "댓글을 모든 사용자에게 공개했습니다." : "댓글과 판단 근거를 등록했습니다.");
   };
 
@@ -641,6 +711,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
         tier: user.tier,
         content: replyText.trim(),
         evidence: null,
+        segments: [],
         vote: detailMode === "judgement" ? vote ?? null : null,
       });
       if (error) return toast(`대댓글을 저장하지 못했습니다: ${error.message}`);
@@ -700,7 +771,37 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
       <section className="detail-main">
         <div className="detail-title-row"><div className="detail-title"><span className={detailMode === "judgement" ? "detail-mode-badge judgement" : "detail-mode-badge feedback"}>{detailMode === "judgement" ? "플레이 판정" : "플레이 피드백"}</span>{resolvedVerdict && <span className="detail-resolved-badge">판결 완료 · {resolvedVerdict.side}측 잘못</span>}<h1>{title}</h1></div><div className="detail-title-actions"><button className="inline-report" onClick={() => requestReport("게시물")}>⚑ 게시물 신고</button>{canJudge && !resolvedVerdict && <button className={officialVerdict ? "judge-jump-button submitted" : "judge-jump-button"} disabled={Boolean(officialVerdict)} onClick={() => setJudgeModalOpen(true)}>{officialVerdict ? "판결 제출 완료" : "판결하기"}</button>}{canGiveFeedback && <button className={expertFeedback ? "expert-feedback-button submitted" : "expert-feedback-button"} disabled={Boolean(expertFeedback)} onClick={() => setFeedbackModalOpen(true)}>{expertFeedback ? "피드백 제출 완료" : "피드백 주기"}</button>}</div></div>
         <div className="detail-post-meta"><div className="author"><span className="avatar small">{author[0]}</span><span className="post-author-copy"><small>작성자</small><strong>{author}</strong></span>{tier && <VerifiedBadge tier={tier} demo={emptyActivityCase} inline />}</div><span className="post-view-count">조회수 <b>{emptyActivityCase ? 0 : "3,842"}</b></span></div>
-        <div className="video-card real-video"><video src={videoSrc} controls playsInline preload="metadata">브라우저가 영상을 지원하지 않습니다.</video></div>
+        <div className="video-card real-video">
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            controls
+            playsInline
+            preload="metadata"
+            onLoadedMetadata={(event) => {
+              const duration = Math.max(1, Math.floor(event.currentTarget.duration));
+              setVideoDuration(duration);
+              setCommentSegments((segments) => segments.map((segment, index) => (
+                index === 0 && segment.start === 0 && segment.end === 5 && !segment.text
+                  ? { ...segment, end: Math.min(5, duration) }
+                  : { ...segment, start: Math.min(segment.start, duration - 1), end: Math.min(Math.max(segment.end, 1), duration) }
+              )));
+            }}
+          >
+            브라우저가 영상을 지원하지 않습니다.
+          </video>
+        </div>
+        {detailMode === "judgement" && <section className="positions-card main-positions-card">
+          <header>
+            <div><span className="positions-eyebrow">CASE VIEW</span><h2>양측 주장</h2><p>영상을 보기 전에 작성자가 정리한 두 입장을 확인하세요.</p></div>
+            <span className="position-legend"><b>A</b><i>VS</i><em>B</em></span>
+          </header>
+          <div className="positions-body">
+            <article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article>
+            <div className="position-divider"><span>VS</span></div>
+            <article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article>
+          </div>
+        </section>}
         {resolvedVerdict && <section className="inline-resolved-verdict official-verdict-document">
           <header><div><span>OFFICIAL VERDICT · 판결 완료</span><h2><b>{resolvedVerdict.side}측 잘못</b>으로 공식 판결했습니다.</h2></div><time>{resolvedVerdict.decidedAt}</time></header>
           <div className="verdict-document-body">
@@ -715,14 +816,41 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
         </section>}
 
         <section className="comments-section">
-          <div className="comments-heading"><div><h2>댓글 <b>{commentTotal}</b></h2><span>{detailMode === "judgement" ? "모든 인증 사용자 참여 · 의견 투표 시 선택 공개" : "댓글은 모든 인증 사용자가 자유롭게 참여합니다."}</span></div><button onClick={() => { if (!user) requireLogin(); else setComposerOpen(!composerOpen); }}>{composerOpen ? "닫기" : "댓글 쓰기"}</button></div>
-          {composerOpen && user && <form className="comment-composer compact-composer" onSubmit={addComment}><div className="comment-fields">{detailMode === "judgement" && <input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="판단 근거 또는 타임스탬프" aria-label="판단 근거" />}<textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder={detailMode === "judgement" ? "댓글을 입력하세요." : "플레이에 대한 의견이나 질문을 남겨주세요."} aria-label="댓글 작성" /></div><button className="compact-comment-submit" type="submit">등록</button></form>}
+          <div className="comments-heading"><div><h2>댓글 <b>{commentTotal}</b></h2><span>{detailMode === "judgement" ? "영상 구간별 근거 · 투표 시 선택 공개" : "영상 구간별로 플레이 피드백을 남길 수 있습니다."}</span></div><button onClick={() => { if (!user) requireLogin(); else setComposerOpen(!composerOpen); }}>{composerOpen ? "닫기" : "댓글 쓰기"}</button></div>
+          {composerOpen && user && <form className="comment-composer segment-comment-composer" onSubmit={addComment}>
+            <div className="segment-composer-head">
+              <div><span>VIDEO FEEDBACK</span><strong>영상 구간별로 피드백을 남겨주세요.</strong><small>전체 영상 {videoDuration > 0 ? formatVideoTime(videoDuration) : "길이 확인 중"}</small></div>
+              <button type="button" onClick={addCommentSegment}>+ 구간 추가</button>
+            </div>
+            <div className="segment-editor-list">
+              {commentSegments.map((segment, index) => <article className="segment-editor" key={index}>
+                <header><span>PART {String(index + 1).padStart(2, "0")}</span><strong>{formatVideoTime(segment.start)} — {formatVideoTime(segment.end)}</strong>{commentSegments.length > 1 && <button type="button" onClick={() => removeCommentSegment(index)}>삭제</button>}</header>
+                <div className="segment-time-controls">
+                  <label><span>시작 시간 <b>{formatVideoTime(segment.start)}</b></span><input type="range" min="0" max={segmentMax} step="1" value={segment.start} onChange={(event) => updateCommentSegment(index, { start: Number(event.target.value) })} aria-label={`파트 ${index + 1} 시작 시간`} /></label>
+                  <label><span>종료 시간 <b>{formatVideoTime(segment.end)}</b></span><input type="range" min="0" max={segmentMax} step="1" value={segment.end} onChange={(event) => updateCommentSegment(index, { end: Number(event.target.value) })} aria-label={`파트 ${index + 1} 종료 시간`} /></label>
+                </div>
+                <textarea value={segment.text} onChange={(event) => updateCommentSegment(index, { text: event.target.value })} placeholder="이 구간에서 보인 판단과 더 나은 플레이 방법을 적어주세요." aria-label={`파트 ${index + 1} 피드백`} />
+              </article>)}
+            </div>
+            <div className={detailMode === "feedback" ? "segment-summary-fields feedback-summary" : "segment-summary-fields"}>
+              {detailMode === "judgement" && <input value={evidence} onChange={(event) => setEvidence(event.target.value)} placeholder="판단 근거 요약 (선택)" aria-label="판단 근거 요약" />}
+              <textarea value={feedback} onChange={(event) => setFeedback(event.target.value)} placeholder="전체 의견 요약 (선택)" aria-label="전체 의견 요약" />
+              <button className="segment-comment-submit" type="submit">피드백 등록</button>
+            </div>
+          </form>}
           {visibleComments.map((item, index) => (
             <article className="comment parent-comment" key={item.id}>
               <span className="comment-avatar">{item.name[0]}</span>
               <div>
                 <div className="comment-meta"><strong>{item.name}</strong><VerifiedBadge tier={item.tier} demo={item.name === user?.nickname} inline />{detailMode === "judgement" && <OpinionBadge side={activityVoteFor(item.name, item.vote)} />}<small>{(commentPage - 1) * 5 + index + 1}시간 전</small></div>
-                <p>{item.text}</p>{item.evidence && <blockquote><b>판단 근거</b>{item.evidence}</blockquote>}
+                {item.text !== "구간별 피드백" && <p>{item.text}</p>}
+                {item.segments && item.segments.length > 0 && <div className="segment-feedback-list">
+                  {item.segments.map((segment, segmentIndex) => <article key={`${item.id}-${segmentIndex}`}>
+                    <button type="button" onClick={() => jumpToSegment(segment.start)}><span>▶</span>{formatVideoTime(segment.start)}–{formatVideoTime(segment.end)}</button>
+                    <p>{segment.text}</p>
+                  </article>)}
+                </div>}
+                {item.evidence && <blockquote><b>판단 근거 요약</b>{item.evidence}</blockquote>}
                 <div className="comment-actions"><button className={likedComments.includes(item.id) ? "liked" : ""} onClick={() => likeComment(item.id)}>{likedComments.includes(item.id) ? "♥" : "♡"} {item.likes}</button>{item.replies.length > 0 && <button className="reply-toggle" onClick={() => toggleReplies(item.id)}>{expandedReplies.includes(item.id) ? "답글 접기" : `답글 ${item.replies.length}개 보기`}</button>}<button onClick={() => { if (!user) return requireLogin(); setReplyingTo(replyingTo === item.id ? null : item.id); setExpandedReplies((ids) => ids.includes(item.id) ? ids : [...ids, item.id]); }}>답글 달기</button><button className="comment-report" onClick={() => requestReport(`${item.name}님의 댓글`)}>신고</button></div>
                 {expandedReplies.includes(item.id) && item.replies.map((reply) => <div className="reply" key={reply.id}><span className="reply-arrow">↳</span><span className="comment-avatar">{reply.name[0]}</span><div className="reply-body"><div className="reply-head"><span><em>답글</em><strong>{reply.name}</strong><VerifiedBadge tier={reply.tier} demo={reply.name === user?.nickname} inline />{detailMode === "judgement" && <OpinionBadge side={activityVoteFor(reply.name, reply.vote)} />}</span><button className="reply-report" onClick={() => requestReport(`${reply.name}님의 대댓글`)}>신고</button></div><p>{reply.text}</p></div></div>)}
                 {replyingTo === item.id && <div className="reply-form"><input value={replyText} onChange={(event) => setReplyText(event.target.value)} placeholder={`${item.name}님에게 답글 남기기`} aria-label="대댓글 작성" /><button onClick={() => addReply(item.id)}>등록</button></div>}
@@ -736,8 +864,7 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
 
       <aside className="vote-rail">
         {detailMode === "judgement" ? <>
-          {resolvedVerdict ? <section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section> : <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>의견 투표</h2><VoteBar a={result.a} b={result.b} />{emptyActivityCase && <p className="local-vote-total">현재 <b>{localVoteTotal}</b>명 참여</p>}<div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 잘못</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 잘못</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote} 잘못</b></p>}</div></section>}
-          <section className="positions-card"><header><div><h2>양측 주장</h2><p>게시물 작성자가 정리한 입장입니다.</p></div><span><b>A</b><i>VS</i><em>B</em></span></header><article className="position-item position-a"><div className="position-label"><b>A</b><strong>A측 주장</strong></div><p>{aClaim}</p></article><div className="position-divider"><span>VS</span></div><article className="position-item position-b"><div className="position-label"><b>B</b><strong>B측 주장</strong></div><p>{bClaim}</p></article></section>
+          {resolvedVerdict ? <section className="vote-card resolved-opinion-card"><div className="deadline resolved-deadline">투표 마감 · 최종 의견</div><div className="vote-body current-result"><h2>커뮤니티 투표 결과</h2><VoteBar a={result.a} b={result.b} /><p className="closed-vote-note">총 1,313명 참여 · 투표가 종료되었습니다.</p></div></section> : <section className="vote-card"><div className="deadline">◷ 마감까지 <strong>2일 14시간</strong></div><div className="vote-body current-result"><h2>어느 주장에 동의하나요?</h2><VoteBar a={result.a} b={result.b} />{emptyActivityCase && <p className="local-vote-total">현재 <b>{localVoteTotal}</b>명 참여</p>}<div className="opinion-vote-buttons"><button className={vote === "A" ? "a chosen" : "a"} onClick={() => requestOpinionVote("A")}>A 동의</button><button className={vote === "B" ? "b chosen" : "b"} onClick={() => requestOpinionVote("B")}>B 동의</button></div><p className="vote-hint">티어와 관계없이 모든 인증 사용자가 한 번씩 참여할 수 있습니다.</p>{vote && <p className="my-vote">내 의견: <b>{vote}측 주장에 동의</b></p>}</div></section>}
           <section className="guide-card"><h2>참여 가이드</h2><ul><li>의견 투표와 댓글은 모든 인증 사용자가 참여합니다.</li><li>공식 판결은 마스터 이상, 다이아 사건은 그랜드마스터 이상만 가능합니다.</li><li>비난보다 다음 플레이에 도움 되는 근거를 남겨 주세요.</li></ul></section>
         </> : <>
           <section className="feedback-intent-card"><header><span>작성자의 생각</span><h2>이렇게 판단하고 플레이했습니다.</h2></header><p>{playThought}</p><footer>결과가 아니라 당시 의도를 기준으로 피드백해 주세요.</footer></section>
@@ -894,7 +1021,7 @@ function ReportModal({ target, close, onSubmit }: { target: string; close: () =>
 }
 
 function VoteConfirmModal({ side, close, confirm }: { side: VoteSide; close: () => void; confirm: () => void }) {
-  return <div className="modal-backdrop" onMouseDown={close}><section className={`profile-modal vote-confirm vote-confirm-${side.toLowerCase()}`} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="vote-confirm-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="vote-confirm-side">{side}</span><h2 id="vote-confirm-title">{side}측 잘못으로 투표할까요?</h2><p>투표를 완료하면 변경할 수 없습니다.<br />작성한 댓글과 대댓글에도 이 의견이 표시됩니다.</p><div><button className="secondary-button" onClick={close}>다시 생각하기</button><button className="vote-confirm-submit" onClick={confirm}>투표 확정</button></div></section></div>;
+  return <div className="modal-backdrop" onMouseDown={close}><section className={`profile-modal vote-confirm vote-confirm-${side.toLowerCase()}`} onMouseDown={(event) => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="vote-confirm-title"><button className="modal-close" onClick={close} aria-label="닫기">×</button><span className="vote-confirm-side">{side}</span><h2 id="vote-confirm-title">{side}측 주장에 동의할까요?</h2><p>투표를 완료하면 변경할 수 없습니다.<br />작성한 댓글과 대댓글에도 이 선택이 표시됩니다.</p><div><button className="secondary-button" onClick={close}>다시 생각하기</button><button className="vote-confirm-submit" onClick={confirm}>동의 확정</button></div></section></div>;
 }
 
 function JudgeVerdictModal({ close, requirement, submit }: { close: () => void; requirement: string; submit: (draft: JudgeVerdictDraft) => void }) {

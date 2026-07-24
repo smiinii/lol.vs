@@ -19,6 +19,7 @@ export type CommentRow = {
   tier: string;
   content: string;
   evidence: string | null;
+  segments: unknown;
   vote: "A" | "B" | null;
   likes: number;
   created_at: string;
