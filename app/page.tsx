@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
+import { CommentRow, isSupabaseConfigured, supabase } from "@/lib/supabase";
 
 type View = "home" | "ranking" | "guide" | "detail" | "submit" | "search" | "admin";
 type NavigationState = { view: View; title?: string; local?: boolean; query?: string };
@@ -33,12 +34,60 @@ type JudgeVerdictDraft = { side: VoteSide; timestamp: string; visibleInfo: strin
 type ExpertFeedbackDraft = { timestamp: string; observedInfo: string; analysis: string; nextChoice: string; author?: string; tier?: string; role?: string };
 type ResolvedVerdict = { side: VoteSide; judge: string; judgeTier: string; judgeRole: string; peakTier: string; timestamp: string; visibleInfo: string; reason: string; nextChoice: string; confidence: number; recognitions: number; acceptance: number; positionJudgements: number; decidedAt: string };
 
+function mapCommentRows(rows: CommentRow[]): CommentItem[] {
+  const roots = rows
+    .filter((row) => row.parent_id === null)
+    .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+  return roots.map((row) => ({
+    id: Number(row.id),
+    name: row.nickname,
+    tier: row.tier,
+    text: row.content,
+    evidence: row.evidence ?? undefined,
+    vote: row.vote ?? undefined,
+    likes: row.likes,
+    replies: rows
+      .filter((reply) => reply.parent_id === row.id)
+      .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))
+      .map((reply) => ({
+        id: Number(reply.id),
+        name: reply.nickname,
+        tier: reply.tier,
+        text: reply.content,
+        vote: reply.vote ?? undefined,
+      })),
+  }));
+}
+
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 const asset = (path: string) => `${basePath}${path}`;
+const navigableViews: View[] = ["home", "ranking", "guide", "detail", "submit", "search", "admin"];
 const USER_KEY = "lolvs-demo-user";
 const CASE_KEY = "lolvs-local-case-v2";
 const VIDEO_KEY = "latest-case-video-v2";
 const PERSONAL_RANKING_KEY = "lolvs-personal-ranking-v1";
+
+function navigationFromHash(hash: string): NavigationState {
+  const [rawView, rawParams = ""] = hash.replace(/^#/, "").split("?");
+  const view = navigableViews.includes(rawView as View) ? rawView as View : "home";
+  const params = new URLSearchParams(rawParams);
+  return {
+    view,
+    title: params.get("title") ?? undefined,
+    local: params.has("local") ? params.get("local") === "1" : undefined,
+    query: params.get("query") ?? undefined,
+  };
+}
+
+function navigationToHash(view: View, state: Omit<NavigationState, "view"> = {}) {
+  if (view === "home") return "";
+  const params = new URLSearchParams();
+  if (state.title) params.set("title", state.title);
+  if (typeof state.local === "boolean") params.set("local", state.local ? "1" : "0");
+  if (state.query) params.set("query", state.query);
+  const query = params.toString();
+  return `#${view}${query ? `?${query}` : ""}`;
+}
 
 const tierLevel = (tier: string) => {
   if (tier.includes("챌린저")) return 9;
@@ -429,15 +478,40 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
   const commentPageCount = Math.max(1, Math.ceil(comments.length / 5));
   const visibleComments = comments.slice((commentPage - 1) * 5, commentPage * 5);
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
+  const loadComments = useCallback(async () => {
+    if (supabase) {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("id, case_id, parent_id, nickname, tier, content, evidence, vote, likes, created_at")
+        .eq("case_id", title)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("댓글을 불러오지 못했습니다.", error);
+        return;
+      }
+      setComments(mapCommentRows((data ?? []) as CommentRow[]));
+    } else {
       const savedComments = localStorage.getItem(commentStorageKey);
       setComments(savedComments ? JSON.parse(savedComments) as CommentItem[] : emptyActivityCase ? [] : detailMode === "feedback" ? feedbackCommentsSeed : commentsSeed);
-      setLikedComments(likedCommentsStorageKey ? JSON.parse(localStorage.getItem(likedCommentsStorageKey) ?? "[]") as number[] : []);
-      setCommentPage(1);
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [detailMode, title, emptyActivityCase, commentStorageKey, likedCommentsStorageKey]);
+    }
+    setLikedComments(likedCommentsStorageKey ? JSON.parse(localStorage.getItem(likedCommentsStorageKey) ?? "[]") as number[] : []);
+    setCommentPage(1);
+  }, [commentStorageKey, detailMode, emptyActivityCase, likedCommentsStorageKey, title]);
+
+  useEffect(() => {
+    const loadTimer = window.setTimeout(() => { void loadComments(); }, 0);
+    const client = supabase;
+    if (!client) return () => window.clearTimeout(loadTimer);
+    const channelKey = Array.from(title).reduce((hash, character) => ((hash * 31) + character.charCodeAt(0)) >>> 0, 0);
+    const channel = client
+      .channel(`comments-${channelKey}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, () => void loadComments())
+      .subscribe();
+    return () => {
+      window.clearTimeout(loadTimer);
+      void client.removeChannel(channel);
+    };
+  }, [loadComments, title]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -526,28 +600,56 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     toast("근거와 다음 플레이 방법을 포함한 전문 피드백을 등록했습니다.");
   };
 
-  const addComment = (event: FormEvent) => {
+  const addComment = async (event: FormEvent) => {
     event.preventDefault();
     if (!user) return requireLogin();
     if (!feedback.trim()) return toast("댓글 내용을 입력해 주세요.");
     if (detailMode === "judgement" && !evidence.trim()) return toast("댓글과 판단 근거를 함께 적어주세요.");
     const item: CommentItem = { id: Date.now(), name: user.nickname, tier: user.tier, text: feedback.trim(), evidence: evidence.trim() || undefined, vote: detailMode === "judgement" ? vote ?? undefined : undefined, likes: 0, replies: [] };
-    const nextComments = [item, ...comments];
-    setComments(nextComments);
-    localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
+    if (supabase) {
+      const { error } = await supabase.from("comments").insert({
+        case_id: title,
+        parent_id: null,
+        nickname: item.name,
+        tier: item.tier,
+        content: item.text,
+        evidence: item.evidence ?? null,
+        vote: item.vote ?? null,
+      });
+      if (error) return toast(`댓글을 저장하지 못했습니다: ${error.message}`);
+      await loadComments();
+    } else {
+      const nextComments = [item, ...comments];
+      setComments(nextComments);
+      localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
+    }
     setCommentPage(1);
     setComposerOpen(false);
     setFeedback("");
     setEvidence("");
-    toast("댓글과 판단 근거를 등록했습니다.");
+    toast(isSupabaseConfigured ? "댓글을 모든 사용자에게 공개했습니다." : "댓글과 판단 근거를 등록했습니다.");
   };
 
-  const addReply = (commentId: number) => {
+  const addReply = async (commentId: number) => {
     if (!user) return requireLogin();
     if (!replyText.trim()) return;
-    const nextComments = comments.map((comment) => comment.id === commentId ? { ...comment, replies: [...comment.replies, { id: Date.now(), name: user.nickname, tier: user.tier, text: replyText.trim(), vote: detailMode === "judgement" ? vote ?? undefined : undefined }] } : comment);
-    setComments(nextComments);
-    localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
+    if (supabase) {
+      const { error } = await supabase.from("comments").insert({
+        case_id: title,
+        parent_id: commentId,
+        nickname: user.nickname,
+        tier: user.tier,
+        content: replyText.trim(),
+        evidence: null,
+        vote: detailMode === "judgement" ? vote ?? null : null,
+      });
+      if (error) return toast(`대댓글을 저장하지 못했습니다: ${error.message}`);
+      await loadComments();
+    } else {
+      const nextComments = comments.map((comment) => comment.id === commentId ? { ...comment, replies: [...comment.replies, { id: Date.now(), name: user.nickname, tier: user.tier, text: replyText.trim(), vote: detailMode === "judgement" ? vote ?? undefined : undefined }] } : comment);
+      setComments(nextComments);
+      localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
+    }
     setExpandedReplies((ids) => ids.includes(commentId) ? ids : [...ids, commentId]);
     setReplyText("");
     setReplyingTo(null);
@@ -559,15 +661,25 @@ function Detail({ toast, user, requireLogin, localCase, localVideoUrl, viewingLo
     setReportTarget(target);
   };
 
-  const likeComment = (commentId: number) => {
+  const likeComment = async (commentId: number) => {
     if (!user) return requireLogin();
     if (likedComments.includes(commentId)) return toast("이미 좋아요를 눌렀습니다.");
-    const nextComments = comments.map((comment) => comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment);
     const nextLikedComments = [...likedComments, commentId];
-    setComments(nextComments);
     setLikedComments(nextLikedComments);
-    localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
     if (likedCommentsStorageKey) localStorage.setItem(likedCommentsStorageKey, JSON.stringify(nextLikedComments));
+    if (supabase) {
+      const { error } = await supabase.rpc("increment_comment_likes", { target_comment_id: commentId });
+      if (error) {
+        setLikedComments(likedComments);
+        if (likedCommentsStorageKey) localStorage.setItem(likedCommentsStorageKey, JSON.stringify(likedComments));
+        return toast(`좋아요를 반영하지 못했습니다: ${error.message}`);
+      }
+      await loadComments();
+    } else {
+      const nextComments = comments.map((comment) => comment.id === commentId ? { ...comment, likes: comment.likes + 1 } : comment);
+      setComments(nextComments);
+      localStorage.setItem(commentStorageKey, JSON.stringify(nextComments));
+    }
   };
 
   const recognizeOfficialVerdict = () => {
@@ -846,22 +958,31 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    const views: View[] = ["home", "ranking", "guide", "detail", "submit", "search", "admin"];
     const baseUrl = `${window.location.pathname}${window.location.search}`;
-    window.history.replaceState({ view: "home" } satisfies NavigationState, "", baseUrl);
+    const initialState = navigationFromHash(window.location.hash);
+    const restoreTimer = window.setTimeout(() => {
+      setView(initialState.view);
+      if (initialState.title) setSelectedCaseTitle(initialState.title);
+      if (typeof initialState.local === "boolean") setViewingLocal(initialState.local);
+      if (initialState.query) setSearchQuery(initialState.query);
+    }, 0);
+    window.history.replaceState(initialState, "", `${baseUrl}${navigationToHash(initialState.view, initialState)}`);
     const restoreView = (event: PopStateEvent) => {
-      const state = event.state as NavigationState | null;
-      const nextView = state && views.includes(state.view) ? state.view : "home";
-      setView(nextView);
+      const savedState = event.state as NavigationState | null;
+      const state = savedState && navigableViews.includes(savedState.view) ? savedState : navigationFromHash(window.location.hash);
+      setView(state.view);
       setLoginOpen(false);
       setProfileOpen(false);
-      if (state?.title) setSelectedCaseTitle(state.title);
-      if (typeof state?.local === "boolean") setViewingLocal(state.local);
-      if (state?.query) setSearchQuery(state.query);
+      if (state.title) setSelectedCaseTitle(state.title);
+      if (typeof state.local === "boolean") setViewingLocal(state.local);
+      if (state.query) setSearchQuery(state.query);
       window.scrollTo({ top: 0, behavior: "smooth" });
     };
     window.addEventListener("popstate", restoreView);
-    return () => window.removeEventListener("popstate", restoreView);
+    return () => {
+      window.clearTimeout(restoreTimer);
+      window.removeEventListener("popstate", restoreView);
+    };
   }, []);
 
   const showToast = (message: string) => { setToastMessage(message); window.setTimeout(() => setToastMessage(""), 2800); };
@@ -872,7 +993,7 @@ export default function HomePage() {
     if (state.query) setSearchQuery(state.query);
     setView(nextView);
     const baseUrl = `${window.location.pathname}${window.location.search}`;
-    window.history.pushState({ view: nextView, ...state } satisfies NavigationState, "", nextView === "home" ? baseUrl : `${baseUrl}#${nextView}`);
+    window.history.pushState({ view: nextView, ...state } satisfies NavigationState, "", `${baseUrl}${navigationToHash(nextView, state)}`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
   const login = (nextUser: User) => {
